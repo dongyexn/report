@@ -1708,7 +1708,9 @@
       패널ID: panelId || null,
       접수: row.전체접수, 처리: row.누계처리, 처리율: row.처리율,
       미처리: row.미처리합계, 장기: row.장기소계, 장기비율: row.장기비율,
-      d60: o.건수, 당월처리: row.기간처리, 합계증감: row.합계증감 || 0
+      d60: o.건수, 당월처리: row.기간처리, 합계증감: row.합계증감 || 0,
+      주차별: sd.주차별 || null,
+      _trades: (sd.장기미처리공종 && sd.장기미처리공종.상위) || null
     };
   }
 
@@ -1808,14 +1810,153 @@
       fmt(lng.미처리) + '건 중 ' + fmt(lng.장기) + '건이 30일 초과 상태.<br>단기 집중 보수일 지정, 협력사 병행 투입 검토 권고.');
   }
 
+  /* ===================== 주차별 추이 차트 (전 현장 합산) ===================== */
+  function renderWeeklyChart(sitesWithData) {
+    if (!sitesWithData.length) return null;
+    var maxLen = 0;
+    sitesWithData.forEach(function (sd) {
+      if (sd.주차별 && sd.주차별.length > maxLen) maxLen = sd.주차별.length;
+    });
+    if (!maxLen) return null;
+    var merged = [];
+    for (var i = 0; i < maxLen; i++) {
+      var acc = { 전체접수: 0, 누계처리: 0, 미처리합계: 0, 일반하자: 0, 장기소계: 0,
+                  month: null, week: null };
+      sitesWithData.forEach(function (sd) {
+        var w = sd.주차별 && sd.주차별[i];
+        if (!w) return;
+        acc.전체접수 += w.전체접수 || 0;
+        acc.누계처리 += w.누계처리 || 0;
+        acc.미처리합계 += w.미처리합계 || 0;
+        acc.일반하자 += w.일반하자 || 0;
+        acc.장기소계 += w.장기소계 || 0;
+        if (acc.month == null) { acc.month = w.month; acc.week = w.week; }
+      });
+      merged.push(acc);
+    }
+    var R = (typeof window !== 'undefined' && window.DefectRenderer) || null;
+    return (R && R.renderChart) ? R.renderChart(merged) : null;
+  }
+
+  /* ===================== 도넛 차트 ===================== */
+  var DONUT_COLORS = ['#08213f', '#265e99', '#3b82f6', '#60a5fa', '#93c5fd',
+    '#1d4ed8', '#1e40af', '#2563eb', '#7c3aed', '#a855f7', '#c084fc', '#e9d5ff',
+    '#f0abfc', '#ddd6fe'];
+
+  function shortName(name) {
+    if (!name) return '';
+    var n = String(name).replace(/^힐스테이트\s*/, '').replace(/\s.*$/, '');
+    return n.length > 4 ? n.slice(0, 4) : n;
+  }
+  function escH(s) {
+    return String(s == null ? '' : s).replace(/[&<>]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];
+    });
+  }
+  function polar(cx, cy, r, deg) {
+    var rad = (deg - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  }
+
+  function renderDonut(items) {
+    var total = 0;
+    items.forEach(function (it) { total += it.value; });
+    if (total <= 0) return { svg: '', legend: '', total: 0 };
+    var cx = 200, cy = 200, R = 175, deg = 0;
+    var paths = [], labels = [], legend = [];
+    items.forEach(function (it, idx) {
+      var frac = it.value / total;
+      var sweep = frac * 360;
+      var color = DONUT_COLORS[idx % DONUT_COLORS.length];
+      var p1 = polar(cx, cy, R, deg);
+      var p2 = polar(cx, cy, R, deg + sweep);
+      var large = sweep > 180 ? 1 : 0;
+      paths.push('<path d="M ' + cx + ' ' + cy + ' L ' + p1[0].toFixed(1) + ' ' +
+        p1[1].toFixed(1) + ' A ' + R + ' ' + R + ' 0 ' + large + ' 1 ' +
+        p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + ' Z" fill="' + color +
+        '" stroke="white" stroke-width="3"/>');
+      if (frac >= 0.04) {
+        var mid = polar(cx, cy, R * 0.62, deg + sweep / 2);
+        var fs = frac >= 0.10 ? 18 : 13;
+        labels.push('<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) +
+          '" text-anchor="middle" dominant-baseline="middle" font-family="Malgun Gothic,sans-serif" font-size="' +
+          fs + '" font-weight="700" fill="white">' + escH(shortName(it.label)) + '</text>');
+      }
+      var pct = (frac * 100).toFixed(1);
+      legend.push('<div style="display:flex;align-items:center;gap:3px;font-size:11px;">' +
+        '<span style="width:10px;height:10px;background:' + color +
+        ';display:inline-block;border-radius:2px;flex-shrink:0;"></span>' +
+        '<span style="color:#4a5568;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+        escH(shortName(it.label)) + '</span>' +
+        '<span style="font-weight:700;color:#4a5568;min-width:44px;text-align:right;">' +
+        fmt(it.value) + '건</span>' +
+        '<span style="font-size:10px;color:#6b7280;min-width:30px;text-align:right;">' +
+        pct + '%</span></div>');
+      deg += sweep;
+    });
+    var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:200px;">' +
+      paths.join('') + '<circle cx="200" cy="200" r="26" fill="white"/>' +
+      labels.join('') + '</svg>';
+    return { svg: svg, legend: legend.join(''), total: total };
+  }
+
+  function updateDonutCard(card, items) {
+    if (!card) return;
+    var sorted = items.slice().filter(function (x) { return x.value > 0; })
+      .sort(function (a, b) { return b.value - a.value; });
+    if (!sorted.length) return;
+    var d = renderDonut(sorted);
+    var svg = card.querySelector('svg');
+    if (svg && d.svg) svg.outerHTML = d.svg;
+    var legend = card.querySelector('.pie-legend');
+    if (legend) legend.innerHTML = d.legend;
+    var sub = card.querySelector('div[style*="font-size:10px"]');
+    if (sub) sub.textContent = '계: ' + fmt(d.total) + '건';
+  }
+
+  function updateDonuts(dash, sites) {
+    var cards = dash.querySelectorAll('.db-donut-card');
+    if (cards.length < 3) return;
+    updateDonutCard(cards[0], sites.map(function (s) { return { label: s.현장명, value: s.접수 }; }));
+    updateDonutCard(cards[1], sites.map(function (s) { return { label: s.현장명, value: s.미처리 }; }));
+    updateDonutCard(cards[2], sites.map(function (s) { return { label: s.현장명, value: s.장기 }; }));
+    if (cards[3]) {
+      var agg = {};
+      sites.forEach(function (s) {
+        if (!s._trades) return;
+        s._trades.forEach(function (t) { agg[t.공종] = (agg[t.공종] || 0) + t.금월; });
+      });
+      var items = Object.keys(agg).map(function (k) { return { label: k, value: agg[k] }; });
+      if (items.length) updateDonutCard(cards[3], items);
+    }
+  }
+
+  function updateWeeklyChart(dash, sitesData) {
+    var chartHtml = renderWeeklyChart(sitesData);
+    if (!chartHtml) return;
+    var holder = dash.querySelector('#dash-weekly-chart');
+    if (holder) { holder.innerHTML = chartHtml; }
+    else {
+      var firstSvg = dash.querySelector('.section svg');
+      if (firstSvg) firstSvg.outerHTML = chartHtml;
+    }
+    // 반영 현장 수 안내
+    var note = dash.querySelector('#dash-weekly-note');
+    if (note) {
+      note.textContent = '※ 주차별 추이는 업로드된 ' + sitesData.length +
+        '개 현장 기준 합산입니다. 13개 현장이 모두 업로드되면 팀 전체 추이가 됩니다.';
+      note.style.display = 'block';
+    }
+  }
+
   /* ---- 메인: 대시보드 갱신 ---- */
   function updateDashboard(allSiteData) {
     var dash = document.getElementById('panel_dashboard');
     if (!dash) return;
 
-    // 1) siteData가 있는 현장
     var byCode = {};
     var sites = [];
+    var rawSiteData = [];   // 주차별 차트용 — siteData 원본 (주차별 배열 포함)
     // 현장코드 → 기존 패널ID 매핑 (권역카드 ID 연결용)
     var codeToPanel = {};
     document.querySelectorAll('.site-panel[data-site-code]').forEach(function (p) {
@@ -1829,6 +1970,7 @@
         var sum = summarizeFromData(sd, codeToPanel[sd.현장코드] || null);
         byCode[sd.현장코드] = sum;
         sites.push(sum);
+        rawSiteData.push(sd);
       });
     }
     // 2) siteData 없는 기존 패널도 합산 (대시보드는 전체 집계여야 하므로)
@@ -1847,6 +1989,10 @@
     updateKPI(dash, sites);
     updateRegionCards(dash, sites);
     updateIssues(dash, sites);
+    updateDonuts(dash, sites);
+    // 주차별 추이 차트: siteData가 있는 현장이 1개 이상일 때만 갱신
+    // (siteData 없는 기존 현장은 주차별 원본이 없어 합산 불가)
+    if (rawSiteData.length) updateWeeklyChart(dash, rawSiteData);
   }
 
   var API = { updateDashboard: updateDashboard };
@@ -2102,7 +2248,8 @@
   <div class="section-title">
     <span class="badge">⌂</span><span>주차별 추이 한눈에 보기</span>
   </div>
-  <div style="padding:12px 16px;background:white;">
+  <div id="dash-weekly-note" style="display:none;padding:6px 16px 0;background:white;font-size:10.5px;color:#6b7280;"></div>
+  <div id="dash-weekly-chart" style="padding:12px 16px;background:white;">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 340" style="width:100%;height:auto;display:block;"><defs><filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0.6" dy="0.6" stdDeviation="0.8" flood-color="#000000" flood-opacity="0.85"/></filter></defs><rect x="65" y="35" width="1325" height="245" fill="white" stroke="#08213f" stroke-width="1"/><g stroke="#d1d5db" stroke-width="0.5" stroke-dasharray="2,2"><line x1="65" y1="231.0" x2="1390" y2="231.0"/><line x1="65" y1="182.0" x2="1390" y2="182.0"/><line x1="65" y1="133.0" x2="1390" y2="133.0"/><line x1="65" y1="84.0" x2="1390" y2="84.0"/></g><g stroke="#eef0f3" stroke-width="0.5"><line x1="138.6" y1="35" x2="138.6" y2="280"/><line x1="212.2" y1="35" x2="212.2" y2="280"/><line x1="285.8" y1="35" x2="285.8" y2="280"/><line x1="359.4" y1="35" x2="359.4" y2="280"/><line x1="433.0" y1="35" x2="433.0" y2="280"/><line x1="506.6" y1="35" x2="506.6" y2="280"/><line x1="580.2" y1="35" x2="580.2" y2="280"/><line x1="653.8" y1="35" x2="653.8" y2="280"/><line x1="727.4" y1="35" x2="727.4" y2="280"/><line x1="801.0" y1="35" x2="801.0" y2="280"/><line x1="874.6" y1="35" x2="874.6" y2="280"/><line x1="948.2" y1="35" x2="948.2" y2="280"/><line x1="1021.8" y1="35" x2="1021.8" y2="280"/><line x1="1095.4" y1="35" x2="1095.4" y2="280"/><line x1="1169.0" y1="35" x2="1169.0" y2="280"/><line x1="1242.6" y1="35" x2="1242.6" y2="280"/><line x1="1316.2" y1="35" x2="1316.2" y2="280"/></g><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#4a5568" text-anchor="end"><text x="57" y="284.0">0</text><text x="57" y="235.0">7,000</text><text x="57" y="186.0">14,000</text><text x="57" y="137.0">21,000</text><text x="57" y="88.0">28,000</text><text x="57" y="39.0">35,000</text></g><text x="65" y="23" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700">미처리(건)</text><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#4a5568" text-anchor="start"><text x="1398" y="284.0">700K</text><text x="1398" y="235.0">715K</text><text x="1398" y="186.0">730K</text><text x="1398" y="137.0">745K</text><text x="1398" y="88.0">760K</text><text x="1398" y="39.0">775K</text></g><text x="1390" y="23" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700">접수·처리(건)</text><rect x="79.7" y="239.8" width="44.2" height="40.2" fill="#c3d7e9"/><rect x="79.7" y="102.9" width="44.2" height="136.9" fill="#ecadad"/><text x="101.8" y="263.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,747</text><text x="101.8" y="175.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,560</text><text x="101.8" y="96.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,307</text><text x="101.8" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="101.8" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="153.3" y="241.9" width="44.2" height="38.1" fill="#c3d7e9"/><rect x="153.3" y="106.4" width="44.2" height="135.4" fill="#ecadad"/><text x="175.4" y="264.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,449</text><text x="175.4" y="178.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,345</text><text x="175.4" y="100.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,794</text><text x="175.4" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="175.4" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="226.9" y="241.5" width="44.2" height="38.5" fill="#c3d7e9"/><rect x="226.9" y="101.3" width="44.2" height="140.1" fill="#ecadad"/><text x="249.0" y="264.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,505</text><text x="249.0" y="175.3" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,020</text><text x="249.0" y="95.3" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,525</text><text x="249.0" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="249.0" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="300.6" y="231.8" width="44.2" height="48.2" fill="#c3d7e9"/><rect x="300.6" y="93.4" width="44.2" height="138.4" fill="#ecadad"/><text x="322.7" y="259.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,886</text><text x="322.7" y="166.6" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,769</text><text x="322.7" y="87.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">26,655</text><text x="322.7" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="322.7" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="374.2" y="227.6" width="44.2" height="52.4" fill="#c3d7e9"/><rect x="374.2" y="89.6" width="44.2" height="138.0" fill="#ecadad"/><text x="396.3" y="257.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">7,489</text><text x="396.3" y="162.6" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,717</text><text x="396.3" y="83.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">27,206</text><text x="396.3" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="396.3" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">5주</text><rect x="447.8" y="232.6" width="44.2" height="47.4" fill="#c3d7e9"/><rect x="447.8" y="96.9" width="44.2" height="135.7" fill="#ecadad"/><text x="469.9" y="260.3" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,773</text><text x="469.9" y="168.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,390</text><text x="469.9" y="90.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">26,163</text><text x="469.9" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="469.9" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="521.4" y="235.8" width="44.2" height="44.2" fill="#c3d7e9"/><rect x="521.4" y="100.5" width="44.2" height="135.3" fill="#ecadad"/><text x="543.5" y="261.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,310</text><text x="543.5" y="172.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,332</text><text x="543.5" y="94.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,642</text><text x="543.5" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="543.5" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="595.0" y="242.9" width="44.2" height="37.1" fill="#c3d7e9"/><rect x="595.0" y="99.5" width="44.2" height="143.4" fill="#ecadad"/><text x="617.1" y="265.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,296</text><text x="617.1" y="175.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,488</text><text x="617.1" y="93.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,784</text><text x="617.1" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="617.1" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="668.6" y="251.3" width="44.2" height="28.7" fill="#c3d7e9"/><rect x="668.6" y="104.2" width="44.2" height="147.1" fill="#ecadad"/><text x="690.7" y="269.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">4,097</text><text x="690.7" y="181.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">21,017</text><text x="690.7" y="98.2" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,114</text><text x="690.7" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="690.7" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="742.2" y="252.1" width="44.2" height="27.9" fill="#c3d7e9"/><rect x="742.2" y="107.8" width="44.2" height="144.3" fill="#ecadad"/><text x="764.3" y="270.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,988</text><text x="764.3" y="183.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,615</text><text x="764.3" y="101.8" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,603</text><text x="764.3" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="764.3" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="815.8" y="255.3" width="44.2" height="24.7" fill="#c3d7e9"/><rect x="815.8" y="119.0" width="44.2" height="136.4" fill="#ecadad"/><text x="837.9" y="271.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,527</text><text x="837.9" y="191.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,479</text><text x="837.9" y="113.0" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">23,006</text><text x="837.9" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="837.9" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="889.4" y="253.0" width="44.2" height="27.0" fill="#c3d7e9"/><rect x="889.4" y="125.5" width="44.2" height="127.5" fill="#ecadad"/><text x="911.5" y="270.5" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,862</text><text x="911.5" y="193.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">18,210</text><text x="911.5" y="119.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">22,072</text><text x="911.5" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="911.5" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="963.1" y="252.8" width="44.2" height="27.2" fill="#c3d7e9"/><rect x="963.1" y="127.3" width="44.2" height="125.5" fill="#ecadad"/><text x="985.2" y="270.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,886</text><text x="985.2" y="194.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,924</text><text x="985.2" y="121.3" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">21,810</text><text x="985.2" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="985.2" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="1036.7" y="254.4" width="44.2" height="25.6" fill="#c3d7e9"/><rect x="1036.7" y="131.6" width="44.2" height="122.8" fill="#ecadad"/><text x="1058.8" y="271.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,652</text><text x="1058.8" y="197.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,545</text><text x="1058.8" y="125.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">21,197</text><text x="1058.8" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1058.8" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="1110.3" y="255.7" width="44.2" height="24.3" fill="#c3d7e9"/><rect x="1110.3" y="135.5" width="44.2" height="120.3" fill="#ecadad"/><text x="1132.4" y="271.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,467</text><text x="1132.4" y="199.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,179</text><text x="1132.4" y="129.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">20,646</text><text x="1132.4" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1132.4" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="1183.9" y="238.5" width="44.2" height="41.5" fill="#c3d7e9"/><rect x="1183.9" y="121.4" width="44.2" height="117.1" fill="#ecadad"/><text x="1206.0" y="263.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,933</text><text x="1206.0" y="183.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,723</text><text x="1206.0" y="115.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">22,656</text><text x="1206.0" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1206.0" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="1257.5" y="222.2" width="44.2" height="57.8" fill="#c3d7e9"/><rect x="1257.5" y="107.5" width="44.2" height="114.6" fill="#ecadad"/><text x="1279.6" y="255.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">8,264</text><text x="1279.6" y="168.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,374</text><text x="1279.6" y="101.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,638</text><text x="1279.6" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1279.6" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="1331.1" y="201.7" width="44.2" height="78.3" fill="#c3d7e9"/><rect x="1331.1" y="87.9" width="44.2" height="113.8" fill="#ecadad"/><text x="1353.2" y="244.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">11,184</text><text x="1353.2" y="148.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,259</text><text x="1353.2" y="81.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">27,443</text><text x="1353.2" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1353.2" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">마감</text><polyline points="101.8,178.6 175.4,173.2 249.0,164.4 322.6,153.7 396.2,144.8 469.9,139.7 543.5,133.5 617.1,130.7 690.7,124.5 764.3,120.1 837.9,115.5 911.5,110.3 985.1,105.1 1058.8,101.2 1132.4,96.5 1206.0,84.2 1279.6,72.1 1353.2,59.8" fill="none" stroke="#fdbb31" stroke-width="2.4"/><polyline points="101.8,261.2 175.4,254.2 249.0,247.8 322.6,240.8 396.2,233.7 469.9,225.2 543.5,217.3 617.1,215.0 690.7,206.5 764.3,200.4 837.9,190.7 911.5,182.4 985.1,176.4 1058.8,170.5 1132.4,163.9 1206.0,158.2 1279.6,152.6 1353.2,149.4" fill="none" stroke="#265e99" stroke-width="2.4"/><circle cx="101.8" cy="178.6" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="101.8" cy="261.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="175.4" cy="173.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="175.4" cy="254.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="249.0" cy="164.4" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="249.0" cy="247.8" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="322.6" cy="153.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="322.6" cy="240.8" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="396.2" cy="144.8" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="396.2" cy="233.7" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="469.9" cy="139.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="469.9" cy="225.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="543.5" cy="133.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="543.5" cy="217.3" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="617.1" cy="130.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="617.1" cy="215.0" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="690.7" cy="124.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="690.7" cy="206.5" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="764.3" cy="120.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="764.3" cy="200.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="837.9" cy="115.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="837.9" cy="190.7" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="911.5" cy="110.3" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="911.5" cy="182.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="985.1" cy="105.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="985.1" cy="176.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1058.8" cy="101.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1058.8" cy="170.5" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1132.4" cy="96.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1132.4" cy="163.9" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1206.0" cy="84.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1206.0" cy="158.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1279.6" cy="72.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1279.6" cy="152.6" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1353.2" cy="59.8" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1353.2" cy="149.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><text x="126.8" y="176.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#fdbb31" font-weight="700" text-anchor="start" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">731,040</text><text x="126.8" y="269.2" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#265e99" font-weight="700" text-anchor="start" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">705,733</text><text x="1345.2" y="57.8" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#fdbb31" font-weight="700" text-anchor="end" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">767,418</text><text x="1345.2" y="161.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#265e99" font-weight="700" text-anchor="end" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">739,975</text><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#1a1a1a"><rect x="65" y="317" width="14" height="12" fill="#ecadad"/><text x="84" y="327">장기미처리</text><rect x="160" y="317" width="14" height="12" fill="#c3d7e9"/><text x="179" y="327">일반하자</text><line x1="250" y1="323" x2="270" y2="323" stroke="#fdbb31" stroke-width="2.4"/><circle cx="260" cy="323" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><text x="276" y="327">전체 접수</text><line x1="350" y1="323" x2="370" y2="323" stroke="#265e99" stroke-width="2.4"/><circle cx="360" cy="323" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><text x="376" y="327">누계 처리</text></g></svg>
   </div>
 </div>
