@@ -1541,14 +1541,21 @@
       var fm = keys[0], lm = keys[keys.length - 1];
       var fv = mn[fm], lv2 = mn[lm];
       var decline = fv > 0 ? Math.round((fv - lv2) / fv * 100) : 0;
+      // 박스 4 — 신규 접수 추이 (의견)
+      boxes.push('<div class="insight-block" style="border-left-color:#265e99;background:#ebf2fa;">' +
+        '<div class="ib-title"><span class="ib-tag" style="background:#265e99;">의견</span>신규 접수 추이 — 처리·적체 병행 관리</div>' +
+        '<div class="ib-body">월별 신규 접수 ' + fm + ' <strong>' + fmt(fv) + '건</strong> → ' + lm + ' <strong>' + fmt(lv2) + '건</strong>' +
+        (decline >= 0 ? ' (' + decline + '% 감소)' : ' (' + Math.abs(decline) + '% 증가)') +
+        '. 60일 이상 장기 ' + fmt(o.건수) + '건(' + o.비율 + '%) 적체와 신규 유입을 병행 관리해야 하며, 협력사별 목표 배정 및 주간 모니터링 강화 요망.</div></div>');
+      // 박스 5 — 처리 추세 평가 (호조 또는 관리 권고)
       if (decline >= 30) {
         boxes.push('<div class="insight-block good">' +
-          '<div class="ib-title"><span class="ib-tag">호조</span>신규 접수 안정화 — 입주 초기 피크 지나는 중</div>' +
-          '<div class="ib-body">월별 신규 접수 ' + fm + ' <strong>' + fmt(fv) + '건</strong> → ' + lm + ' <strong>' + fmt(lv2) + '건</strong> (' + decline + '% 감소). 일반하자 잔량도 감소 추세로 장기 적체 해소에 자원 집중 가능.</div></div>');
+          '<div class="ib-title"><span class="ib-tag" style="background:#00a94f;">호조</span>신규 접수 안정화 — 입주 초기 피크 지나는 중</div>' +
+          '<div class="ib-body">신규 접수가 ' + fm + ' 대비 ' + decline + '% 감소하며 입주 초기 피크를 지나고 있음. 일반하자 잔량도 감소 추세로, 신규 대응 부담이 줄어든 만큼 장기 적체 해소에 자원을 집중할 수 있는 국면.</div></div>');
       } else {
-        boxes.push('<div class="insight-block" style="border-left-color:#265e99;background:#ebf2fa;">' +
-          '<div class="ib-title"><span class="ib-tag" style="background:#265e99;">의견</span>신규 접수 추이 — 처리·적체 병행 관리</div>' +
-          '<div class="ib-body">월별 신규 접수 ' + fm + ' <strong>' + fmt(fv) + '건</strong> → ' + lm + ' <strong>' + fmt(lv2) + '건</strong>. 60일 이상 장기 ' + fmt(o.건수) + '건(' + o.비율 + '%) 적체와 신규 유입을 병행 관리해야 하며, 협력사별 목표 배정 및 주간 모니터링 강화 요망.</div></div>');
+        boxes.push('<div class="insight-block warn">' +
+          '<div class="ib-title"><span class="ib-tag">경고</span>신규 접수 지속 — 처리 역량 집중 필요</div>' +
+          '<div class="ib-body">신규 접수 감소폭이 ' + (decline >= 0 ? decline + '%' : '증가') + '로 아직 입주 초기 부담이 이어지는 국면. 미처리 누계 ' + fmt(insights.총미처리) + '건과 신규 유입이 겹치는 구간으로, 협력사 처리 역량을 집중 배정하고 주간 단위 진척 점검 체계가 필요.</div></div>');
       }
     }
 
@@ -1672,11 +1679,188 @@
 })(typeof window !== 'undefined' ? window : globalThis);
 
 </script>
+<script>
+/* =====================================================================
+ * 대시보드 렌더러 — 모든 현장 siteData를 집계해 팀 전체 현황 갱신
+ * 원칙: 대시보드 HTML 구조/디자인은 그대로. 숫자가 들어가는 부분만 교체.
+ *       siteData에 없는 현장은 페이지의 기존 패널에서 숫자를 읽어 합산.
+ * ===================================================================== */
+(function (root) {
+  'use strict';
+
+  function num(v) {
+    if (v == null) return 0;
+    var n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+  function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+  function r1(n) { return Math.round(n * 10) / 10; }
+
+  /* ---- siteData 1건 → 대시보드용 요약 ---- */
+  function summarizeFromData(sd, panelId) {
+    var baseMonth = parseInt(sd.기준일.slice(5, 7), 10);
+    var row = null;
+    sd.월별.forEach(function (m) { if (m.label === baseMonth + '월') row = m; });
+    if (!row) row = sd.월별[sd.월별.length - 1];
+    var o = sd.분석 && sd.분석.d60이상 ? sd.분석.d60이상 : { 건수: 0 };
+    return {
+      현장명: sd.현장명, 현장코드: sd.현장코드, 권역: sd.권역 || '기타',
+      패널ID: panelId || null,
+      접수: row.전체접수, 처리: row.누계처리, 처리율: row.처리율,
+      미처리: row.미처리합계, 장기: row.장기소계, 장기비율: row.장기비율,
+      d60: o.건수, 당월처리: row.기간처리, 합계증감: row.합계증감 || 0
+    };
+  }
+
+  /* ---- 페이지의 기존 패널 DOM → 대시보드용 요약 (siteData 없는 현장) ---- */
+  function summarizeFromPanel(panel) {
+    function kpiVal(cls) {
+      var c = panel.querySelector('.db-kpi-card.' + cls + ' .db-kpi-value');
+      return c ? num(c.textContent) : 0;
+    }
+    var name = '', codeEl = panel.getAttribute('data-site-code');
+    var titleEl = panel.querySelector('.report-header .title');
+    if (titleEl) name = titleEl.textContent.replace(/\s*\(.*\)\s*$/, '').trim();
+    var 접수 = kpiVal('blue'), 처리율 = kpiVal('green');
+    var 미처리 = kpiVal('red'), 장기 = kpiVal('yellow');
+    return {
+      현장명: name, 현장코드: codeEl || '', 권역: panel.getAttribute('data-region') || '기타',
+      패널ID: panel.id || null,
+      접수: 접수, 처리: Math.round(접수 * 처리율 / 100), 처리율: 처리율,
+      미처리: 미처리, 장기: 장기, 장기비율: 미처리 > 0 ? r1(장기 / 미처리 * 100) : 0,
+      d60: 0, 당월처리: 0, 합계증감: 0, _fromPanel: true
+    };
+  }
+
+  /* ---- KPI 5장 갱신 ---- */
+  function updateKPI(dash, sites) {
+    var T = { 접수: 0, 처리: 0, 미처리: 0, 장기: 0 };
+    sites.forEach(function (s) {
+      T.접수 += s.접수; T.처리 += s.처리; T.미처리 += s.미처리; T.장기 += s.장기;
+    });
+    var 처리율 = T.접수 > 0 ? r1(T.처리 / T.접수 * 100) : 0;
+    var 장기비율 = T.미처리 > 0 ? r1(T.장기 / T.미처리 * 100) : 0;
+    var cards = dash.querySelectorAll('.db-kpi-row .db-kpi-card');
+    if (cards.length < 5) return;
+    function setVal(card, html) {
+      var v = card.querySelector('.db-kpi-value');
+      if (v) v.innerHTML = html;
+    }
+    function setSub(card, txt) {
+      var s = card.querySelector('.db-kpi-sub');
+      if (s) s.textContent = txt;
+    }
+    var small = '<span style="font-size:15px;color:#6b7280;font-weight:400;">';
+    setVal(cards[0], sites.length + small + '개 현장</span>');
+    setVal(cards[1], fmt(T.접수));
+    setVal(cards[2], 처리율 + '%');
+    setSub(cards[2], fmt(T.처리) + '건 처리');
+    setVal(cards[3], fmt(T.미처리));
+    setVal(cards[4], fmt(T.장기));
+    setSub(cards[4], '전체 미처리의 ' + 장기비율 + '%');
+  }
+
+  /* ---- 권역별 현장 카드 갱신 ---- */
+  function updateRegionCards(dash, sites) {
+    sites.forEach(function (s) {
+      // 권역카드 ID는 'rgcard_<패널ID>' 형식. 패널ID가 없으면 현장코드로도 시도.
+      var card = null;
+      if (s.패널ID) card = dash.querySelector('#rgcard_' + s.패널ID);
+      if (!card && s.현장코드) card = dash.querySelector('#rgcard_' + s.현장코드);
+      if (!card) return;
+      var nums = card.querySelectorAll('div[style*="font-size:14px"]');
+      // [0]=당월처리, [1]=미처리, [2]=장기비율 순서 (기존 구조)
+      if (nums[0]) nums[0].textContent = fmt(s.당월처리) + '건';
+      if (nums[1]) nums[1].textContent = fmt(s.미처리) + '건';
+      if (nums[2]) nums[2].textContent = s.장기비율 + '%';
+    });
+  }
+
+  /* ---- 주요 이슈 카드 갱신 (미처리 최다 / 처리율 최저 / 장기비율 최고) ---- */
+  function updateIssues(dash, sites) {
+    if (!sites.length) return;
+    var byUnp = sites.slice().sort(function (a, b) { return b.미처리 - a.미처리; });
+    var byRate = sites.slice().sort(function (a, b) { return a.처리율 - b.처리율; });
+    var byLong = sites.slice().sort(function (a, b) { return b.장기비율 - a.장기비율; });
+    var cards = dash.querySelectorAll('.db-issue-card');
+    function fill(card, tag, title, body) {
+      if (!card) return;
+      var t = card.querySelector('.db-issue-title');
+      var b = card.querySelector('.db-issue-body');
+      if (t) t.textContent = title;
+      if (b) b.innerHTML = body;
+      card.setAttribute('data-title', title);
+    }
+    var top = byUnp[0];
+    fill(cards[0], '긴급', '미처리 최다 — ' + top.현장명,
+      '미처리 <strong>' + fmt(top.미처리) + '건</strong>으로 전체 ' + sites.length +
+      '개 등록 현장 중 최다 규모.<br>장기미처리 소계 ' + fmt(top.장기) + '건(' + top.장기비율 +
+      '%)이 포함되어 있어 처리 지연 관리가 필요한 상태.<br>해당 현장 담당 PM·협력사 점검, 주 단위 처리 목표 수치화 권고.');
+    var low = byRate[0];
+    var avgRate = r1(sites.reduce(function (s, x) { return s + x.처리율; }, 0) / sites.length);
+    fill(cards[1], '주의', '처리율 최저 — ' + low.현장명,
+      '전체 처리율 <strong>' + low.처리율 + '%</strong>로 전체 현장 최저 수준이며, 전체 평균 ' +
+      avgRate + '% 대비 낮음.<br>미처리 ' + fmt(low.미처리) + '건 중 장기 ' + fmt(low.장기) +
+      '건(' + low.장기비율 + '%).<br>월별 처리 목표 할당 후 담당 PM 주간보고, 협력사별 진척 관리 권고.');
+    var lng = byLong[0];
+    fill(cards[3], '주의', '장기비율 최고 — ' + lng.현장명 + ' ' + lng.장기비율 + '%',
+      '장기미처리(30일↑) 비율 <strong>' + lng.장기비율 + '%</strong>로 전체 현장 최고 수준.<br>미처리 ' +
+      fmt(lng.미처리) + '건 중 ' + fmt(lng.장기) + '건이 30일 초과 상태.<br>단기 집중 보수일 지정, 협력사 병행 투입 검토 권고.');
+  }
+
+  /* ---- 메인: 대시보드 갱신 ---- */
+  function updateDashboard(allSiteData) {
+    var dash = document.getElementById('panel_dashboard');
+    if (!dash) return;
+
+    // 1) siteData가 있는 현장
+    var byCode = {};
+    var sites = [];
+    // 현장코드 → 기존 패널ID 매핑 (권역카드 ID 연결용)
+    var codeToPanel = {};
+    document.querySelectorAll('.site-panel[data-site-code]').forEach(function (p) {
+      var c = p.getAttribute('data-site-code');
+      if (c) codeToPanel[c] = p.id;
+    });
+    if (allSiteData) {
+      Object.keys(allSiteData).forEach(function (code) {
+        var sd = allSiteData[code];
+        if (!sd || !sd.현장코드) return;
+        var sum = summarizeFromData(sd, codeToPanel[sd.현장코드] || null);
+        byCode[sd.현장코드] = sum;
+        sites.push(sum);
+      });
+    }
+    // 2) siteData 없는 기존 패널도 합산 (대시보드는 전체 집계여야 하므로)
+    document.querySelectorAll('.site-panel[data-site-code]').forEach(function (panel) {
+      var code = panel.getAttribute('data-site-code');
+      if (!code || byCode[code]) return;       // siteData로 이미 집계된 현장은 skip
+      if (panel.id === 'panel_dashboard') return;
+      var sum = summarizeFromPanel(panel);
+      if (sum.접수 > 0 || sum.미처리 > 0) {
+        byCode[code] = sum;
+        sites.push(sum);
+      }
+    });
+
+    if (!sites.length) return;
+    updateKPI(dash, sites);
+    updateRegionCards(dash, sites);
+    updateIssues(dash, sites);
+  }
+
+  var API = { updateDashboard: updateDashboard };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  else root.DashboardRenderer = API;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
 
 <style>
   /* ===== 2단계: 관리자 데이터 갱신 UI ===== */
   #admin-btn {
-    position: fixed; top: 12px; right: 178px; z-index: 1100;
+    position: fixed; top: 12px; right: 156px; z-index: 1100;
     background: #fdbb31; color: #08213f; border: none;
     padding: 6px 14px; border-radius: 4px; font-size: 11.5px; font-weight: 700;
     cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -1730,7 +1914,7 @@
 
 <div id="save-indicator">✓ 자동 저장 활성</div>
 <!-- ===================== 2단계: 관리자 데이터 갱신 ===================== -->
-<button id="admin-btn" title="엑셀로 리포트 갱신">&#9881; 데이터 갱신</button>
+<button id="admin-btn" title="엑셀로 리포트 업데이트">&#9881; 데이터 업데이트</button>
 <div id="admin-modal" class="admin-overlay">
   <div class="admin-box">
     <div class="admin-head"><span>현장 데이터 갱신</span><span id="admin-close">&#10005;</span></div>
@@ -12456,7 +12640,14 @@
   /* ---- siteData 실시간 구독: 누가 올리면 모두에게 반영 ---- */
   if (FB.ready) {
     FB.db.ref('siteData').on('value', function (snap) {
-      try { applySiteData(snap.val()); }
+      try {
+        var all = snap.val();
+        applySiteData(all);
+        if (window.DashboardRenderer) {
+          try { window.DashboardRenderer.updateDashboard(all); }
+          catch (e) { console.warn('[통합] 대시보드 갱신 오류', e); }
+        }
+      }
       catch (e) { console.warn('[통합] siteData 적용 오류', e); }
     }, function (err) { console.warn('[통합] siteData 읽기 실패', err); });
   } else {
