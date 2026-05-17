@@ -1858,21 +1858,44 @@
 </script>
 
 <style>
-  /* ===== 2단계: 관리자 데이터 갱신 UI ===== */
-  #admin-btn {
-    position: fixed; top: 12px; right: 156px; z-index: 1100;
-    background: #fdbb31; color: #08213f; border: none;
-    padding: 6px 14px; border-radius: 4px; font-size: 11.5px; font-weight: 700;
-    cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  /* ===== 2단계: 관리자 데이터 업데이트 UI ===== */
+  /* 사이드바 바닥 고정 버튼 — 스크롤과 무관하게 항상 하단 */
+  .sidebar .admin-sidebar-btn {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 11px 12px;
+    background: #08213f;
+    color: #fdbb31;
+    font-size: 12px; font-weight: 700;
+    border: none;
+    border-top: 1px solid #1a4a7a;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: -0.3px;
+    transition: background 0.15s;
+    min-width: 230px;     /* 펼친 너비 기준 — 접히면 overflow:hidden으로 클립 */
+    box-sizing: border-box;
     font-family: 'Malgun Gothic', sans-serif;
   }
-  #admin-btn:hover { background: #ffd166; }
+  .sidebar .admin-sidebar-btn:hover { background: #0f3260; }
+  .sidebar .admin-sidebar-btn .ad-icon { font-size: 15px; line-height: 1; }
+  .sidebar .admin-sidebar-btn .ad-label { flex: 1; text-align: left; }
+  .sidebar .admin-sidebar-btn .ad-badge {
+    background: #fdbb31; color: #08213f;
+    font-size: 9px; padding: 1px 5px; border-radius: 2px;
+    font-weight: 700;
+  }
+  /* 사이드바 접힘 시 바닥 버튼 숨김 */
+  .sidebar.collapsed .admin-sidebar-btn { display: none; }
+
+
   .admin-overlay {
     position: fixed; inset: 0; background: rgba(8,33,63,0.55);
     z-index: 2000; display: none; align-items: center; justify-content: center;
   }
   .admin-box {
-    background: white; width: 470px; max-width: 92vw; border-radius: 6px;
+    background: white; width: 480px; max-width: 92vw; border-radius: 6px;
     overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.35);
     font-family: 'Malgun Gothic', sans-serif;
   }
@@ -1883,7 +1906,16 @@
   #admin-close { cursor: pointer; color: #c8cdd4; }
   #admin-close:hover { color: white; }
   .admin-body { padding: 16px; font-size: 12px; color: #4a5568; }
-  .admin-body p { margin-bottom: 12px; line-height: 1.6; }
+  .admin-body p { margin-bottom: 10px; line-height: 1.6; }
+  .admin-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+  .admin-tab {
+    flex: 1; padding: 7px 10px; font-size: 11.5px; font-weight: 700;
+    background: #f0f2f4; color: #6b7280; border: none; border-radius: 4px 4px 0 0;
+    cursor: pointer; font-family: 'Malgun Gothic', sans-serif;
+  }
+  .admin-tab.active { background: #08213f; color: white; }
+  .admin-pane { display: none; }
+  .admin-pane.active { display: block; }
   .admin-pick {
     background: #08213f; color: white; border: none; padding: 9px 18px;
     border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -1906,27 +1938,53 @@
   .admin-msg { margin-top: 10px; font-size: 11.5px; }
   .admin-msg.err { color: #961e1e; font-weight: 700; }
   .admin-msg.ok { color: #006e2e; font-weight: 700; }
-  @media print { #admin-btn, .admin-overlay { display: none !important; } }
+  .admin-remove-list { margin-top: 6px; }
+  .admin-remove-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 4px;
+    margin-bottom: 6px; font-size: 11.5px;
+  }
+  .admin-remove-item .ari-name { font-weight: 700; color: #08213f; }
+  .admin-remove-item .ari-sub { color: #6b7280; font-size: 10.5px; }
+  .admin-remove-btn {
+    background: #961e1e; color: white; border: none; padding: 5px 12px;
+    border-radius: 3px; font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: 'Malgun Gothic', sans-serif; flex-shrink: 0; margin-left: 10px;
+  }
+  .admin-remove-btn:hover { background: #b03030; }
+  .admin-remove-btn.confirm { background: #6b1010; }
+  .admin-empty { color: #9ca3af; font-size: 11.5px; padding: 14px 4px; text-align: center; }
+  @media print { .admin-sidebar-btn, .admin-overlay { display: none !important; } }
 </style>
 <!-- ====================================================================== -->
 </head>
 <body>
 
 <div id="save-indicator">✓ 자동 저장 활성</div>
-<!-- ===================== 2단계: 관리자 데이터 갱신 ===================== -->
-<button id="admin-btn" title="엑셀로 리포트 업데이트">&#9881; 데이터 업데이트</button>
+<!-- ===================== 2단계: 관리자 데이터 관리 모달 ===================== -->
 <div id="admin-modal" class="admin-overlay">
   <div class="admin-box">
-    <div class="admin-head"><span>현장 데이터 갱신</span><span id="admin-close">&#10005;</span></div>
+    <div class="admin-head"><span>현장 데이터 관리</span><span id="admin-close">&#10005;</span></div>
     <div class="admin-body">
-      <p>전체 하자 목록 엑셀을 올리면 해당 현장 패널이 자동으로 생성·갱신되어 모든 사용자에게 공유됩니다. 파일명은 무관하며, 엑셀은 브라우저 안에서만 처리됩니다.</p>
-      <input type="file" id="admin-file" accept=".xlsx,.xls" style="display:none">
-      <button class="admin-pick" id="admin-pick">엑셀 파일 선택</button>
-      <div id="admin-result"></div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="upload">데이터 업데이트</button>
+        <button class="admin-tab" data-tab="remove">업로드 현장 제거</button>
+      </div>
+      <div class="admin-pane active" id="admin-pane-upload">
+        <p>전체 하자 목록 엑셀을 올리면 해당 현장 패널이 자동으로 생성·갱신되고 대시보드도 함께 반영되어 모든 사용자에게 공유됩니다. 파일명은 무관하며, 엑셀은 브라우저 안에서만 처리됩니다.</p>
+        <input type="file" id="admin-file" accept=".xlsx,.xls" style="display:none">
+        <button class="admin-pick" id="admin-pick">엑셀 파일 선택</button>
+        <div id="admin-result"></div>
+      </div>
+      <div class="admin-pane" id="admin-pane-remove">
+        <p>업로드를 통해 추가/갱신된 현장 목록입니다. 제거하면 해당 현장 데이터가 모든 사용자에게서 사라집니다. 리포트에 원래 있던 13개 현장은 여기에 표시되지 않습니다.</p>
+        <div class="admin-remove-list" id="admin-remove-list"></div>
+        <div id="admin-remove-result"></div>
+      </div>
     </div>
   </div>
 </div>
-<!-- ==================================================================== -->
+<!-- ============================================================================ -->
 
 
 <div class="app-layout">
@@ -1973,6 +2031,13 @@
 </div>
 <!-- SIDEBAR_END -->
   </div><!-- /sidebar-inner -->
+
+  <!-- 2단계: 데이터 업데이트 버튼 (사이드바 하단, 접으면 자동 숨김) -->
+  <button class="admin-sidebar-btn" id="admin-btn" title="엑셀로 리포트 업데이트">
+    <span class="ad-icon">&#9881;</span>
+    <span class="ad-label">데이터 업데이트</span>
+    <span class="ad-badge">XLSX</span>
+  </button>
 </aside>
 
 <main class="main-content">
@@ -12543,22 +12608,134 @@
     });
   }
 
-  /* ===================== 관리자 업로드 ===================== */
+  /* ===================== 관리자 데이터 관리 ===================== */
   var modal = document.getElementById('admin-modal');
   var adminBtn = document.getElementById('admin-btn');
   var closeBtn = document.getElementById('admin-close');
   var pickBtn = document.getElementById('admin-pick');
   var fileInput = document.getElementById('admin-file');
   var resultEl = document.getElementById('admin-result');
+  var removeListEl = document.getElementById('admin-remove-list');
+  var removeResultEl = document.getElementById('admin-remove-result');
   var pending = null;
+  var lastSiteData = null;   // siteData 구독 최신값 (제거 목록 렌더용)
 
   function resetAdmin() {
     pending = null;
     if (fileInput) fileInput.value = '';
     if (resultEl) resultEl.innerHTML = '';
+    if (removeResultEl) removeResultEl.innerHTML = '';
   }
+
+  /* ---- 탭 전환 ---- */
+  function switchTab(name) {
+    var tabs = document.querySelectorAll('.admin-tab');
+    var panes = document.querySelectorAll('.admin-pane');
+    tabs.forEach(function (t) {
+      t.classList.toggle('active', t.getAttribute('data-tab') === name);
+    });
+    panes.forEach(function (p) {
+      p.classList.toggle('active', p.id === 'admin-pane-' + name);
+    });
+    if (name === 'remove') renderRemoveList();
+  }
+  document.querySelectorAll('.admin-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      switchTab(tab.getAttribute('data-tab'));
+    });
+  });
+
+  /* ---- 제거 목록 렌더링 (업로드로 추가된 현장만) ---- */
+  function renderRemoveList() {
+    if (!removeListEl) return;
+    if (!FB.ready) {
+      removeListEl.innerHTML = '<div class="admin-empty">Firebase 미설정 — 제거 기능을 쓸 수 없습니다.</div>';
+      return;
+    }
+    var all = lastSiteData || {};
+    var codes = Object.keys(all);
+    if (!codes.length) {
+      removeListEl.innerHTML = '<div class="admin-empty">업로드로 추가된 현장이 없습니다.</div>';
+      return;
+    }
+    var html = '';
+    codes.forEach(function (code) {
+      var sd = all[code];
+      if (!sd || !sd.현장코드) return;
+      html += '<div class="admin-remove-item" data-code="' + escHtml(code) + '">' +
+        '<div><div class="ari-name">' + escHtml(sd.현장명 || code) + '</div>' +
+        '<div class="ari-sub">' + escHtml(sd.현장코드) + ' · 기준일 ' + escHtml(sd.기준일 || '-') + '</div></div>' +
+        '<button class="admin-remove-btn" data-code="' + escHtml(code) + '">제거</button></div>';
+    });
+    removeListEl.innerHTML = html;
+    removeListEl.querySelectorAll('.admin-remove-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.getAttribute('data-code');
+        if (!btn.classList.contains('confirm')) {
+          // 1차 클릭: 확인 단계로
+          removeListEl.querySelectorAll('.admin-remove-btn').forEach(function (b) {
+            b.classList.remove('confirm'); b.textContent = '제거';
+          });
+          btn.classList.add('confirm');
+          btn.textContent = '한번 더 눌러 제거';
+          return;
+        }
+        // 2차 클릭: 실제 제거
+        removeSite(code, btn);
+      });
+    });
+  }
+
+  function removeSite(code, btn) {
+    if (!FB.ready) return;
+    btn.disabled = true; btn.textContent = '제거 중...';
+    FB.db.ref('siteData/' + code).remove().then(function () {
+      removeResultEl.innerHTML = '<div class="admin-msg ok">✓ 제거 완료 — 모든 사용자에게 반영됩니다.</div>';
+      // 화면에서 자동 생성 패널·사이드바 항목 제거
+      removeAutoPanel(code);
+      // 대시보드도 제거된 현장을 빼고 재집계
+      if (window.DashboardRenderer) {
+        try {
+          var rest = {};
+          Object.keys(lastSiteData || {}).forEach(function (c) {
+            if (c !== code) rest[c] = lastSiteData[c];
+          });
+          window.DashboardRenderer.updateDashboard(rest);
+        } catch (e) { console.warn('[통합] 제거 후 대시보드 갱신 오류', e); }
+      }
+      setTimeout(function () { renderRemoveList(); removeResultEl.innerHTML = ''; }, 1500);
+    }).catch(function (e) {
+      btn.disabled = false; btn.textContent = '제거';
+      removeResultEl.innerHTML = '<div class="admin-msg err">제거 실패: ' + escHtml(e.message) + '</div>';
+    });
+  }
+
+  /* ---- 자동 생성된 패널/사이드바 항목 제거 (기존 13개 패널은 건드리지 않음) ---- */
+  function removeAutoPanel(code) {
+    var pid = 'panel_auto_' + String(code).replace(/[^A-Za-z0-9]/g, '');
+    var panel = document.getElementById(pid);
+    if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
+    var item = document.querySelector('.site-item[data-site="' + pid + '"]');
+    if (item && item.parentNode) {
+      var grp = item.parentNode;
+      item.parentNode.removeChild(item);
+      // 권역 그룹이 비면 그룹도 제거 (단, 원래 있던 그룹은 region-title 외 자식이 없을 때만)
+      if (grp.classList.contains('region-group') &&
+          !grp.querySelector('.site-item')) {
+        if (grp.parentNode) grp.parentNode.removeChild(grp);
+      }
+    }
+    // 제거된 패널이 활성 상태였다면 대시보드로 복귀
+    if (panel && panel.classList.contains('active')) {
+      var db = document.getElementById('dashboard-btn');
+      var dash = document.getElementById('panel_dashboard');
+      if (db) db.classList.add('active');
+      if (dash) dash.classList.add('active');
+    }
+  }
+
   if (adminBtn) adminBtn.addEventListener('click', function () {
-    if (modal) modal.style.display = 'flex';
+    if (modal) { modal.style.display = 'flex'; switchTab('upload'); }
   });
   if (closeBtn) closeBtn.addEventListener('click', function () {
     if (modal) modal.style.display = 'none';
@@ -12642,11 +12819,15 @@
     FB.db.ref('siteData').on('value', function (snap) {
       try {
         var all = snap.val();
+        lastSiteData = all || {};
         applySiteData(all);
         if (window.DashboardRenderer) {
           try { window.DashboardRenderer.updateDashboard(all); }
           catch (e) { console.warn('[통합] 대시보드 갱신 오류', e); }
         }
+        // 제거 탭이 열려 있으면 목록도 갱신
+        var rmPane = document.getElementById('admin-pane-remove');
+        if (rmPane && rmPane.classList.contains('active')) renderRemoveList();
       }
       catch (e) { console.warn('[통합] siteData 적용 오류', e); }
     }, function (err) { console.warn('[통합] siteData 읽기 실패', err); });
