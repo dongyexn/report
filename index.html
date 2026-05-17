@@ -774,7 +774,6 @@
     '힐스테이트 고덕 스카이시티': '1권역',
     '힐스테이트 평택 더퍼스트': '1권역',
     '힐스테이트 오산 더퍼스트': '1권역',
-    '힐스테이트 지제역 퍼스티움': '1권역',
     '힐스테이트 유성': '2권역',
     '힐스테이트 가양 더와이즈': '2권역',
     '힐스테이트 도안 퍼스트': '2권역',
@@ -1944,7 +1943,7 @@
     var note = dash.querySelector('#dash-weekly-note');
     if (note) {
       note.textContent = '※ 주차별 추이는 업로드된 ' + sitesData.length +
-        '개 현장 기준 합산입니다. 13개 현장이 모두 업로드되면 팀 전체 추이가 됩니다.';
+        '개 현장 기준 합산입니다. 12개 현장이 모두 업로드되면 팀 전체 추이가 됩니다.';
       note.style.display = 'block';
     }
   }
@@ -2100,6 +2099,20 @@
   .admin-remove-btn:hover { background: #b03030; }
   .admin-remove-btn.confirm { background: #6b1010; }
   .admin-empty { color: #9ca3af; font-size: 11.5px; padding: 14px 4px; text-align: center; }
+  /* B단계: 사이드바 드래그 이동 */
+  .sidebar .site-item[draggable="true"] { cursor: grab; }
+  .sidebar .site-item.dragging { opacity: 0.45; cursor: grabbing; }
+  .sidebar .region-group.drop-target {
+    outline: 2px dashed #fdbb31; outline-offset: -2px;
+    background: rgba(253,187,49,0.08);
+  }
+  /* B단계: 복원 버튼 */
+  .admin-restore-btn {
+    background: #1a4a7a; color: white; border: none; padding: 5px 12px;
+    border-radius: 3px; font-size: 11px; font-weight: 700; cursor: pointer;
+    font-family: 'Malgun Gothic', sans-serif; flex-shrink: 0; margin-left: 10px;
+  }
+  .admin-restore-btn:hover { background: #265e99; }
   @media print { .admin-sidebar-btn, .admin-overlay { display: none !important; } }
 </style>
 <!-- ====================================================================== -->
@@ -2123,7 +2136,7 @@
         <div id="admin-result"></div>
       </div>
       <div class="admin-pane" id="admin-pane-remove">
-        <p>업로드를 통해 추가/갱신된 현장 목록입니다. 제거하면 해당 현장 데이터가 모든 사용자에게서 사라집니다. 리포트에 원래 있던 13개 현장은 여기에 표시되지 않습니다.</p>
+        <p>업로드를 통해 추가/갱신된 현장 목록입니다. 제거하면 해당 현장 데이터가 모든 사용자에게서 사라집니다. 리포트에 원래 있던 12개 현장은 여기에 표시되지 않습니다.</p>
         <div class="admin-remove-list" id="admin-remove-list"></div>
         <div id="admin-remove-result"></div>
       </div>
@@ -12792,34 +12805,51 @@
     });
   });
 
-  /* ---- 제거 목록 렌더링 (업로드로 추가된 현장만) ---- */
+  /* ---- 제거 목록 렌더링 (전체 현장: 기존 + 업로드) ---- */
   function renderRemoveList() {
     if (!removeListEl) return;
     if (!FB.ready) {
       removeListEl.innerHTML = '<div class="admin-empty">Firebase 미설정 — 제거 기능을 쓸 수 없습니다.</div>';
       return;
     }
-    var all = lastSiteData || {};
-    var codes = Object.keys(all);
-    if (!codes.length) {
-      removeListEl.innerHTML = '<div class="admin-empty">업로드로 추가된 현장이 없습니다.</div>';
+    var LM = window.LayoutManager;
+    if (!LM) {
+      removeListEl.innerHTML = '<div class="admin-empty">레이아웃 모듈 로드 대기 중…</div>';
+      return;
+    }
+    var sites = LM.getAllSites();
+    if (!sites.length) {
+      removeListEl.innerHTML = '<div class="admin-empty">현장이 없습니다.</div>';
       return;
     }
     var html = '';
-    codes.forEach(function (code) {
-      var sd = all[code];
-      if (!sd || !sd.현장코드) return;
-      html += '<div class="admin-remove-item" data-code="' + escHtml(code) + '">' +
-        '<div><div class="ari-name">' + escHtml(sd.현장명 || code) + '</div>' +
-        '<div class="ari-sub">' + escHtml(sd.현장코드) + ' · 기준일 ' + escHtml(sd.기준일 || '-') + '</div></div>' +
-        '<button class="admin-remove-btn" data-code="' + escHtml(code) + '">제거</button></div>';
+    sites.forEach(function (s) {
+      var sd = (lastSiteData || {})[s.code];
+      var sub = escHtml(s.code) +
+        (sd && sd.기준일 ? ' · 기준일 ' + escHtml(sd.기준일) : '') +
+        (s.isAuto ? ' · 업로드 추가' : ' · 기존 현장') +
+        (s.removed ? ' · <b style="color:#961e1e;">제거됨</b>' : '');
+      if (s.removed) {
+        html += '<div class="admin-remove-item" data-pid="' + escHtml(s.panelId) +
+          '" style="opacity:.62;">' +
+          '<div><div class="ari-name">' + escHtml(s.name) + '</div>' +
+          '<div class="ari-sub">' + sub + '</div></div>' +
+          '<button class="admin-restore-btn" data-pid="' + escHtml(s.panelId) +
+          '">복원</button></div>';
+      } else {
+        html += '<div class="admin-remove-item" data-pid="' + escHtml(s.panelId) + '">' +
+          '<div><div class="ari-name">' + escHtml(s.name) + '</div>' +
+          '<div class="ari-sub">' + sub + '</div></div>' +
+          '<button class="admin-remove-btn" data-pid="' + escHtml(s.panelId) +
+          '" data-code="' + escHtml(s.code) + '" data-auto="' + (s.isAuto ? '1' : '0') +
+          '">제거</button></div>';
+      }
     });
     removeListEl.innerHTML = html;
+
     removeListEl.querySelectorAll('.admin-remove-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var code = btn.getAttribute('data-code');
         if (!btn.classList.contains('confirm')) {
-          // 1차 클릭: 확인 단계로
           removeListEl.querySelectorAll('.admin-remove-btn').forEach(function (b) {
             b.classList.remove('confirm'); b.textContent = '제거';
           });
@@ -12827,37 +12857,57 @@
           btn.textContent = '한번 더 눌러 제거';
           return;
         }
-        // 2차 클릭: 실제 제거
-        removeSite(code, btn);
+        removeSite(btn.getAttribute('data-pid'), btn.getAttribute('data-code'),
+          btn.getAttribute('data-auto') === '1', btn);
+      });
+    });
+    removeListEl.querySelectorAll('.admin-restore-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var pid = btn.getAttribute('data-pid');
+        btn.disabled = true; btn.textContent = '복원 중...';
+        if (window.LayoutManager) window.LayoutManager.restoreSite(pid);
+        removeResultEl.innerHTML = '<div class="admin-msg ok">✓ 복원 완료 — 모든 사용자에게 반영됩니다.</div>';
+        setTimeout(function () { renderRemoveList(); removeResultEl.innerHTML = ''; }, 1300);
       });
     });
   }
 
-  function removeSite(code, btn) {
+  function removeSite(panelId, code, isAuto, btn) {
     if (!FB.ready) return;
     btn.disabled = true; btn.textContent = '제거 중...';
-    FB.db.ref('siteData/' + code).remove().then(function () {
+
+    function afterRemove() {
       removeResultEl.innerHTML = '<div class="admin-msg ok">✓ 제거 완료 — 모든 사용자에게 반영됩니다.</div>';
-      // 화면에서 자동 생성 패널·사이드바 항목 제거
-      removeAutoPanel(code);
-      // 대시보드도 제거된 현장을 빼고 재집계
-      if (window.DashboardRenderer) {
-        try {
-          var rest = {};
-          Object.keys(lastSiteData || {}).forEach(function (c) {
-            if (c !== code) rest[c] = lastSiteData[c];
-          });
-          window.DashboardRenderer.updateDashboard(rest);
-        } catch (e) { console.warn('[통합] 제거 후 대시보드 갱신 오류', e); }
-      }
       setTimeout(function () { renderRemoveList(); removeResultEl.innerHTML = ''; }, 1500);
-    }).catch(function (e) {
-      btn.disabled = false; btn.textContent = '제거';
-      removeResultEl.innerHTML = '<div class="admin-msg err">제거 실패: ' + escHtml(e.message) + '</div>';
-    });
+    }
+
+    // 1) layout.removed에 추가 (기존·자동 공통 — 사이드바/패널/대시보드에서 숨김)
+    if (window.LayoutManager) window.LayoutManager.deleteSite(panelId);
+
+    // 2) 자동 생성 현장이면 siteData에서도 영구 삭제
+    if (isAuto && code) {
+      FB.db.ref('siteData/' + code).remove().then(function () {
+        if (window.DashboardRenderer) {
+          try {
+            var rest = {};
+            Object.keys(lastSiteData || {}).forEach(function (c) {
+              if (c !== code) rest[c] = lastSiteData[c];
+            });
+            window.DashboardRenderer.updateDashboard(rest);
+          } catch (e) { console.warn('[통합] 제거 후 대시보드 갱신 오류', e); }
+        }
+        afterRemove();
+      }).catch(function (e) {
+        btn.disabled = false; btn.textContent = '제거';
+        removeResultEl.innerHTML = '<div class="admin-msg err">제거 실패: ' + escHtml(e.message) + '</div>';
+      });
+    } else {
+      // 기존 현장: layout.removed 처리만으로 충분
+      afterRemove();
+    }
   }
 
-  /* ---- 자동 생성된 패널/사이드바 항목 제거 (기존 13개 패널은 건드리지 않음) ---- */
+  /* ---- 자동 생성된 패널/사이드바 항목 제거 (사용 안 함 — layout이 처리) ---- */
   function removeAutoPanel(code) {
     var pid = 'panel_auto_' + String(code).replace(/[^A-Za-z0-9]/g, '');
     var panel = document.getElementById(pid);
@@ -12866,13 +12916,11 @@
     if (item && item.parentNode) {
       var grp = item.parentNode;
       item.parentNode.removeChild(item);
-      // 권역 그룹이 비면 그룹도 제거 (단, 원래 있던 그룹은 region-title 외 자식이 없을 때만)
       if (grp.classList.contains('region-group') &&
           !grp.querySelector('.site-item')) {
         if (grp.parentNode) grp.parentNode.removeChild(grp);
       }
     }
-    // 제거된 패널이 활성 상태였다면 대시보드로 복귀
     if (panel && panel.classList.contains('active')) {
       var db = document.getElementById('dashboard-btn');
       var dash = document.getElementById('panel_dashboard');
@@ -12980,6 +13028,379 @@
     }, function (err) { console.warn('[통합] siteData 읽기 실패', err); });
   } else {
     console.warn('[통합] Firebase 미설정 — 자동 갱신 비활성, 기존 리포트는 정상 표시');
+  }
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * B 단계: 사이드바 권역 드래그 이동 + 전체 현장 삭제 (Firebase 공유)
+ *
+ * Firebase 'layout' 노드 구조:
+ *   {
+ *     regions: ["1권역","2권역","광주 권역", ...],   // 권역 표시 순서
+ *     assign:  { "panel_1":"2권역", ... },            // 현장→권역 (변경분만)
+ *     order:   { "1권역":["panel_2","panel_1"], ... },// 권역 내 현장 순서
+ *     removed: ["panel_5", ...]                        // 삭제된 현장(기존 포함)
+ *   }
+ * layout이 없으면 HTML 기본 구조를 그대로 사용(하위호환).
+ * ===================================================================== */
+(function () {
+  'use strict';
+  var FB = window.__FB || { ready: false, db: null };
+
+  function escH(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* 현재 DOM 사이드바 → 기본 layout 스냅샷 (Firebase에 layout이 없을 때 기준) */
+  function snapshotLayout() {
+    var regions = [], order = {}, assign = {};
+    document.querySelectorAll('.sidebar-inner .region-group').forEach(function (grp) {
+      var t = grp.querySelector('.region-title');
+      if (!t) return;
+      var rname = t.textContent.trim();
+      regions.push(rname);
+      order[rname] = [];
+      grp.querySelectorAll('.site-item').forEach(function (it) {
+        var pid = it.getAttribute('data-site');
+        if (!pid) return;
+        order[rname].push(pid);
+        assign[pid] = rname;
+      });
+    });
+    return { regions: regions, order: order, assign: assign, removed: [] };
+  }
+
+  var baseLayout = null;   // HTML 기본 구조 스냅샷 (1회 캡처)
+  var lastLayout = null;   // 현재 적용된 layout
+
+  /* layout 객체를 사이드바 DOM에 반영 */
+  function applyLayout(layout) {
+    var inner = document.querySelector('.sidebar-inner');
+    if (!inner || !baseLayout) return;
+
+    // 병합: 기본 + Firebase 변경분
+    var merged = {
+      regions: (layout && layout.regions) ? layout.regions.slice() : baseLayout.regions.slice(),
+      assign: {},
+      order: (layout && layout.order) ? layout.order : null,
+      removed: (layout && layout.removed) ? layout.removed.slice() : []
+    };
+    // assign: 기본값에 Firebase 변경분 덮어쓰기
+    Object.keys(baseLayout.assign).forEach(function (pid) {
+      merged.assign[pid] = baseLayout.assign[pid];
+    });
+    if (layout && layout.assign) {
+      Object.keys(layout.assign).forEach(function (pid) {
+        merged.assign[pid] = layout.assign[pid];
+      });
+    }
+    lastLayout = merged;
+
+    // 자동 생성 패널(panel_auto_*)도 사이드바 대상에 포함
+    var allPanels = [];
+    document.querySelectorAll('.site-panel[data-site-code]').forEach(function (p) {
+      if (p.id && p.id !== 'panel_dashboard') allPanels.push(p.id);
+    });
+
+    // 삭제 처리: removed에 있는 패널/항목 숨김
+    var removedSet = {};
+    merged.removed.forEach(function (pid) { removedSet[pid] = true; });
+
+    // 권역별 현장 그룹핑
+    var byRegion = {};
+    merged.regions.forEach(function (r) { byRegion[r] = []; });
+    allPanels.forEach(function (pid) {
+      if (removedSet[pid]) return;
+      var r = merged.assign[pid] || merged.regions[0] || '기타';
+      if (!byRegion[r]) { byRegion[r] = []; merged.regions.push(r); }
+      byRegion[pid] = byRegion[pid];
+      byRegion[r].push(pid);
+    });
+    // 권역 내 순서: order 우선
+    merged.regions.forEach(function (r) {
+      if (merged.order && merged.order[r]) {
+        var ordered = [];
+        merged.order[r].forEach(function (pid) {
+          if (byRegion[r].indexOf(pid) >= 0 && !removedSet[pid]) ordered.push(pid);
+        });
+        byRegion[r].forEach(function (pid) {
+          if (ordered.indexOf(pid) < 0) ordered.push(pid);
+        });
+        byRegion[r] = ordered;
+      }
+    });
+
+    // 현장명 조회 (기존 site-item 텍스트 또는 패널 헤더)
+    function panelName(pid) {
+      var existing = document.querySelector('.site-item[data-site="' + pid + '"]');
+      if (existing) return existing.textContent.trim();
+      var panel = document.getElementById(pid);
+      if (panel) {
+        var t = panel.querySelector('.report-header .title');
+        if (t) return t.textContent.replace(/\s*\(.*\)\s*$/, '').trim();
+      }
+      return pid;
+    }
+
+    // 사이드바 재구성: SIDEBAR_START~END 영역만 교체
+    var startC = null, endC = null;
+    var walker = inner.childNodes;
+    for (var i = 0; i < walker.length; i++) {
+      var n = walker[i];
+      if (n.nodeType === 8) {
+        if (n.textContent.indexOf('SIDEBAR_START') >= 0) startC = n;
+        if (n.textContent.indexOf('SIDEBAR_END') >= 0) endC = n;
+      }
+    }
+    if (!startC || !endC) return;
+    // 기존 region-group 제거
+    var rm = [], cur = startC.nextSibling;
+    while (cur && cur !== endC) { rm.push(cur); cur = cur.nextSibling; }
+    rm.forEach(function (n) { inner.removeChild(n); });
+    // 새 region-group 삽입
+    merged.regions.forEach(function (rname) {
+      var list = byRegion[rname] || [];
+      var grp = document.createElement('div');
+      grp.className = 'region-group';
+      grp.setAttribute('data-region', rname);
+      var html = '<div class="region-title" data-region="' + escH(rname) + '">' +
+        escH(rname) + '</div>';
+      list.forEach(function (pid) {
+        html += '<div class="site-item" data-site="' + escH(pid) +
+          '" draggable="true">' + escH(panelName(pid)) + '</div>';
+      });
+      grp.innerHTML = html;
+      inner.insertBefore(grp, endC);
+    });
+
+    // 삭제된 패널 DOM 숨김
+    allPanels.forEach(function (pid) {
+      var panel = document.getElementById(pid);
+      if (!panel) return;
+      panel.style.display = removedSet[pid] ? 'none' : '';
+    });
+
+    rewireSidebar();
+    enableDrag();
+    if (window.DashboardRenderer) {
+      // 대시보드 권역 카드 재구성 위해 layout 전달
+      try { rebuildDashboardRegions(merged, byRegion, panelName, removedSet); }
+      catch (e) { console.warn('[layout] 대시보드 권역 갱신 오류', e); }
+    }
+  }
+
+  /* 사이드바 항목 클릭 핸들러 재연결 */
+  function rewireSidebar() {
+    document.querySelectorAll('.sidebar-inner .site-item').forEach(function (item) {
+      if (item._navBound) return;
+      item._navBound = true;
+      item.addEventListener('click', function () {
+        var pid = item.getAttribute('data-site');
+        document.querySelectorAll('.site-item').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.site-panel').forEach(function (p) { p.classList.remove('active'); });
+        var db = document.getElementById('dashboard-btn');
+        if (db) db.classList.remove('active');
+        item.classList.add('active');
+        var p = document.getElementById(pid);
+        if (p) p.classList.add('active');
+      });
+    });
+  }
+
+  /* ===================== 드래그로 권역 이동 ===================== */
+  var dragPid = null;
+
+  function enableDrag() {
+    document.querySelectorAll('.sidebar-inner .site-item').forEach(function (item) {
+      if (item._dragBound) return;
+      item._dragBound = true;
+      item.addEventListener('dragstart', function (e) {
+        dragPid = item.getAttribute('data-site');
+        item.classList.add('dragging');
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+      });
+      item.addEventListener('dragend', function () {
+        item.classList.remove('dragging');
+        document.querySelectorAll('.region-group.drop-target').forEach(function (g) {
+          g.classList.remove('drop-target');
+        });
+        dragPid = null;
+      });
+      item.addEventListener('dragover', function (e) { e.preventDefault(); });
+      item.addEventListener('drop', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var targetPid = item.getAttribute('data-site');
+        var grp = item.closest('.region-group');
+        if (grp) handleDrop(grp.getAttribute('data-region'), targetPid);
+      });
+    });
+    document.querySelectorAll('.sidebar-inner .region-group').forEach(function (grp) {
+      if (grp._dropBound) return;
+      grp._dropBound = true;
+      grp.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        grp.classList.add('drop-target');
+      });
+      grp.addEventListener('dragleave', function () {
+        grp.classList.remove('drop-target');
+      });
+      grp.addEventListener('drop', function (e) {
+        e.preventDefault();
+        grp.classList.remove('drop-target');
+        handleDrop(grp.getAttribute('data-region'), null);
+      });
+    });
+  }
+
+  /* 드롭 처리: dragPid를 targetRegion으로 이동, targetPid 앞에 삽입 */
+  function handleDrop(targetRegion, targetPid) {
+    if (!dragPid || !targetRegion || !lastLayout) return;
+    if (dragPid === targetPid) return;
+
+    var L = lastLayout;
+    // assign 갱신
+    L.assign[dragPid] = targetRegion;
+    // order 재계산
+    if (!L.order) L.order = {};
+    // 모든 권역 order를 현재 DOM 기준으로 새로 구성
+    var newOrder = {};
+    L.regions.forEach(function (r) { newOrder[r] = []; });
+    document.querySelectorAll('.sidebar-inner .region-group').forEach(function (grp) {
+      var r = grp.getAttribute('data-region');
+      if (!newOrder[r]) newOrder[r] = [];
+      grp.querySelectorAll('.site-item').forEach(function (it) {
+        var pid = it.getAttribute('data-site');
+        if (pid !== dragPid) newOrder[r].push(pid);
+      });
+    });
+    // dragPid를 targetRegion의 targetPid 앞에 삽입
+    if (!newOrder[targetRegion]) newOrder[targetRegion] = [];
+    if (targetPid) {
+      var idx = newOrder[targetRegion].indexOf(targetPid);
+      if (idx < 0) idx = newOrder[targetRegion].length;
+      newOrder[targetRegion].splice(idx, 0, dragPid);
+    } else {
+      newOrder[targetRegion].push(dragPid);
+    }
+    L.order = newOrder;
+
+    saveLayout(L);
+  }
+
+  /* layout을 Firebase에 저장 (없으면 로컬 적용만) */
+  function saveLayout(L) {
+    var payload = {
+      regions: L.regions,
+      assign: L.assign,
+      order: L.order,
+      removed: L.removed || []
+    };
+    if (FB.ready) {
+      FB.db.ref('layout').set(payload).catch(function (e) {
+        console.warn('[layout] 저장 실패', e);
+      });
+    } else {
+      // Firebase 없으면 즉시 로컬 반영
+      applyLayout(payload);
+    }
+  }
+
+  /* ===================== 대시보드 권역 카드 재구성 ===================== */
+  function rebuildDashboardRegions(merged, byRegion, panelName, removedSet) {
+    // 대시보드의 권역 카드는 'rgcard_<패널ID>' 구조.
+    // 삭제된 현장의 카드는 숨기고, 권역 변경은 DashboardRenderer가 집계 시 반영.
+    var dash = document.getElementById('panel_dashboard');
+    if (!dash) return;
+    Object.keys(removedSet).forEach(function (pid) {
+      var card = dash.querySelector('#rgcard_' + pid);
+      if (card) {
+        // 카드가 속한 래퍼까지 숨김
+        var wrap = card.closest('.db-region-site') || card;
+        wrap.style.display = 'none';
+      }
+    });
+  }
+
+  /* ===================== 전체 현장 삭제 ===================== */
+  // integration.js의 제거 탭을 확장: 기존 12개 현장도 삭제 가능
+  function getAllSites() {
+    // 사이드바의 모든 현장 (기존 + 자동생성), 삭제된 것 제외
+    var sites = [];
+    var removedSet = {};
+    if (lastLayout && lastLayout.removed) {
+      lastLayout.removed.forEach(function (p) { removedSet[p] = true; });
+    }
+    document.querySelectorAll('.site-panel[data-site-code]').forEach(function (p) {
+      if (p.id === 'panel_dashboard') return;
+      var name = '';
+      var t = p.querySelector('.report-header .title');
+      if (t) name = t.textContent.replace(/\s*\(.*\)\s*$/, '').trim();
+      var item = document.querySelector('.site-item[data-site="' + p.id + '"]');
+      sites.push({
+        panelId: p.id,
+        code: p.getAttribute('data-site-code'),
+        name: name || (item ? item.textContent.trim() : p.id),
+        removed: !!removedSet[p.id],
+        isAuto: p.id.indexOf('panel_auto_') === 0
+      });
+    });
+    return sites;
+  }
+
+  /* 현장 삭제 (기존/자동 공통) — layout.removed에 추가 */
+  function deleteSite(panelId) {
+    if (!lastLayout) lastLayout = baseLayout ? JSON.parse(JSON.stringify(baseLayout)) : { removed: [] };
+    if (!lastLayout.removed) lastLayout.removed = [];
+    if (lastLayout.removed.indexOf(panelId) < 0) {
+      lastLayout.removed.push(panelId);
+    }
+    saveLayout(lastLayout);
+  }
+
+  /* 삭제 복원 */
+  function restoreSite(panelId) {
+    if (!lastLayout || !lastLayout.removed) return;
+    var idx = lastLayout.removed.indexOf(panelId);
+    if (idx >= 0) {
+      lastLayout.removed.splice(idx, 1);
+      saveLayout(lastLayout);
+    }
+  }
+
+  /* ===================== 초기화 ===================== */
+  function init() {
+    baseLayout = snapshotLayout();
+    lastLayout = JSON.parse(JSON.stringify(baseLayout));
+
+    // 외부(integration.js 등)에서 호출할 API 노출
+    window.LayoutManager = {
+      getAllSites: getAllSites,
+      deleteSite: deleteSite,
+      restoreSite: restoreSite,
+      applyLayout: applyLayout,
+      getLayout: function () { return lastLayout; }
+    };
+
+    if (FB.ready) {
+      FB.db.ref('layout').on('value', function (snap) {
+        var L = snap.val();
+        try { applyLayout(L); }
+        catch (e) { console.warn('[layout] 적용 오류', e); }
+      }, function (err) { console.warn('[layout] 읽기 실패', err); });
+    } else {
+      // Firebase 없으면 기본 구조에 드래그만 활성화
+      applyLayout(null);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
 
