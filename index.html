@@ -3,6 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <title>H서비스중부팀 현장별 하자처리 현황</title>
+
+<!-- ===================== Firebase 연동 (실시간 공유 저장) ===================== -->
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-database-compat.js"></script>
+<script>
+  /* ┌──────────────────────────────────────────────────────────────────┐
+     │  ★★★ 담당자 설정 영역 ★★★                                          │
+     │  Firebase 콘솔 → 프로젝트 설정(톱니바퀴) → '내 앱' → SDK 설정 →     │
+     │  firebaseConfig 객체 값을 복사해 아래에 그대로 붙여넣으세요.        │
+     │  ※ databaseURL 항목이 반드시 포함되어 있어야 합니다.               │
+     └──────────────────────────────────────────────────────────────────┘ */
+  const firebaseConfig = {
+    apiKey:            "AIzaSyDX5yANupr5xqLbCq_UcSVHc-iZvobRM3g",
+    authDomain:        "report-c29a1.firebaseapp.com",
+    databaseURL:       "https://report-c29a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "report-c29a1",
+    storageBucket:     "report-c29a1.firebasestorage.app",
+    messagingSenderId: "625677240502",
+    appId:             "1:625677240502:web:f66c629db928c2b801fe17",
+    measurementId:     "G-YT6MVSE221"
+  };
+
+  /* ── 아래 코드는 수정하지 마세요 ── */
+  window.__FB = { ready: false, db: null };
+  try {
+    if (typeof firebase !== 'undefined'
+        && firebaseConfig.apiKey
+        && firebaseConfig.apiKey.indexOf('여기에') === -1) {
+      firebase.initializeApp(firebaseConfig);
+      window.__FB.db = firebase.database();
+      window.__FB.ready = true;
+      console.log('[Firebase] 연결됨 — 실시간 공유 저장 활성화');
+    } else {
+      console.warn('[Firebase] 미설정 — 이 PC에만 저장됩니다(localStorage).');
+    }
+  } catch (e) {
+    console.warn('[Firebase] 초기화 실패 — 이 PC에만 저장됩니다:', e);
+  }
+</script>
+<!-- =========================================================================== -->
+
 <style>
   @page { size: A3 landscape; margin: 8mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10872,62 +10913,106 @@
   });
 
   
-  // ===== 처리계획 자동 저장 (패널별 독립 키) =====
+  // ===== 처리계획 자동 저장 (Firebase 실시간 공유 / 미설정 시 이 PC에 저장) =====
   const PLAN_STORAGE_KEY = 'hdec_defect_report_plans_v2';
+  const FB = window.__FB || { ready: false, db: null };
 
   function getPanelKey(cell) {
     const panel = cell.closest('.site-panel');
     return panel ? panel.id : 'unknown';
   }
 
-  function loadAllPlans() {
+  // 저장용 텍스트 (전각공백만 남았으면 빈 값으로 간주)
+  function planText(cell) {
+    return cell.textContent.replace(/　/g, '').trim() ? cell.textContent : '';
+  }
+
+  function flashSaved() {
+    const ind = document.getElementById('save-indicator');
+    if (!ind) return;
+    ind.textContent = (FB.ready ? '✓ 저장됨 (전체 공유) · ' : '✓ 저장됨 (이 PC) · ')
+      + new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    ind.style.opacity = '1';
+    clearTimeout(ind._t);
+    ind._t = setTimeout(() => { ind.style.opacity = '0.5'; }, 1500);
+  }
+
+  // 페이지 최초 상태(기본 입력값) 보관 → Firebase에서 값이 비워졌을 때 복원용
+  const _planBaseline = new Map();
+  document.querySelectorAll('[data-plan-id]').forEach(cell => {
+    _planBaseline.set(cell, cell.innerHTML);
+  });
+
+  function applyPlanText(cell, val) {
+    if (val != null && val !== '') {
+      if (cell.textContent !== val) cell.textContent = val;
+      cell.classList.add('has-content');
+    } else {
+      const base = _planBaseline.get(cell) || '';
+      if (cell.innerHTML !== base) cell.innerHTML = base;
+      const baseHasText = base.replace(/<[^>]*>/g, '')
+        .replace(/&#12288;|&nbsp;|　|\s/g, '') !== '';
+      cell.classList.toggle('has-content', baseHasText);
+    }
+  }
+
+  // ---- 로컬 저장 (Firebase 미설정 시 대체) ----
+  function loadAllPlansLS() {
     try { return JSON.parse(localStorage.getItem(PLAN_STORAGE_KEY) || '{}'); }
-    catch(e) { return {}; }
+    catch (e) { return {}; }
+  }
+  function saveAllPlansLS(plans) {
+    try { localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans)); } catch (e) {}
   }
 
-  function saveAllPlans(plans) {
-    try { localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(plans)); }
-    catch(e) { console.warn('저장 실패', e); }
-  }
-
-  // 페이지 로드 시 복원
-  (function restorePlans() {
-    const allPlans = loadAllPlans();
-    document.querySelectorAll('[data-plan-id]').forEach(cell => {
-      const panelKey = getPanelKey(cell);
-      const planKey  = cell.dataset.planId;
-      const saved    = allPlans[panelKey] && allPlans[panelKey][planKey];
-      if (saved) { cell.textContent = saved; cell.classList.add('has-content'); }
-    });
-  })();
-
-  let _planSaveTimer = null;
-  function schedulePlanSave() {
-    if (_planSaveTimer) clearTimeout(_planSaveTimer);
-    _planSaveTimer = setTimeout(() => {
-      const plans = loadAllPlans();
+  // ---- 처리계획 불러오기 ----
+  if (FB.ready) {
+    // 실시간 구독: 누군가 수정하면 모든 사용자 화면에 즉시 반영
+    FB.db.ref('plans').on('value', snap => {
+      const all = snap.val() || {};
       document.querySelectorAll('[data-plan-id]').forEach(cell => {
-        const pk = getPanelKey(cell);
-        const id = cell.dataset.planId;
-        if (!plans[pk]) plans[pk] = {};
-        const text = cell.textContent.replace(/　/g, '').trim();
-        if (text) { plans[pk][id] = cell.textContent; }
-        else { delete plans[pk][id]; }
+        if (document.activeElement === cell) return; // 편집 중인 셀은 건드리지 않음
+        const pk = getPanelKey(cell), id = cell.dataset.planId;
+        const saved = all[pk] ? all[pk][id] : null;
+        applyPlanText(cell, saved);
       });
-      saveAllPlans(plans);
-      const ind = document.getElementById('save-indicator');
-      if (ind) {
-        ind.textContent = '✓ 저장됨 · ' + new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-        ind.style.opacity = '1';
-        setTimeout(() => ind.style.opacity = '0.5', 1500);
+    }, err => console.warn('처리계획 읽기 실패:', err));
+  } else {
+    const all = loadAllPlansLS();
+    document.querySelectorAll('[data-plan-id]').forEach(cell => {
+      const pk = getPanelKey(cell), id = cell.dataset.planId;
+      const saved = all[pk] ? all[pk][id] : null;
+      if (saved) applyPlanText(cell, saved);
+    });
+  }
+
+  // ---- 처리계획 저장 (셀별 디바운스 0.5초) ----
+  const _planTimers = {};
+  function savePlanCell(cell) {
+    const pk = getPanelKey(cell), id = cell.dataset.planId;
+    const key = pk + '|' + id;
+    clearTimeout(_planTimers[key]);
+    _planTimers[key] = setTimeout(() => {
+      const val = planText(cell);
+      if (FB.ready) {
+        const ref = FB.db.ref('plans/' + pk + '/' + id);
+        (val ? ref.set(val) : ref.remove())
+          .then(flashSaved)
+          .catch(err => console.warn('저장 실패:', err));
+      } else {
+        const all = loadAllPlansLS();
+        if (!all[pk]) all[pk] = {};
+        if (val) all[pk][id] = val; else delete all[pk][id];
+        saveAllPlansLS(all);
+        flashSaved();
       }
-    }, 400);
+    }, 500);
   }
 
   document.querySelectorAll('[data-plan-id]').forEach(cell => {
     cell.addEventListener('input', () => {
       cell.classList.toggle('has-content', cell.textContent.trim() !== '');
-      schedulePlanSave();
+      savePlanCell(cell);
     });
     cell.addEventListener('paste', e => {
       e.preventDefault();
@@ -11039,22 +11124,25 @@
     });
   });
 
-  // 팀장 의견 자동저장 (각 패널 독립적)
+  // ===== 팀장 의견 자동저장 (Firebase 실시간 공유 / 미설정 시 이 PC에 저장) =====
+  function _opBody(btn) {
+    return btn.closest('.team-opinion-section').querySelector('.team-opinion-body');
+  }
   function clearOpinion(btn) {
-    const body = btn.closest('.team-opinion-section').querySelector('.team-opinion-body');
+    const body = _opBody(btn);
     const panelId = body.dataset.panelId || 'unknown';
     body.innerText = '';
-    try { localStorage.removeItem('opinion_' + panelId); } catch(e) {}
+    if (FB.ready) FB.db.ref('opinions/' + panelId).remove().catch(() => {});
+    else { try { localStorage.removeItem('opinion_' + panelId); } catch(e) {} }
     showSaveIndicator('지워짐');
   }
   function saveOpinion(btn) {
-    const body = btn.closest('.team-opinion-section').querySelector('.team-opinion-body');
+    const body = _opBody(btn);
     const panelId = body.dataset.panelId || 'unknown';
-    try {
-      localStorage.setItem('opinion_' + panelId, body.innerText);
-      btn.textContent = '저장됨 ✓';
-      setTimeout(() => { btn.textContent = '저장'; }, 1500);
-    } catch(e) {}
+    const val = body.innerText;
+    const done = () => { btn.textContent = '저장됨 ✓'; setTimeout(() => { btn.textContent = '저장'; }, 1500); };
+    if (FB.ready) FB.db.ref('opinions/' + panelId).set(val).then(done).catch(() => {});
+    else { try { localStorage.setItem('opinion_' + panelId, val); done(); } catch(e) {} }
   }
   function showSaveIndicator(msg) {
     const ind = document.getElementById('save-indicator');
@@ -11064,23 +11152,43 @@
     clearTimeout(ind._t);
     ind._t = setTimeout(() => { ind.style.opacity = '0'; }, 2000);
   }
-  // 자동저장: input 이벤트 (100ms 디바운스)
-  let _opTimer = {};
+
+  // ---- 팀장 의견 불러오기 ----
+  if (FB.ready) {
+    // 실시간 구독: 누군가 수정하면 모든 사용자 화면에 즉시 반영
+    FB.db.ref('opinions').on('value', snap => {
+      const all = snap.val() || {};
+      document.querySelectorAll('.team-opinion-body').forEach(el => {
+        if (document.activeElement === el) return; // 편집 중이면 건드리지 않음
+        const panelId = el.dataset.panelId || 'unknown';
+        const next = (all[panelId] != null) ? all[panelId] : '';
+        if (el.innerText !== next) el.innerText = next;
+      });
+    }, err => console.warn('팀장 의견 읽기 실패:', err));
+  } else {
+    document.querySelectorAll('.team-opinion-body').forEach(el => {
+      const panelId = el.dataset.panelId || 'unknown';
+      try {
+        const saved = localStorage.getItem('opinion_' + panelId);
+        if (saved) el.innerText = saved;
+      } catch(e) {}
+    });
+  }
+
+  // ---- 자동저장: input 이벤트 (0.6초 디바운스) ----
+  const _opTimer = {};
   document.querySelectorAll('.team-opinion-body').forEach(el => {
     const panelId = el.dataset.panelId || 'unknown';
-    // 불러오기 (패널별 독립)
-    try {
-      const saved = localStorage.getItem('opinion_' + panelId);
-      if (saved) el.innerText = saved;
-    } catch(e) {}
-    // 자동저장
     el.addEventListener('input', function() {
       clearTimeout(_opTimer[panelId]);
       _opTimer[panelId] = setTimeout(() => {
-        try {
-          localStorage.setItem('opinion_' + panelId, this.innerText);
-          showSaveIndicator('✓ 자동 저장됨');
-        } catch(e) {}
+        const val = this.innerText;
+        if (FB.ready) {
+          FB.db.ref('opinions/' + panelId).set(val)
+            .then(() => showSaveIndicator('✓ 자동 저장됨')).catch(() => {});
+        } else {
+          try { localStorage.setItem('opinion_' + panelId, val); showSaveIndicator('✓ 자동 저장됨'); } catch(e) {}
+        }
       }, 600);
     });
   });
