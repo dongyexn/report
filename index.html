@@ -1235,6 +1235,20 @@
     var empty = emptyUnitStats(data, baseDate, 5);
     var insights = analysisInsights(data, baseDate, maxTS);
 
+    // 공종별 전체 미처리 집계 (기준일 시점) — 대시보드 '미처리 상위 공종' 도넛용
+    var unpByTrade = {};
+    for (var ui = 0; ui < data.length; ui++) {
+      var ur = data[ui];
+      if (ur.접수일 > baseDate) continue;
+      var udone = ur.처리확인일 !== null && ur.처리확인일 <= baseDate;
+      if (udone) continue;
+      var ut = (ur.공종 == null || ur.공종 === '') ? '미분류' : String(ur.공종);
+      unpByTrade[ut] = (unpByTrade[ut] || 0) + 1;
+    }
+    var 공종별미처리 = Object.keys(unpByTrade).map(function (k) {
+      return { 공종: k, 미처리: unpByTrade[k] };
+    }).sort(function (a, b) { return b.미처리 - a.미처리; });
+
     return {
       현장명: siteName,
       현장코드: siteCode,
@@ -1246,6 +1260,7 @@
       월별: monthly,
       주차별: weekly,
       장기미처리공종: trades,
+      공종별미처리: 공종별미처리,
       공가세대: empty,
       분석: insights
     };
@@ -1709,7 +1724,8 @@
       미처리: row.미처리합계, 장기: row.장기소계, 장기비율: row.장기비율,
       d60: o.건수, 당월처리: row.기간처리, 합계증감: row.합계증감 || 0,
       주차별: sd.주차별 || null,
-      _trades: (sd.장기미처리공종 && sd.장기미처리공종.상위) || null
+      _trades: (sd.장기미처리공종 && sd.장기미처리공종.상위) || null,
+      _tradesAll: sd.공종별미처리 || null
     };
   }
 
@@ -1842,10 +1858,15 @@
     '#1d4ed8', '#1e40af', '#2563eb', '#7c3aed', '#a855f7', '#c084fc', '#e9d5ff',
     '#f0abfc', '#ddd6fe'];
 
-  function shortName(name) {
+  /* 현장명 축약: '힐스테이트 OO ...' → 'OO' (앞 2글자). 원래 도넛 규칙과 동일 */
+  function siteShort(name) {
     if (!name) return '';
     var n = String(name).replace(/^힐스테이트\s*/, '').replace(/\s.*$/, '');
-    return n.length > 4 ? n.slice(0, 4) : n;
+    return n.length > 2 ? n.slice(0, 2) : n;
+  }
+  /* 공종명: 줄이지 않고 원문 그대로 사용 */
+  function tradeLabel(name) {
+    return String(name == null ? '' : name);
   }
   function escH(s) {
     return String(s == null ? '' : s).replace(/[&<>]/g, function (c) {
@@ -1857,7 +1878,12 @@
     return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
   }
 
-  function renderDonut(items) {
+  /* renderDonut(items, labelFn)
+   *  - items: [{label, value}]
+   *  - labelFn: 중앙 라벨 표시용 변환 (현장=siteShort, 공종=tradeLabel)
+   *  - 범례는 항상 원문(label) 그대로 — 원래 도넛 규칙 */
+  function renderDonut(items, labelFn) {
+    labelFn = labelFn || function (x) { return x; };
     var total = 0;
     items.forEach(function (it) { total += it.value; });
     if (total <= 0) return { svg: '', legend: '', total: 0 };
@@ -1874,19 +1900,21 @@
         p1[1].toFixed(1) + ' A ' + R + ' ' + R + ' 0 ' + large + ' 1 ' +
         p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + ' Z" fill="' + color +
         '" stroke="white" stroke-width="3"/>');
+      // 중앙 라벨: 큰 조각에만 (원래 규칙). 폰트 18/13
       if (frac >= 0.04) {
         var mid = polar(cx, cy, R * 0.62, deg + sweep / 2);
         var fs = frac >= 0.10 ? 18 : 13;
         labels.push('<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) +
           '" text-anchor="middle" dominant-baseline="middle" font-family="Malgun Gothic,sans-serif" font-size="' +
-          fs + '" font-weight="700" fill="white">' + escH(shortName(it.label)) + '</text>');
+          fs + '" font-weight="700" fill="white">' + escH(labelFn(it.label)) + '</text>');
       }
       var pct = (frac * 100).toFixed(1);
+      // 범례: 원문 label 그대로
       legend.push('<div style="display:flex;align-items:center;gap:3px;font-size:11px;">' +
         '<span style="width:10px;height:10px;background:' + color +
         ';display:inline-block;border-radius:2px;flex-shrink:0;"></span>' +
         '<span style="color:#4a5568;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
-        escH(shortName(it.label)) + '</span>' +
+        escH(it.label) + '</span>' +
         '<span style="font-weight:700;color:#4a5568;min-width:44px;text-align:right;">' +
         fmt(it.value) + '건</span>' +
         '<span style="font-size:10px;color:#6b7280;min-width:30px;text-align:right;">' +
@@ -1899,12 +1927,12 @@
     return { svg: svg, legend: legend.join(''), total: total };
   }
 
-  function updateDonutCard(card, items) {
+  function updateDonutCard(card, items, labelFn) {
     if (!card) return;
     var sorted = items.slice().filter(function (x) { return x.value > 0; })
       .sort(function (a, b) { return b.value - a.value; });
     if (!sorted.length) return;
-    var d = renderDonut(sorted);
+    var d = renderDonut(sorted, labelFn);
     var svg = card.querySelector('svg');
     if (svg && d.svg) svg.outerHTML = d.svg;
     var legend = card.querySelector('.pie-legend');
@@ -1916,17 +1944,30 @@
   function updateDonuts(dash, sites) {
     var cards = dash.querySelectorAll('.db-donut-card');
     if (cards.length < 3) return;
-    updateDonutCard(cards[0], sites.map(function (s) { return { label: s.현장명, value: s.접수 }; }));
-    updateDonutCard(cards[1], sites.map(function (s) { return { label: s.현장명, value: s.미처리 }; }));
-    updateDonutCard(cards[2], sites.map(function (s) { return { label: s.현장명, value: s.장기 }; }));
+    // 현장 도넛 3개 — 중앙 라벨은 현장명 2글자 축약
+    updateDonutCard(cards[0], sites.map(function (s) { return { label: s.현장명, value: s.접수 }; }), siteShort);
+    updateDonutCard(cards[1], sites.map(function (s) { return { label: s.현장명, value: s.미처리 }; }), siteShort);
+    updateDonutCard(cards[2], sites.map(function (s) { return { label: s.현장명, value: s.장기 }; }), siteShort);
+    // 상위 공종 도넛 — 공종명 원문 그대로, 상위 12개로 제한 (원래 도넛 규칙)
     if (cards[3]) {
       var agg = {};
       sites.forEach(function (s) {
-        if (!s._trades) return;
-        s._trades.forEach(function (t) { agg[t.공종] = (agg[t.공종] || 0) + t.금월; });
+        if (s._tradesAll) {
+          // 공종별 전체 미처리 집계 (정확)
+          s._tradesAll.forEach(function (t) {
+            agg[t.공종] = (agg[t.공종] || 0) + t.미처리;
+          });
+        } else if (s._trades) {
+          // 폴백: 장기미처리 상위 공종만
+          s._trades.forEach(function (t) {
+            agg[t.공종] = (agg[t.공종] || 0) + t.금월;
+          });
+        }
       });
       var items = Object.keys(agg).map(function (k) { return { label: k, value: agg[k] }; });
-      if (items.length) updateDonutCard(cards[3], items);
+      items.sort(function (a, b) { return b.value - a.value; });
+      if (items.length > 12) items = items.slice(0, 12);
+      if (items.length) updateDonutCard(cards[3], items, tradeLabel);
     }
   }
 
