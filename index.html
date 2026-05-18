@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>H서비스중부팀 현장별 하자처리 현황</title>
 
 <!-- ===================== Firebase 연동 (실시간 공유 저장) ===================== -->
@@ -930,13 +931,13 @@
   }
 
   /* ---- 월별 통계 ---- */
-  function monthlyStats(data, year, maxTS) {
+  function monthlyStats(data, year, limitTS) {
     var results = [];
     var prevEnd = Date.UTC(year - 1, 11, 31);
     for (var month = 1; month <= 12; month++) {
       var ms = monthStart(year, month);
       var me = monthEndTS(year, month);
-      if (ms > maxTS) break;
+      if (ms > limitTS) break;
       var newReceived = 0;
       for (var i = 0; i < data.length; i++) {
         if (data[i].접수일 >= ms && data[i].접수일 <= me) newReceived++;
@@ -960,25 +961,39 @@
     var add = ((5 - pandasWeekday(fromTS)) % 7 + 7) % 7;
     return fromTS + add * DAY;
   }
-  function weeklyStats(data, year, maxTS) {
+  function weeklyStats(data, year, limitTS) {
     var results = [];
     var yearStart = Date.UTC(year, 0, 1);
     var firstSat = firstSaturday(yearStart);
     var prev = firstSat - 7 * DAY;
     var cur = firstSat;
-    var limit = maxTS + 7 * DAY;
-    while (cur <= limit) {
-      var d = new Date(cur);
-      var month = d.getUTCMonth() + 1;
-      var firstOfMonth = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
-      var firstSatM = firstSaturday(firstOfMonth);
-      var weekNum = Math.floor(dayDiff(cur, firstSatM) / 7) + 1;
+    // 기준일(limitTS)이 속한 주까지 생성. prev < limitTS 이면 그 주는 기준일을 포함.
+    while (prev < limitTS) {
+      // 기준일을 넘어가는 마지막 주는 기준일 시점으로 잘라 집계 (5월 데이터 혼입 방지)
+      var cutTS = (cur > limitTS) ? limitTS : cur;
+
+      var isPartialLast = (cur > limitTS);
+      // 주차 라벨: 월은 잘린 시점 기준
+      var dCut = new Date(cutTS);
+      var month = dCut.getUTCMonth() + 1;
+      var weekNum;
+      if (isPartialLast && results.length > 0) {
+        // 기준일이 속한 잘린 마지막 주: 직전 주가 같은 달이면 +1, 아니면 1
+        var prevW = results[results.length - 1];
+        weekNum = (prevW.month === month) ? prevW.week + 1 : 1;
+      } else {
+        var dCur = new Date(cur);
+        var firstOfCurMonth = Date.UTC(dCur.getUTCFullYear(), dCur.getUTCMonth(), 1);
+        var firstSatM = firstSaturday(firstOfCurMonth);
+        weekNum = Math.floor(dayDiff(cur, firstSatM) / 7) + 1;
+        if (weekNum < 1) weekNum = 1;
+      }
 
       var newReceived = 0;
       for (var i = 0; i < data.length; i++) {
-        if (data[i].접수일 > prev && data[i].접수일 <= cur) newReceived++;
+        if (data[i].접수일 > prev && data[i].접수일 <= cutTS) newReceived++;
       }
-      var st = calcStatus(data, cur, prev);
+      var st = calcStatus(data, cutTS, prev);
       st.month = month;
       st.week = weekNum;
       st.주간접수 = newReceived;
@@ -1125,7 +1140,7 @@
   }
 
   /* ---- CS팀장 분석 의견 데이터 ---- */
-  function analysisInsights(data, baseDate, maxTS) {
+  function analysisInsights(data, baseDate) {
     var received = [], unp = [];
     data.forEach(function (r) {
       if (r.접수일 > baseDate) return;
@@ -1182,12 +1197,12 @@
       d365: over60.filter(function (r) { return r._delay >= 365; }).length
     };
 
-    // 월별 신규 접수
+    // 월별 신규 접수 (기준일까지만)
     var monthlyNew = {};
     var baseYear = new Date(baseDate).getUTCFullYear();
     for (var m = 1; m <= 12; m++) {
       var ms = monthStart(baseYear, m), me = monthEndTS(baseYear, m);
-      if (ms > maxTS) break;
+      if (ms > baseDate) break;
       var c = 0;
       data.forEach(function (r) { if (r.접수일 >= ms && r.접수일 <= me) c++; });
       monthlyNew[m + '월'] = c;
@@ -1216,14 +1231,16 @@
 
     var bd = detectBaseDate(data);
     var baseDate = bd.base, maxTS = bd.max;
-    var year = opts.year || new Date(maxTS).getUTCFullYear();
+    var year = opts.year || new Date(baseDate).getUTCFullYear();
 
-    var monthly = monthlyStats(data, year, maxTS);
+    // 월별·주차별은 기준일(baseDate)까지만 생성.
+    // 5월 데이터를 받아도 기준일이 4월 말이면 5월 행은 만들지 않음.
+    var monthly = monthlyStats(data, year, baseDate);
     addChange(monthly, '미처리합계', '합계증감');
     addChange(monthly, '장기소계', '장기증감');
     addChange(monthly, '기간처리', '처리증감');
 
-    var weekly = weeklyStats(data, year, maxTS);
+    var weekly = weeklyStats(data, year, baseDate);
     addChange(weekly, '미처리합계', '합계증감');
     addChange(weekly, '장기소계', '장기증감');
     addChange(weekly, '기간처리', '처리증감');
@@ -1233,7 +1250,7 @@
 
     var trades = longTermTrades(data, baseDate, prevBase, 5);
     var empty = emptyUnitStats(data, baseDate, 5);
-    var insights = analysisInsights(data, baseDate, maxTS);
+    var insights = analysisInsights(data, baseDate);
 
     // 공종별 전체 미처리 집계 (기준일 시점) — 대시보드 '미처리 상위 공종' 도넛용
     var unpByTrade = {};
@@ -1266,10 +1283,56 @@
     };
   }
 
+  /* ---------------------------------------------------------------------
+   * sanitizeSiteData: 기준일 이후 데이터가 섞인 옛 siteData를 정리.
+   *  - 엔진 수정 전 업로드본은 월별/주차별이 5월 등 기준일 이후까지 포함됨.
+   *  - 페이지 로드 시 이 함수를 거치면 기준월까지만 남도록 잘라냄.
+   *  - 데이터가 이미 정상이면 그대로 반환.
+   * ------------------------------------------------------------------- */
+  function sanitizeSiteData(sd) {
+    if (!sd || !sd.기준일) return sd;
+    var baseMonth = parseInt(String(sd.기준일).slice(5, 7), 10);
+    if (!baseMonth) return sd;
+    var changed = false;
+
+    // 월별: label('N월')이 기준월 초과면 제거
+    if (Array.isArray(sd.월별)) {
+      var m2 = sd.월별.filter(function (m) {
+        var mn = parseInt(String(m.label || '').replace(/[^0-9]/g, ''), 10);
+        return !mn || mn <= baseMonth;
+      });
+      if (m2.length !== sd.월별.length) { sd.월별 = m2; changed = true; }
+    }
+    // 주차별: month가 기준월 초과면 제거
+    if (Array.isArray(sd.주차별)) {
+      var w2 = sd.주차별.filter(function (w) {
+        return !w.month || w.month <= baseMonth;
+      });
+      if (w2.length !== sd.주차별.length) { sd.주차별 = w2; changed = true; }
+    }
+    // 분석.월별신규접수: 기준월 초과 키 제거
+    if (sd.분석 && sd.분석.월별신규접수) {
+      var mn = sd.분석.월별신규접수, keep = {};
+      Object.keys(mn).forEach(function (k) {
+        var n = parseInt(String(k).replace(/[^0-9]/g, ''), 10);
+        if (!n || n <= baseMonth) keep[k] = mn[k];
+      });
+      if (Object.keys(keep).length !== Object.keys(mn).length) {
+        sd.분석.월별신규접수 = keep; changed = true;
+      }
+    }
+    if (changed && typeof console !== 'undefined') {
+      console.log('[engine] 옛 siteData 정리: ' + (sd.현장명 || sd.현장코드) +
+        ' — 기준월(' + baseMonth + '월) 이후 데이터 제거');
+    }
+    return sd;
+  }
+
   var API = {
     analyze: analyze,
     prepare: prepare,
     toDayTS: toDayTS,
+    sanitizeSiteData: sanitizeSiteData,
     REGION_MAP: REGION_MAP,
     _internal: {
       detectBaseDate: detectBaseDate, calcStatus: calcStatus,
@@ -1793,6 +1856,65 @@
     });
   }
 
+  /* ---- 권역 카드 재배치 (B단계: 권역 이동 반영) ----
+   * layout의 assign(현장→권역)에 따라 rgcard를 올바른 권역 카드로 옮기고
+   * 각 권역 카드의 'N개 현장' 배지와 집계 3칸을 다시 계산. */
+  function rebuildRegionLayout(dash, sites, layout) {
+    if (!layout || !layout.assign) return;
+    // 권역명 → db-region-card 매핑
+    var regionCards = {};
+    dash.querySelectorAll('.db-region-card').forEach(function (rc) {
+      var hdr = rc.querySelector('.db-region-header');
+      if (!hdr) return;
+      // 헤더 텍스트 첫 토큰이 권역명 (배지 제외)
+      var rname = (hdr.childNodes[0] && hdr.childNodes[0].textContent || '').trim();
+      if (rname) regionCards[rname] = rc;
+    });
+    // 패널ID → 현장 요약
+    var sumByPanel = {};
+    sites.forEach(function (s) { if (s.패널ID) sumByPanel[s.패널ID] = s; });
+
+    // 각 rgcard를 assign된 권역 카드의 본문으로 이동
+    Object.keys(layout.assign).forEach(function (pid) {
+      var targetRegion = layout.assign[pid];
+      var rgcard = dash.querySelector('#rgcard_' + pid);
+      var targetCard = regionCards[targetRegion];
+      if (!rgcard || !targetCard) return;
+      // 본문 컨테이너: db-region-card 안의 flex:1 영역
+      var body = targetCard.querySelector('div[style*="flex:1"]');
+      if (body && rgcard.parentNode !== body) {
+        body.appendChild(rgcard);
+      }
+    });
+
+    // 각 권역 카드: 배지(N개 현장) + 집계 3칸 갱신
+    Object.keys(regionCards).forEach(function (rname) {
+      var rc = regionCards[rname];
+      var rgcards = rc.querySelectorAll('[id^="rgcard_"]');
+      var visible = [];
+      rgcards.forEach(function (g) {
+        if (g.style.display === 'none') return;
+        var pid = g.id.replace('rgcard_', '');
+        if (sumByPanel[pid]) visible.push(sumByPanel[pid]);
+      });
+      // 배지
+      var badge = rc.querySelector('.r-badge');
+      if (badge) badge.textContent = visible.length + '개 현장';
+      // 집계 3칸: 당월처리 합 / 미처리 합 / 평균 장기비율
+      var agg = { proc: 0, unp: 0, longR: 0 };
+      visible.forEach(function (s) {
+        agg.proc += s.당월처리 || 0;
+        agg.unp += s.미처리 || 0;
+        agg.longR += s.장기비율 || 0;
+      });
+      var avgLong = visible.length ? r1(agg.longR / visible.length) : 0;
+      var statCells = rc.querySelectorAll('.db-region-header + div div[style*="font-size:14px"]');
+      if (statCells[0]) statCells[0].textContent = fmt(agg.proc) + '건';
+      if (statCells[1]) statCells[1].textContent = fmt(agg.unp) + '건';
+      if (statCells[2]) statCells[2].textContent = avgLong + '%';
+    });
+  }
+
   /* ---- 주요 이슈 카드 갱신 (미처리 최다 / 처리율 최저 / 장기비율 최고) ---- */
   function updateIssues(dash, sites) {
     if (!sites.length) return;
@@ -1909,19 +2031,19 @@
           fs + '" font-weight="700" fill="white">' + escH(labelFn(it.label)) + '</text>');
       }
       var pct = (frac * 100).toFixed(1);
-      // 범례: 원문 label 그대로
-      legend.push('<div style="display:flex;align-items:center;gap:3px;font-size:11px;">' +
+      // 범례: 라벨 변환 적용 (현장=2글자 줄임, 공종=원문). 카드 폭 넘침 방지
+      legend.push('<div style="display:flex;align-items:center;gap:3px;font-size:11px;min-width:0;">' +
         '<span style="width:10px;height:10px;background:' + color +
         ';display:inline-block;border-radius:2px;flex-shrink:0;"></span>' +
-        '<span style="color:#4a5568;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
-        escH(it.label) + '</span>' +
-        '<span style="font-weight:700;color:#4a5568;min-width:44px;text-align:right;">' +
+        '<span style="color:#4a5568;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+        escH(labelFn(it.label)) + '</span>' +
+        '<span style="font-weight:700;color:#4a5568;flex-shrink:0;min-width:42px;text-align:right;">' +
         fmt(it.value) + '건</span>' +
-        '<span style="font-size:10px;color:#6b7280;min-width:30px;text-align:right;">' +
+        '<span style="font-size:10px;color:#6b7280;flex-shrink:0;min-width:30px;text-align:right;">' +
         pct + '%</span></div>');
       deg += sweep;
     });
-    var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:200px;">' +
+    var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:170px;height:auto;display:block;">' +
       paths.join('') + '<circle cx="200" cy="200" r="26" fill="white"/>' +
       labels.join('') + '</svg>';
     return { svg: svg, legend: legend.join(''), total: total };
@@ -2030,6 +2152,13 @@
     updateRegionCards(dash, sites);
     updateIssues(dash, sites);
     updateDonuts(dash, sites);
+    // B단계: 권역 이동이 반영된 layout으로 권역 카드 재배치
+    if (window.LayoutManager) {
+      try {
+        var L = window.LayoutManager.getLayout();
+        if (L) rebuildRegionLayout(dash, sites, L);
+      } catch (e) { console.warn('[대시보드] 권역 재배치 오류', e); }
+    }
     // 주차별 추이 차트: siteData가 있는 현장이 1개 이상일 때만 갱신
     // (siteData 없는 기존 현장은 주차별 원본이 없어 합산 불가)
     if (rawSiteData.length) updateWeeklyChart(dash, rawSiteData);
@@ -2141,8 +2270,13 @@
   .admin-remove-btn.confirm { background: #6b1010; }
   .admin-empty { color: #9ca3af; font-size: 11.5px; padding: 14px 4px; text-align: center; }
   /* B단계: 사이드바 드래그 이동 */
-  .sidebar .site-item[draggable="true"] { cursor: grab; }
-  .sidebar .site-item.dragging { opacity: 0.45; cursor: grabbing; }
+  .sidebar .site-item[draggable="true"] {
+    cursor: grab;
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .sidebar .site-item.dragging {
+    opacity: 0.4; cursor: grabbing;
+  }
   .sidebar .region-group.drop-target {
     outline: 2px dashed #fdbb31; outline-offset: -2px;
     background: rgba(253,187,49,0.08);
@@ -2155,6 +2289,111 @@
   }
   .admin-restore-btn:hover { background: #265e99; }
   @media print { .admin-sidebar-btn, .admin-overlay { display: none !important; } }
+</style>
+<style>
+/* ===== 모바일 반응형 패치 ===== */
+/* ============================================================================
+ * 모바일 반응형 패치 — 좁은 화면(≤768px)에서만 적용.
+ * 데스크톱 레이아웃·구조는 일절 변경하지 않음 (미디어쿼리 안에서만 재정의).
+ * ========================================================================== */
+
+@media (max-width: 768px) {
+  /* ----- 도넛: 4열 → 2열 ----- */
+  .db-donut-card { min-width: 0; }
+  .section > div[style*="repeat(4,1fr)"],
+  .section > div[style*="repeat(4, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    padding: 12px 8px !important;
+  }
+  .db-donut-card svg { max-width: 140px !important; }
+  .pie-legend { font-size: 9.5px !important; gap: 3px 5px !important; }
+
+  /* ----- KPI 줄: 1 / 2 / 2 배치 -----
+     규모 카드(.navy)는 한 줄 전체, 나머지 4개는 2+2. */
+  .db-kpi-row { grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+  .db-kpi-card { padding: 8px 10px !important; }
+  .db-kpi-card.navy { grid-column: 1 / -1 !important; }
+  .db-kpi-value { font-size: 16px !important; }
+  .db-kpi-label { font-size: 10px !important; }
+  .db-kpi-sub { font-size: 9px !important; }
+
+  /* ----- 권역 / 이슈 / 분석의견 카드: 1열 ----- */
+  .db-region-cards { grid-template-columns: 1fr !important; }
+  .db-issue-grid { grid-template-columns: 1fr !important; }
+  .insight-grid { grid-template-columns: 1fr !important; }
+  .db-trend-row { grid-template-columns: 1fr !important; }
+
+  /* ----- 표: 가로 스크롤 (칸 수·구조 유지) -----
+     모든 표는 래퍼 div(.mtable-wrap / .collapsible-table)가 스크롤.
+     table 요소에 직접 overflow를 주면 탈출하므로 래퍼 필수. */
+  .mtable-wrap,
+  .collapsible-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    box-shadow: inset -10px 0 8px -8px rgba(0,0,0,0.12);
+  }
+  .data-table { min-width: 860px; font-size: 10px; }
+  .trade-table { min-width: 680px; font-size: 10px; }
+  .empty-status-table { min-width: 620px; font-size: 10px; }
+  .data-table th, .data-table td,
+  .trade-table th, .trade-table td,
+  .empty-status-table th, .empty-status-table td {
+    padding: 3px 4px !important;
+    white-space: nowrap;
+  }
+  /* 패널/섹션이 표 때문에 가로로 밀리지 않도록 */
+  .section { overflow-x: hidden; max-width: 100%; margin-bottom: 8px; }
+  .site-panel { overflow-x: hidden; max-width: 100%; }
+
+  /* ----- 주차별 추이 차트: 가로 스크롤 ----- */
+  #dash-weekly-chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #dash-weekly-chart svg { min-width: 680px; }
+
+  /* ----- 본문 여백 ----- */
+  .main-content {
+    padding: 8px !important;
+    margin-left: 48px;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* ----- 사이드바: 오버레이 방식 ----- */
+  .sidebar {
+    position: fixed !important;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 1200;
+  }
+  .sidebar.collapsed { width: 48px; }
+  .sidebar:not(.collapsed) {
+    width: 230px;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+  }
+
+  /* 사이드바 펼침 시 본문을 가리는 배경.
+     헤더 글씨가 비쳐 읽히도록 옅게(0.25) — 본문 구분에는 충분. */
+  #mobile-scrim {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(8,33,63,0.25);
+    z-index: 1150;
+  }
+  body.sidebar-open #mobile-scrim { display: block; }
+}
+
+@media (max-width: 480px) {
+  /* 아주 좁은 화면: 도넛만 1열, KPI는 1/2/2 유지 */
+  .section > div[style*="repeat(4,1fr)"],
+  .section > div[style*="repeat(4, 1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  .db-donut-card svg { max-width: 200px !important; }
+  .db-kpi-row { grid-template-columns: 1fr 1fr !important; }
+  .db-kpi-card.navy { grid-column: 1 / -1 !important; }
+}
+
 </style>
 <!-- ====================================================================== -->
 </head>
@@ -12799,14 +13038,25 @@
         panel.id = pid;
         panel.setAttribute('data-site-code', sd.현장코드);
         panel.setAttribute('data-base-date', sd.기준일);
+        if (sd.권역) panel.setAttribute('data-region', sd.권역);
         panel.innerHTML = Renderer.renderPanelInner(sd, pid, {});
         var main = document.querySelector('.main-content');
         if (main) main.appendChild(panel);
         bindEditable(panel);
         wireToggles(panel);
-        addSidebarItem(sd, pid);
+        // 사이드바 등록은 LayoutManager에 일임 (SIDEBAR 영역 안에 정확히 배치)
+        if (window.LayoutManager) {
+          try { window.LayoutManager.applyLayout(window.LayoutManager.getLayout()); }
+          catch (e) { addSidebarItem(sd, pid); }
+        } else {
+          addSidebarItem(sd, pid);
+        }
       }
     });
+    // 새로 그려진 패널의 표를 모바일 스크롤 래퍼로 감싸기
+    if (window.__wrapMobileTables) {
+      try { window.__wrapMobileTables(); } catch (e) {}
+    }
   }
 
   /* ===================== 관리자 데이터 관리 ===================== */
@@ -13054,8 +13304,16 @@
   if (FB.ready) {
     FB.db.ref('siteData').on('value', function (snap) {
       try {
-        var all = snap.val();
-        lastSiteData = all || {};
+        var all = snap.val() || {};
+        // 옛 siteData(기준일 이후 데이터 혼입) 자동 정리
+        if (window.DefectEngine && window.DefectEngine.sanitizeSiteData) {
+          Object.keys(all).forEach(function (code) {
+            try { all[code] = window.DefectEngine.sanitizeSiteData(all[code]); }
+            catch (e) { /* 개별 현장 정리 실패는 무시 */ }
+          });
+        }
+        lastSiteData = all;
+        window.__latestSiteData = lastSiteData;
         applySiteData(all);
         if (window.DashboardRenderer) {
           try { window.DashboardRenderer.updateDashboard(all); }
@@ -13156,9 +13414,14 @@
     merged.regions.forEach(function (r) { byRegion[r] = []; });
     allPanels.forEach(function (pid) {
       if (removedSet[pid]) return;
-      var r = merged.assign[pid] || merged.regions[0] || '기타';
+      // 권역 결정: assign 우선 → 패널 data-region(자동패널) → 첫 권역
+      var r = merged.assign[pid];
+      if (!r) {
+        var pEl = document.getElementById(pid);
+        if (pEl && pEl.getAttribute('data-region')) r = pEl.getAttribute('data-region');
+      }
+      if (!r) r = merged.regions[0] || '기타';
       if (!byRegion[r]) { byRegion[r] = []; merged.regions.push(r); }
-      byRegion[pid] = byRegion[pid];
       byRegion[r].push(pid);
     });
     // 권역 내 순서: order 우선
@@ -13228,8 +13491,13 @@
     rewireSidebar();
     enableDrag();
     if (window.DashboardRenderer) {
-      // 대시보드 권역 카드 재구성 위해 layout 전달
-      try { rebuildDashboardRegions(merged, byRegion, panelName, removedSet); }
+      try {
+        // 삭제된 현장 카드 숨김
+        rebuildDashboardRegions(merged, byRegion, panelName, removedSet);
+        // 대시보드 전체 재집계 (권역 이동·삭제 반영) — 최신 siteData 사용
+        var sd = (window.__latestSiteData) || null;
+        window.DashboardRenderer.updateDashboard(sd);
+      }
       catch (e) { console.warn('[layout] 대시보드 권역 갱신 오류', e); }
     }
   }
@@ -13261,7 +13529,8 @@
       item._dragBound = true;
       item.addEventListener('dragstart', function (e) {
         dragPid = item.getAttribute('data-site');
-        item.classList.add('dragging');
+        // 드래그 이미지가 자리를 비우도록 약간 지연 후 클래스 적용
+        setTimeout(function () { item.classList.add('dragging'); }, 0);
         if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
       });
       item.addEventListener('dragend', function () {
@@ -13271,12 +13540,29 @@
         });
         dragPid = null;
       });
-      item.addEventListener('dragover', function (e) { e.preventDefault(); });
+      // 드래그 중: 마우스 위치에 따라 끌고 있는 항목을 실시간으로 이동
+      // → 다른 현장들이 자연스럽게 밀려남
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        if (!dragPid) return;
+        var dragEl = document.querySelector('.site-item[data-site="' + dragPid + '"]');
+        if (!dragEl || dragEl === item) return;
+        var grp = item.closest('.region-group');
+        if (!grp) return;
+        // 마우스가 대상 항목의 위/아래 절반 어디에 있는지로 삽입 위치 결정
+        var rect = item.getBoundingClientRect();
+        var after = e.clientY > rect.top + rect.height / 2;
+        if (after) {
+          if (item.nextSibling !== dragEl) grp.insertBefore(dragEl, item.nextSibling);
+        } else {
+          if (item.previousSibling !== dragEl) grp.insertBefore(dragEl, item);
+        }
+      });
       item.addEventListener('drop', function (e) {
         e.preventDefault(); e.stopPropagation();
-        var targetPid = item.getAttribute('data-site');
+        // 실시간 이동으로 이미 dragEl이 제자리에 있음 → 현재 DOM 순서로 확정
         var grp = item.closest('.region-group');
-        if (grp) handleDrop(grp.getAttribute('data-region'), targetPid);
+        if (grp) commitDragOrder(grp.getAttribute('data-region'));
       });
     });
     document.querySelectorAll('.sidebar-inner .region-group').forEach(function (grp) {
@@ -13285,6 +13571,13 @@
       grp.addEventListener('dragover', function (e) {
         e.preventDefault();
         grp.classList.add('drop-target');
+        // 빈 권역이거나 항목 사이가 아닌 영역에 드래그 시: 끌고 있는 항목을 이 권역 끝으로
+        if (dragPid) {
+          var dragEl = document.querySelector('.site-item[data-site="' + dragPid + '"]');
+          if (dragEl && dragEl.closest('.region-group') !== grp) {
+            grp.appendChild(dragEl);
+          }
+        }
       });
       grp.addEventListener('dragleave', function () {
         grp.classList.remove('drop-target');
@@ -13292,43 +13585,29 @@
       grp.addEventListener('drop', function (e) {
         e.preventDefault();
         grp.classList.remove('drop-target');
-        handleDrop(grp.getAttribute('data-region'), null);
+        commitDragOrder(grp.getAttribute('data-region'));
       });
     });
   }
 
-  /* 드롭 처리: dragPid를 targetRegion으로 이동, targetPid 앞에 삽입 */
-  function handleDrop(targetRegion, targetPid) {
-    if (!dragPid || !targetRegion || !lastLayout) return;
-    if (dragPid === targetPid) return;
-
+  /* 실시간 이동 후 현재 DOM 순서를 layout에 확정 저장 */
+  function commitDragOrder() {
+    if (!dragPid || !lastLayout) return;
     var L = lastLayout;
-    // assign 갱신
-    L.assign[dragPid] = targetRegion;
-    // order 재계산
-    if (!L.order) L.order = {};
-    // 모든 권역 order를 현재 DOM 기준으로 새로 구성
     var newOrder = {};
-    L.regions.forEach(function (r) { newOrder[r] = []; });
+    var newAssign = {};
+    Object.keys(L.assign).forEach(function (k) { newAssign[k] = L.assign[k]; });
     document.querySelectorAll('.sidebar-inner .region-group').forEach(function (grp) {
       var r = grp.getAttribute('data-region');
-      if (!newOrder[r]) newOrder[r] = [];
+      newOrder[r] = [];
       grp.querySelectorAll('.site-item').forEach(function (it) {
         var pid = it.getAttribute('data-site');
-        if (pid !== dragPid) newOrder[r].push(pid);
+        newOrder[r].push(pid);
+        newAssign[pid] = r;   // 현재 속한 권역으로 갱신
       });
     });
-    // dragPid를 targetRegion의 targetPid 앞에 삽입
-    if (!newOrder[targetRegion]) newOrder[targetRegion] = [];
-    if (targetPid) {
-      var idx = newOrder[targetRegion].indexOf(targetPid);
-      if (idx < 0) idx = newOrder[targetRegion].length;
-      newOrder[targetRegion].splice(idx, 0, dragPid);
-    } else {
-      newOrder[targetRegion].push(dragPid);
-    }
     L.order = newOrder;
-
+    L.assign = newAssign;
     saveLayout(L);
   }
 
@@ -13445,6 +13724,84 @@
   }
 })();
 
+</script>
+
+<script>
+/* 모바일: 사이드바 기본 접힘 + 오버레이 + 자동 접힘 */
+(function () {
+  var MQ = '(max-width: 768px)';
+  function isMobile() {
+    if (window.matchMedia) {
+      try { return window.matchMedia(MQ).matches; } catch (e) {}
+    }
+    // matchMedia 미지원 환경: 화면 폭으로 판단
+    return (window.innerWidth || document.documentElement.clientWidth || 9999) <= 768;
+  }
+  var sb = null, scrim = null;
+
+  function setup() {
+    sb = document.getElementById('main-sidebar');
+    if (!sb) return;
+    // 오버레이 배경 요소 생성
+    if (!document.getElementById('mobile-scrim')) {
+      scrim = document.createElement('div');
+      scrim.id = 'mobile-scrim';
+      document.body.appendChild(scrim);
+      scrim.addEventListener('click', function () { collapse(); });
+    }
+    if (isMobile()) collapse();
+    syncBody();
+  }
+  function collapse() {
+    if (sb) sb.classList.add('collapsed');
+    syncBody();
+  }
+  function syncBody() {
+    // 모바일 + 펼쳐진 상태일 때만 scrim 표시
+    var open = isMobile() && sb && !sb.classList.contains('collapsed');
+    document.body.classList.toggle('sidebar-open', open);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else { setup(); }
+
+  // 토글 버튼 클릭 후 상태 동기화
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.sb-toggle')) {
+      setTimeout(syncBody, 10);
+      return;
+    }
+    // 현장/대시보드 선택 시 모바일이면 자동 접힘
+    if (isMobile() && e.target.closest('.site-item, .dashboard-btn')) {
+      setTimeout(collapse, 60);
+    }
+  });
+  window.addEventListener('resize', syncBody);
+
+  /* 래퍼 없는 표(trade-table, empty-status-table)를 스크롤 div로 감싸기.
+     table 요소에 직접 overflow를 주면 탈출하므로 래퍼가 필요.
+     데스크톱에서도 무해(.mtable-wrap은 모바일 미디어쿼리에서만 스크롤). */
+  function wrapTables() {
+    var tables = document.querySelectorAll('.trade-table, .empty-status-table');
+    tables.forEach(function (tbl) {
+      var p = tbl.parentNode;
+      if (!p) return;
+      // 이미 감싸져 있으면 skip
+      if (p.classList && (p.classList.contains('mtable-wrap') ||
+          p.classList.contains('collapsible-table'))) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'mtable-wrap';
+      p.insertBefore(wrap, tbl);
+      wrap.appendChild(tbl);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wrapTables);
+  } else { wrapTables(); }
+  // 패널이 동적으로 새로 그려질 때도 다시 감싸기 (업로드/렌더 후)
+  window.__wrapMobileTables = wrapTables;
+})();
 </script>
 
 </body>
