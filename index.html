@@ -46,7 +46,7 @@
 <!-- =========================================================================== -->
 
 <style>
-  @page { size: A3 landscape; margin: 8mm; }
+  @page { margin: 8mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif;
@@ -769,6 +769,14 @@
 
   var DAY = 86400000;
 
+  /* ---- 엔진 버전 도장 ----
+     데이터 스키마/계산 로직이 바뀔 때마다 올린다.
+     저장된 siteData가 이 버전과 다르면 화면에 '재업로드 필요' 배지 표시.
+     - MAJOR: 스키마 비호환 변경(필드 추가/제거/의미 변경)
+     - MINOR: 계산 로직 수정(같은 입력으로 다른 결과)
+     - PATCH: 버그 수정/리팩토링(결과 동일) */
+  var ENGINE_VERSION = '2.0.0';
+
   /* ---- 권역 등록부 (site_registry.md) ---- */
   var REGION_MAP = {
     '힐스테이트 두정역': '1권역',
@@ -1267,11 +1275,14 @@
     }).sort(function (a, b) { return b.미처리 - a.미처리; });
 
     return {
+      engineVersion: ENGINE_VERSION,
+      generatedAt: new Date().toISOString(),
       현장명: siteName,
       현장코드: siteCode,
       권역: REGION_MAP[siteName] || null,
       기준일: ymd(baseDate),
       데이터_최대일: ymd(maxTS),
+      출력일: opts.출력일 || null,
       연도: year,
       행수: data.length,
       월별: monthly,
@@ -1309,6 +1320,24 @@
         return !w.month || w.month <= baseMonth;
       });
       if (w2.length !== sd.주차별.length) { sd.주차별 = w2; changed = true; }
+
+      // 손상된 마지막 주 감지: 누계처리/전체접수가 직전 주 대비 급감(절벽)하면 제거.
+      // (옛 엔진이 5월 데이터를 month=4로 잘못 매겨 저장한 손상 행)
+      var guard = 0;
+      while (sd.주차별.length >= 2 && guard < 6) {
+        guard++;
+        var last = sd.주차별[sd.주차별.length - 1];
+        var prev = sd.주차별[sd.주차별.length - 2];
+        var lastProc = last.누계처리 || 0, prevProc = prev.누계처리 || 0;
+        var lastRecv = last.전체접수 || 0, prevRecv = prev.전체접수 || 0;
+        // 누계처리·전체접수는 단조증가여야 정상. 직전 주의 60% 미만이면 손상으로 판단.
+        var broken = (prevProc > 0 && lastProc < prevProc * 0.6) ||
+                     (prevRecv > 0 && lastRecv < prevRecv * 0.6);
+        if (broken) {
+          sd.주차별.pop();
+          changed = true;
+        } else break;
+      }
     }
     // 분석.월별신규접수: 기준월 초과 키 제거
     if (sd.분석 && sd.분석.월별신규접수) {
@@ -1328,11 +1357,143 @@
     return sd;
   }
 
+  /* ---------------------------------------------------------------------
+   * verifyIntegrity: siteData의 등식 일관성과 버전을 검사한다.
+   *  - 회의 자료로 틀린 숫자가 나가는 걸 막는 마지막 방어선.
+   *  - 통과/실패만 반환하지 않고, 어느 행의 어떤 등식이 깨졌는지 알려준다.
+   * 반환: { ok, level, version, isStale, problems: [...], summary }
+   *   level: 'ok' | 'warn' | 'error'
+   *   isStale: 엔진 버전이 옛 데이터일 때 true (재업로드 필요)
+   * ------------------------------------------------------------------- */
+  function verifyIntegrity(sd) {
+    var problems = [];
+    var level = 'ok';
+
+    if (!sd || typeof sd !== 'object') {
+      return { ok: false, level: 'error', version: null, isStale: true,
+               problems: ['siteData가 비어 있거나 형식이 잘못됨'], summary: '데이터 없음' };
+    }
+
+    var ver = sd.engineVersion || null;
+    var isStale = !ver || ver !== ENGINE_VERSION;
+    if (!ver) {
+      problems.push('엔진 버전 정보 없음 — 옛 데이터(재업로드 권장)');
+      level = 'warn';
+    } else if (ver !== ENGINE_VERSION) {
+      problems.push('엔진 버전 불일치: 저장본 ' + ver + ' / 현재 ' + ENGINE_VERSION);
+      level = 'warn';
+    }
+
+    // 1. 월별 등식: 전체접수 = 누계처리 + 미처리합계
+    if (Array.isArray(sd.월별)) {
+      sd.월별.forEach(function (m, i) {
+        var lhs = +m.전체접수 || 0;
+        var rhs = (+m.누계처리 || 0) + (+m.미처리합계 || 0);
+        if (Math.abs(lhs - rhs) > 1) {
+          problems.push('월별[' + (m.label || i) + '] 전체접수(' + lhs +
+            ') ≠ 누계처리+미처리합계(' + rhs + ')');
+          level = 'error';
+        }
+        // 미처리합계 = 일반하자 + 장기소계
+        var unp = +m.미처리합계 || 0;
+        var sum = (+m.일반하자 || 0) + (+m.장기소계 || 0);
+        if (m.일반하자 != null && m.장기소계 != null && Math.abs(unp - sum) > 1) {
+          problems.push('월별[' + (m.label || i) + '] 미처리합계(' + unp +
+            ') ≠ 일반하자+장기소계(' + sum + ')');
+          level = 'error';
+        }
+      });
+      // 단조증가: 전체접수는 감소하지 않아야 함
+      for (var i = 1; i < sd.월별.length; i++) {
+        var a = +sd.월별[i - 1].전체접수 || 0;
+        var b = +sd.월별[i].전체접수 || 0;
+        if (b < a - 1) {
+          problems.push('월별 전체접수가 감소: ' +
+            sd.월별[i - 1].label + '(' + a + ') → ' + sd.월별[i].label + '(' + b + ')');
+          level = 'error';
+        }
+      }
+    }
+
+    // 2. 주차별 등식: 전체접수 = 누계처리 + 미처리합계
+    if (Array.isArray(sd.주차별)) {
+      sd.주차별.forEach(function (w, i) {
+        var lhs = +w.전체접수 || 0;
+        var rhs = (+w.누계처리 || 0) + (+w.미처리합계 || 0);
+        if (Math.abs(lhs - rhs) > 1) {
+          problems.push('주차별[' + w.month + '월' + w.week + '주] 전체접수(' + lhs +
+            ') ≠ 누계처리+미처리합계(' + rhs + ')');
+          level = 'error';
+        }
+      });
+    }
+
+    // 3. 공가세대: 합계 = 미분양 + 미납
+    if (sd.공가세대 && sd.공가세대.합계) {
+      var e = sd.공가세대;
+      ['세대수', '접수', '미처리합계'].forEach(function (k) {
+        if (e.합계[k] != null && e.미분양 && e.미납) {
+          var lhs2 = +e.합계[k] || 0;
+          var rhs2 = (+e.미분양[k] || 0) + (+e.미납[k] || 0);
+          if (Math.abs(lhs2 - rhs2) > 1) {
+            problems.push('공가세대 합계.' + k + '(' + lhs2 +
+              ') ≠ 미분양+미납(' + rhs2 + ')');
+            level = 'error';
+          }
+        }
+      });
+    }
+
+    // 4. 장기미처리공종: 상위 합계 + 기타 = 합계
+    if (sd.장기미처리공종 && sd.장기미처리공종.합계) {
+      var lt = sd.장기미처리공종;
+      ['금월', '전월'].forEach(function (k) {
+        if (lt.합계 && lt.상위 && lt.기타) {
+          var top = 0;
+          lt.상위.forEach(function (t) { top += +t[k] || 0; });
+          var etc = +lt.기타[k] || 0;
+          var total = +lt.합계[k] || 0;
+          if (Math.abs(top + etc - total) > 1) {
+            problems.push('장기미처리공종.' + k + ' 상위(' + top + ')+기타(' + etc +
+              ')=' + (top + etc) + ' ≠ 합계(' + total + ')');
+            level = 'error';
+          }
+        }
+      });
+    }
+
+    // 5. 기준일이 데이터_최대일이 속한 월의 말일과 호환되는지
+    if (sd.기준일 && sd.데이터_최대일) {
+      var bm = String(sd.기준일).slice(0, 7);     // YYYY-MM
+      var dm = String(sd.데이터_최대일).slice(0, 7);
+      if (bm > dm) {
+        problems.push('기준일(' + sd.기준일 + ')이 데이터 최대일(' + sd.데이터_최대일 + ')보다 미래');
+        level = 'error';
+      }
+    }
+
+    var summary;
+    if (level === 'error') summary = '⚠ 수치 불일치 ' + problems.length + '건';
+    else if (level === 'warn') summary = '⚠ ' + problems[0];
+    else summary = '✓ 정상';
+
+    return {
+      ok: level === 'ok',
+      level: level,
+      version: ver,
+      isStale: isStale,
+      problems: problems,
+      summary: summary
+    };
+  }
+
   var API = {
     analyze: analyze,
     prepare: prepare,
     toDayTS: toDayTS,
     sanitizeSiteData: sanitizeSiteData,
+    verifyIntegrity: verifyIntegrity,
+    ENGINE_VERSION: ENGINE_VERSION,
     REGION_MAP: REGION_MAP,
     _internal: {
       detectBaseDate: detectBaseDate, calcStatus: calcStatus,
@@ -1468,12 +1629,12 @@
     if (weekly.length) {
       var first = weekly[0], last = weekly[weekly.length - 1];
       var cxF = M.left + barSlot * 0.5, cxL = M.left + barSlot * (n - 0.5);
-      [[cxF + 25, ly(first.전체접수), first.전체접수, L_RECEIVED, 'start', -2],
-       [cxF + 25, ly(first.누계처리), first.누계처리, L_PROCESSED, 'start', 8],
-       [cxL - 8, ly(last.전체접수), last.전체접수, L_RECEIVED, 'end', -2],
-       [cxL - 8, ly(last.누계처리), last.누계처리, L_PROCESSED, 'end', 12]
+      [[cxF + 28, ly(first.전체접수), first.전체접수, L_RECEIVED, 'start', -4],
+       [cxF + 28, ly(first.누계처리), first.누계처리, L_PROCESSED, 'start', 12],
+       [cxL - 12, ly(last.전체접수), last.전체접수, L_RECEIVED, 'end', -4],
+       [cxL - 12, ly(last.누계처리), last.누계처리, L_PROCESSED, 'end', 14]
       ].forEach(function (a) {
-        s.push('<text x="' + f1(a[0]) + '" y="' + f1(a[1] + a[5]) + '" font-family="Malgun Gothic, sans-serif" font-size="11" fill="' + a[3] + '" font-weight="700" text-anchor="' + a[4] + '" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">' + a[2].toLocaleString('en-US') + '</text>');
+        s.push('<text x="' + f1(a[0]) + '" y="' + f1(a[1] + a[5]) + '" font-family="Malgun Gothic, sans-serif" font-size="12" fill="' + a[3] + '" font-weight="700" text-anchor="' + a[4] + '" filter="url(#textShadow)" stroke="white" stroke-width="3" paint-order="stroke fill">' + a[2].toLocaleString('en-US') + '</text>');
       });
     }
     var lx = M.left, lyv = H - 12;
@@ -1652,7 +1813,8 @@
     d.월별.forEach(function (m) { if (m.label === baseMonth + '월') baseRow = m; });
     if (!baseRow) baseRow = d.월별[d.월별.length - 1];
     var e = d.공가세대.합계;
-    var outputDate = opts.outputDate || new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+    var outputDate = d.출력일 || opts.outputDate ||
+      new Date().toISOString().slice(0, 10).replace(/-/g, '.');
 
     // 헤더
     var html = '<div class="report-header"><div>' +
@@ -2022,8 +2184,8 @@
         p1[1].toFixed(1) + ' A ' + R + ' ' + R + ' 0 ' + large + ' 1 ' +
         p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + ' Z" fill="' + color +
         '" stroke="white" stroke-width="3"/>');
-      // 중앙 라벨: 큰 조각에만 (원래 규칙). 폰트 18/13
-      if (frac >= 0.04) {
+      // 중앙 라벨: 원본 규칙 — 작은 조각에도 표시. 폰트 10%↑ 18px, 그 외 13px
+      if (frac >= 0.015) {
         var mid = polar(cx, cy, R * 0.62, deg + sweep / 2);
         var fs = frac >= 0.10 ? 18 : 13;
         labels.push('<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) +
@@ -2043,7 +2205,7 @@
         pct + '%</span></div>');
       deg += sweep;
     });
-    var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:170px;height:auto;display:block;">' +
+    var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:200px;">' +
       paths.join('') + '<circle cx="200" cy="200" r="26" fill="white"/>' +
       labels.join('') + '</svg>';
     return { svg: svg, legend: legend.join(''), total: total };
@@ -2070,25 +2232,28 @@
     updateDonutCard(cards[0], sites.map(function (s) { return { label: s.현장명, value: s.접수 }; }), siteShort);
     updateDonutCard(cards[1], sites.map(function (s) { return { label: s.현장명, value: s.미처리 }; }), siteShort);
     updateDonutCard(cards[2], sites.map(function (s) { return { label: s.현장명, value: s.장기 }; }), siteShort);
-    // 상위 공종 도넛 — 공종명 원문 그대로, 상위 12개로 제한 (원래 도넛 규칙)
+    // 상위 공종 도넛 — siteData의 전체 공종별 미처리 집계 기준.
+    // 상위 N개 + 나머지를 '기타'로 묶음 (원본 도넛 규칙).
     if (cards[3]) {
       var agg = {};
       sites.forEach(function (s) {
+        // _tradesAll = 엔진이 만든 공종별 전체 미처리 집계 (siteData 있는 현장만 보유)
         if (s._tradesAll) {
-          // 공종별 전체 미처리 집계 (정확)
           s._tradesAll.forEach(function (t) {
             agg[t.공종] = (agg[t.공종] || 0) + t.미처리;
-          });
-        } else if (s._trades) {
-          // 폴백: 장기미처리 상위 공종만
-          s._trades.forEach(function (t) {
-            agg[t.공종] = (agg[t.공종] || 0) + t.금월;
           });
         }
       });
       var items = Object.keys(agg).map(function (k) { return { label: k, value: agg[k] }; });
       items.sort(function (a, b) { return b.value - a.value; });
-      if (items.length > 12) items = items.slice(0, 12);
+      // 상위 11개 + 기타(나머지 합) = 최대 12 슬라이스
+      var TOP = 11;
+      if (items.length > TOP) {
+        var etcSum = 0;
+        for (var ti = TOP; ti < items.length; ti++) etcSum += items[ti].value;
+        items = items.slice(0, TOP);
+        if (etcSum > 0) items.push({ label: '기타', value: etcSum });
+      }
       if (items.length) updateDonutCard(cards[3], items, tradeLabel);
     }
   }
@@ -2101,13 +2266,6 @@
     else {
       var firstSvg = dash.querySelector('.section svg');
       if (firstSvg) firstSvg.outerHTML = chartHtml;
-    }
-    // 반영 현장 수 안내
-    var note = dash.querySelector('#dash-weekly-note');
-    if (note) {
-      note.textContent = '※ 주차별 추이는 업로드된 ' + sitesData.length +
-        '개 현장 기준 합산입니다. 12개 현장이 모두 업로드되면 팀 전체 추이가 됩니다.';
-      note.style.display = 'block';
     }
   }
 
@@ -2151,7 +2309,6 @@
     updateKPI(dash, sites);
     updateRegionCards(dash, sites);
     updateIssues(dash, sites);
-    updateDonuts(dash, sites);
     // B단계: 권역 이동이 반영된 layout으로 권역 카드 재배치
     if (window.LayoutManager) {
       try {
@@ -2159,14 +2316,40 @@
         if (L) rebuildRegionLayout(dash, sites, L);
       } catch (e) { console.warn('[대시보드] 권역 재배치 오류', e); }
     }
-    // 주차별 추이 차트: siteData가 있는 현장이 1개 이상일 때만 갱신
-    // (siteData 없는 기존 현장은 주차별 원본이 없어 합산 불가)
+
+    // 도넛 차트: 항상 전체 패널(sites = siteData 있는 현장 + 없는 패널) 기준으로 집계.
+    updateDonuts(dash, sites);
+
+    // 주차별 추이 차트: siteData가 있는 현장만 합산해 갱신.
+    // (siteData 없는 기존 현장은 주차별 원본이 없어 합산 불가 — 있는 것만이라도 갱신)
     if (rawSiteData.length) updateWeeklyChart(dash, rawSiteData);
+    // 대시보드 헤더 출력일: siteData들의 출력일 중 가장 최근값
+    var outEl = dash.querySelector('#dash-output-date');
+    if (outEl && rawSiteData.length) {
+      var latest = '';
+      rawSiteData.forEach(function (sd) {
+        if (sd.출력일 && sd.출력일 > latest) latest = sd.출력일;
+      });
+      if (latest) outEl.textContent = latest;
+    }
   }
 
   var API = { updateDashboard: updateDashboard };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.DashboardRenderer = API;
+
+  /* 대시보드 버튼 클릭 시 재집계 — 매번 최신 패널 기준으로 대시보드 갱신.
+     12개 패널 숫자 읽기는 밀리초 단위라 부하 거의 없음. */
+  if (typeof document !== 'undefined') {
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('#dashboard-btn, .dashboard-btn');
+      if (!btn) return;
+      setTimeout(function () {
+        try { updateDashboard(window.__latestSiteData || null); }
+        catch (err) { console.warn('[대시보드] 재집계 오류', err); }
+      }, 50);
+    });
+  }
 
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2194,7 +2377,13 @@
     font-family: 'Malgun Gothic', sans-serif;
   }
   .sidebar .admin-sidebar-btn:hover { background: #0f3260; }
-  .sidebar .admin-sidebar-btn .ad-icon { font-size: 15px; line-height: 1; }
+  .sidebar .admin-sidebar-btn .ad-icon {
+    font-size: 14px; line-height: 1;
+    width: 18px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    /* 컬러풀 이모지 폰트 비활성 → 글자처럼 단정한 모노 톤으로 강제 */
+    font-family: 'Malgun Gothic', sans-serif;
+  }
   .sidebar .admin-sidebar-btn .ad-label { flex: 1; text-align: left; }
   .sidebar .admin-sidebar-btn .ad-badge {
     background: #fdbb31; color: #08213f;
@@ -2269,6 +2458,15 @@
   .admin-remove-btn:hover { background: #b03030; }
   .admin-remove-btn.confirm { background: #6b1010; }
   .admin-empty { color: #9ca3af; font-size: 11.5px; padding: 14px 4px; text-align: center; }
+  /* siteData 전체 초기화 버튼 */
+  .admin-reset-btn {
+    width: 100%; background: #6b1010; color: white; border: none;
+    padding: 9px; border-radius: 4px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: 'Malgun Gothic', sans-serif; margin-top: 4px;
+  }
+  .admin-reset-btn:hover { background: #8a1818; }
+  .admin-reset-btn.confirm { background: #961e1e; }
+  .admin-reset-btn:disabled { background: #9ca3af; cursor: default; }
   /* B단계: 사이드바 드래그 이동 */
   .sidebar .site-item[draggable="true"] {
     cursor: grab;
@@ -2289,6 +2487,340 @@
   }
   .admin-restore-btn:hover { background: #265e99; }
   @media print { .admin-sidebar-btn, .admin-overlay { display: none !important; } }
+
+  /* ===== 1차: 정합성 배지 ===== */
+  .sidebar .site-item { position: relative; }
+  .sidebar .site-item .site-health-badge {
+    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 10px; font-weight: 700; line-height: 16px; text-align: center;
+    color: white; font-family: 'Malgun Gothic', sans-serif;
+    pointer-events: auto; cursor: help;
+  }
+  .sidebar .site-item .site-health-badge.error { background: #c0392b; }
+  .sidebar .site-item .site-health-badge.warn { background: #d39e00; }
+  .sidebar.collapsed .site-item .site-health-badge { display: none; }
+
+  /* 패널 헤더 정합성 경고 줄 (renderer가 아니라 integration이 동적 삽입) */
+  .site-panel .integrity-warning {
+    margin: 8px 18px 0 18px; padding: 7px 12px; border-radius: 4px;
+    font-size: 11.5px; font-weight: 600; font-family: 'Malgun Gothic', sans-serif;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .site-panel .integrity-warning.error { background: #fdecea; color: #961e1e; border-left: 3px solid #c0392b; }
+  .site-panel .integrity-warning.warn  { background: #fef6e0; color: #6e4d00; border-left: 3px solid #d39e00; }
+  .site-panel .integrity-warning .iw-icon { font-size: 13px; }
+  .site-panel .integrity-warning details { margin-left: auto; cursor: pointer; }
+  .site-panel .integrity-warning details summary { font-size: 11px; color: inherit; opacity: 0.8; }
+  .site-panel .integrity-warning details ul { margin: 6px 0 0 0; padding-left: 18px; font-size: 10.5px; font-weight: 500; }
+
+  /* ===== 2차: 비밀번호 게이트 모달 ===== */
+  body.gate-locked { overflow: hidden; }
+  body.gate-locked .app-layout,
+  body.gate-locked #save-indicator,
+  body.gate-locked .admin-sidebar-btn { visibility: hidden; }
+  #pw-gate {
+    position: fixed; inset: 0; background: linear-gradient(135deg,#08213f 0%, #1a4a7a 100%);
+    z-index: 99999; display: flex; align-items: center; justify-content: center;
+    font-family: 'Malgun Gothic', sans-serif;
+  }
+  #pw-gate.hidden { display: none; }
+  .pw-box {
+    background: white; width: 360px; max-width: 92vw; padding: 28px 26px 22px 26px;
+    border-radius: 8px; box-shadow: 0 16px 50px rgba(0,0,0,0.4);
+  }
+  .pw-title { font-size: 16px; font-weight: 700; color: #08213f; margin-bottom: 6px; }
+  .pw-sub { font-size: 11.5px; color: #6b7280; margin-bottom: 18px; line-height: 1.5; }
+  .pw-input {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    border: 1.5px solid #d1d5db; border-radius: 4px;
+    font-family: inherit; letter-spacing: 0.1em;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .pw-input:focus {
+    outline: none; border-color: #fdbb31;
+    box-shadow: 0 0 0 3px rgba(253,187,49,0.2);
+  }
+  .pw-btn {
+    width: 100%; margin-top: 12px; padding: 10px;
+    background: #08213f; color: white; border: none; border-radius: 4px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: background 0.15s;
+  }
+  .pw-btn:hover { background: #1a4a7a; }
+  .pw-btn:disabled { background: #9ca3af; cursor: default; }
+  .pw-msg { margin-top: 10px; font-size: 11.5px; min-height: 16px; }
+  .pw-msg.err { color: #961e1e; font-weight: 700; }
+  .pw-msg.ok { color: #006e2e; font-weight: 700; }
+
+  /* 비밀번호 변경 폼 (관리자 모달 안) */
+  .pw-change-form label {
+    display: block; font-size: 11.5px; font-weight: 600; color: #08213f;
+    margin: 10px 0 4px 0;
+  }
+  .pw-change-form input {
+    width: 100%; padding: 8px 10px; font-size: 12.5px;
+    border: 1.5px solid #d1d5db; border-radius: 4px; font-family: inherit;
+    letter-spacing: 0.1em;
+  }
+  .pw-change-form input:focus {
+    outline: none; border-color: #fdbb31;
+    box-shadow: 0 0 0 3px rgba(253,187,49,0.15);
+  }
+  .pw-change-form .pw-save {
+    margin-top: 14px; padding: 9px 16px; background: #08213f; color: white;
+    border: none; border-radius: 4px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .pw-change-form .pw-save:hover { background: #1a4a7a; }
+  .pw-change-form .pw-save:disabled { background: #9ca3af; cursor: default; }
+  .pw-change-msg { margin-top: 10px; font-size: 11.5px; min-height: 16px; }
+  .pw-change-msg.err { color: #961e1e; font-weight: 700; }
+  .pw-change-msg.ok { color: #006e2e; font-weight: 700; }
+
+  /* ===== 4차: PDF 출력 버튼 — admin-sidebar-btn 스타일을 그대로 상속 ===== */
+  /* 인쇄 시에는 다른 사이드바 요소들과 함께 숨김 (아래 @media print 블록에서 처리) */
+  @media print { .pdf-export-btn { display: none !important; } }
+
+  /* ===== 4차: A4 인쇄 전용 스타일시트 — 회의 자료용 2장 레이아웃 ===== */
+  @media print {
+    /* 색상·배경 보존 (도넛 범례 색박스, KPI 카드 배경 등) */
+    body.print-a4, body.print-a4 * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body.print-a4 { background: white !important; padding: 0 !important; font-size: 9.5pt; }
+    body.print-a4 .sidebar,
+    body.print-a4 .admin-sidebar-btn,
+    body.print-a4 .admin-overlay,
+    body.print-a4 #pw-gate,
+    body.print-a4 #save-indicator,
+    body.print-a4 #mobile-scrim,
+    body.print-a4 .pdf-export-btn,
+    body.print-a4 .integrity-warning { display: none !important; }
+    body.print-a4 .main-content { padding: 0 !important; margin: 0 !important; }
+    body.print-a4 .site-panel { display: none !important; }
+    body.print-a4 .site-panel.print-target {
+      display: block !important; padding: 0 !important; margin: 0 !important;
+    }
+    body.print-a4 .collapsible-table { display: table !important; }
+    body.print-a4 .toggle-btn { display: none !important; }
+
+    /* ----- 헤더: 슬림하게 ----- */
+    body.print-a4 .site-panel.print-target > div:first-child { padding: 6px 10px !important; margin-bottom: 5px !important; }
+    body.print-a4 .site-panel.print-target h1,
+    body.print-a4 .site-panel.print-target .title { font-size: 15pt !important; margin: 0 !important; }
+    body.print-a4 .site-panel.print-target .subtitle { font-size: 8.5pt !important; margin-top: 1px !important; }
+
+    /* ----- KPI 5장 한 줄: 폭 균일, 라벨 줄바꿈 금지 ----- */
+    body.print-a4 .db-kpi-row {
+      display: grid !important;
+      grid-template-columns: repeat(5, 1fr) !important;
+      gap: 3px !important;
+      margin: 0 0 5px 0 !important;
+      padding: 0 !important;
+    }
+    body.print-a4 .db-kpi-card {
+      padding: 4px 6px !important;
+      min-height: 0 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+    body.print-a4 .db-kpi-label {
+      font-size: 7pt !important; margin-bottom: 1px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important; text-overflow: ellipsis !important;
+    }
+    body.print-a4 .db-kpi-value {
+      font-size: 12.5pt !important; line-height: 1.05 !important;
+      white-space: nowrap !important;
+    }
+    body.print-a4 .db-kpi-sub { font-size: 6.5pt !important; margin-top: 1px !important; white-space: nowrap !important; }
+
+    /* ----- 섹션 공통 ----- */
+    body.print-a4 .section {
+      page-break-inside: avoid;
+      margin-bottom: 5px !important;
+    }
+    body.print-a4 .section > div:first-child { /* 섹션 헤더 */
+      padding: 4px 8px !important;
+      font-size: 10pt !important;
+    }
+    body.print-a4 .section > div:not(:first-child) { padding: 6px 8px !important; }
+
+    /* ----- 주차별 차트 ----- */
+    body.print-a4 .site-panel svg { max-width: 100% !important; height: auto !important; }
+
+    /* ===== 첫 페이지 강제: 도넛(현황분석) 섹션까지 첫 페이지에 ===== */
+    /* 권역별 섹션 앞에 무조건 페이지 break (JS가 .pdf-page-break 클래스 부여) */
+    body.print-a4 .pdf-page-break {
+      break-before: page !important;
+      page-break-before: always !important;
+    }
+
+    /* ----- 도넛 4장: 한 줄, 범례 여유 ----- */
+    body.print-a4 .site-panel .db-donut-card {
+      padding: 5px 7px !important;
+      page-break-inside: avoid !important;
+    }
+    body.print-a4 .site-panel .db-donut-card svg {
+      max-width: 140px !important; max-height: 140px !important;
+      width: 140px !important; margin: 0 auto !important; display: block !important;
+    }
+    body.print-a4 .site-panel .pie-legend {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 3px 10px !important;             /* 행간격·열간격 충분히 */
+      margin-top: 6px !important;
+      font-size: 7.5pt !important;
+    }
+    body.print-a4 .site-panel .pie-legend > div {
+      font-size: 7.5pt !important; gap: 4px !important;
+    }
+    body.print-a4 .site-panel .pie-legend span[style*="background"] {
+      width: 8px !important; height: 8px !important; border-radius: 1px !important;
+      flex-shrink: 0 !important;
+    }
+    body.print-a4 .site-panel .pie-legend span[style*="min-width:44px"] { min-width: 40px !important; font-weight: 700 !important; }
+    body.print-a4 .site-panel .pie-legend span[style*="min-width:30px"] { min-width: 26px !important; font-size: 7pt !important; }
+    body.print-a4 .site-panel .db-donut-card > div[style*="font-size:13px"] { font-size: 9.5pt !important; margin-bottom: 2px !important; }
+    body.print-a4 .site-panel .db-donut-card > div[style*="font-size:10px"] { font-size: 7pt !important; margin-bottom: 4px !important; }
+
+    /* ===== 두번째 페이지: 권역별 + 이슈 + 종합의견 ===== */
+    /* 권역별 박스를 풀폭으로 — 3열이지만 각 카드가 페이지 너비를 충분히 사용 */
+    body.print-a4 .site-panel .db-region-cards {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
+      gap: 6px !important;
+      margin-bottom: 6px !important;
+      width: 100% !important;
+    }
+    body.print-a4 .site-panel .db-region-card {
+      page-break-inside: avoid !important;
+      min-width: 0 !important;
+    }
+    body.print-a4 .site-panel .db-region-header {
+      padding: 5px 9px !important;
+      font-size: 10pt !important;
+    }
+    body.print-a4 .site-panel .db-region-header .r-badge { font-size: 7pt !important; padding: 1px 5px !important; }
+
+    /* 권역 안의 박스 — "당월 처리 소계" 같은 라벨이 한 줄에 들어오도록 nowrap */
+    body.print-a4 .site-panel .db-region-card div[style*="padding:5px 6px"],
+    body.print-a4 .site-panel .db-region-card div[style*="padding:8px 10px"] {
+      padding: 4px 5px !important;
+    }
+    body.print-a4 .site-panel .db-region-card div[style*="font-size:10px"] {
+      font-size: 7pt !important;
+      white-space: nowrap !important;   /* "당월 처리 소계" 줄바꿈 차단 */
+      overflow: hidden !important; text-overflow: ellipsis !important;
+    }
+    body.print-a4 .site-panel .db-region-card div[style*="font-size:14px"] {
+      font-size: 10pt !important;
+      white-space: nowrap !important;
+    }
+    body.print-a4 .site-panel .db-region-card div[style*="font-size:12px"] {
+      font-size: 8.5pt !important;
+      white-space: nowrap !important;
+      overflow: hidden !important; text-overflow: ellipsis !important;
+    }
+    body.print-a4 .site-panel .db-region-card div[style*="font-size:9px"] { font-size: 7pt !important; white-space: nowrap !important; }
+
+    /* ----- 이슈 카드: 3열에서 2열로, 폰트 컴팩트 ----- */
+    body.print-a4 .site-panel .db-issue-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 5px !important;
+    }
+    body.print-a4 .site-panel .insight-block { page-break-inside: avoid !important; padding: 6px 8px !important; }
+    body.print-a4 .site-panel .ib-title { font-size: 9pt !important; margin-bottom: 2px !important; }
+    body.print-a4 .site-panel .ib-body  { font-size: 8pt !important; line-height: 1.35 !important; }
+    body.print-a4 .site-panel .ib-tag   { font-size: 6.5pt !important; padding: 1px 5px !important; }
+
+    /* ----- 종합 의견 (현 상태 유지) ----- */
+    body.print-a4 .site-panel .team-op,
+    body.print-a4 .site-panel [class*="opinion"] {
+      page-break-inside: avoid !important;
+    }
+
+    /* ===== 표 잘림·셀 침범 해결 ===== */
+    body.print-a4 .site-panel table.data-table,
+    body.print-a4 .site-panel .trade-table,
+    body.print-a4 .site-panel .empty-status-table {
+      width: 100% !important;
+      table-layout: fixed !important;     /* 셀 폭 강제 고정 */
+      border-collapse: collapse !important;
+      font-size: 8.5pt !important;
+    }
+    body.print-a4 .site-panel table.data-table th,
+    body.print-a4 .site-panel table.data-table td,
+    body.print-a4 .site-panel .trade-table th,
+    body.print-a4 .site-panel .trade-table td,
+    body.print-a4 .site-panel .empty-status-table th,
+    body.print-a4 .site-panel .empty-status-table td {
+      padding: 2px 3px !important;
+      word-break: keep-all !important;
+      overflow-wrap: anywhere !important;  /* 한글이라도 강제 줄바꿈 — 셀 침범 방지 */
+      vertical-align: middle !important;
+      white-space: normal !important;       /* 줄바꿈 허용 */
+    }
+    /* 시공업체명 같은 긴 텍스트가 들어가는 셀은 line-height도 빡빡 */
+    body.print-a4 .site-panel .trade-table td { line-height: 1.25 !important; }
+
+    /* 표를 감싼 컨테이너에 overflow:visible 강제 (잘림 방지) */
+    body.print-a4 .site-panel .panel-section,
+    body.print-a4 .site-panel .section { overflow: visible !important; }
+
+    /* 편집 가능 셀 하이라이트 제거 */
+    body.print-a4 [contenteditable="true"] { outline: none !important; background: transparent !important; }
+    body.print-a4 [data-plan-id] { box-shadow: none !important; background: transparent !important; }
+  }
+
+  /* ===== 5차: 모션 제거됨 (사용자 요청) — 스켈레톤/토스트만 남김 ===== */
+
+  /* 스켈레톤 (Firebase 로딩 중) */
+  .skeleton-block {
+    background: linear-gradient(90deg, #ebedf0 0%, #f5f6f8 50%, #ebedf0 100%);
+    background-size: 200% 100%; animation: skel-shimmer 1.2s ease-in-out infinite;
+    border-radius: 4px; min-height: 16px;
+  }
+  @keyframes skel-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 토스트 알림 (좌하단) */
+  #toast-zone {
+    position: fixed; left: 16px; bottom: 16px; z-index: 9999;
+    display: flex; flex-direction: column-reverse; gap: 8px; pointer-events: none;
+  }
+  .toast {
+    pointer-events: auto;
+    min-width: 220px; max-width: 360px;
+    background: #08213f; color: white; padding: 10px 14px;
+    border-radius: 4px; font-size: 12px; font-weight: 600;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+    font-family: 'Malgun Gothic', sans-serif;
+    animation: toast-in 0.28s ease both;
+  }
+  .toast.ok { background: #006e2e; }
+  .toast.warn { background: #6e4d00; }
+  .toast.err { background: #961e1e; }
+  .toast.leaving { animation: toast-out 0.22s ease both; }
+  @keyframes toast-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes toast-out {
+    from { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(20px); opacity: 0; }
+  }
+
+  /* 접근성: 모션 줄이기 환경 설정 존중 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001s !important;
+      transition-duration: 0.001s !important;
+    }
+  }
 </style>
 <style>
 /* ===== 모바일 반응형 패치 ===== */
@@ -2398,6 +2930,16 @@
 <!-- ====================================================================== -->
 </head>
 <body>
+<div id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-title">하자처리 리포트 — 접속 인증</div>
+    <div class="pw-sub">처음 접속하신 경우 관리자에게 비밀번호를 받아 입력하세요. 한 번 입력하면 이 기기에서는 다시 묻지 않습니다.</div>
+    <input type="password" id="pw-input" class="pw-input" autocomplete="current-password" autofocus>
+    <button class="pw-btn" id="pw-submit">접속</button>
+    <div class="pw-msg" id="pw-msg"></div>
+  </div>
+</div>
+
 
 <div id="save-indicator">✓ 자동 저장 활성</div>
 <!-- ===================== 2단계: 관리자 데이터 관리 모달 ===================== -->
@@ -2408,6 +2950,7 @@
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="upload">데이터 업데이트</button>
         <button class="admin-tab" data-tab="remove">업로드 현장 제거</button>
+        <button class="admin-tab" data-tab="security">비밀번호 변경</button>
       </div>
       <div class="admin-pane active" id="admin-pane-upload">
         <p>전체 하자 목록 엑셀을 올리면 해당 현장 패널이 자동으로 생성·갱신되고 대시보드도 함께 반영되어 모든 사용자에게 공유됩니다. 파일명은 무관하며, 엑셀은 브라우저 안에서만 처리됩니다.</p>
@@ -2416,14 +2959,35 @@
         <div id="admin-result"></div>
       </div>
       <div class="admin-pane" id="admin-pane-remove">
-        <p>업로드를 통해 추가/갱신된 현장 목록입니다. 제거하면 해당 현장 데이터가 모든 사용자에게서 사라집니다. 리포트에 원래 있던 12개 현장은 여기에 표시되지 않습니다.</p>
+        <p>현장을 제거하면 모든 사용자에게서 사라집니다. 업로드로 추가된 현장은 데이터까지 삭제되고, 기존 현장은 화면에서 숨겨집니다(복원 가능).</p>
         <div class="admin-remove-list" id="admin-remove-list"></div>
         <div id="admin-remove-result"></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
+          <p style="font-size:11px;color:#961e1e;">⚠ 옛 데이터가 잘못 표시되거나 현장 순서가 틀어질 때: 아래 버튼으로 업로드 데이터와 사이드바 배치를 모두 초기화하고 엑셀을 다시 올리면 깨끗하게 재구성됩니다. (기존 12개 현장 패널은 그대로 유지됩니다.)</p>
+          <button class="admin-reset-btn" id="admin-reset-btn">업로드 데이터 · 배치 전체 초기화</button>
+          <div id="admin-reset-result"></div>
+        </div>
+      </div>
+      <div class="admin-pane" id="admin-pane-security">
+        <p>리포트 접속 비밀번호를 변경합니다. 변경 즉시 모든 사용자가 다음 접속부터 새 비밀번호를 사용해야 합니다.</p>
+        <div class="pw-change-form">
+          <label for="pw-old">현재 비밀번호</label>
+          <input type="password" id="pw-old" autocomplete="current-password">
+          <label for="pw-new">새 비밀번호</label>
+          <input type="password" id="pw-new" autocomplete="new-password" minlength="4">
+          <label for="pw-new2">새 비밀번호 확인</label>
+          <input type="password" id="pw-new2" autocomplete="new-password" minlength="4">
+          <button class="pw-save" id="pw-save">비밀번호 변경</button>
+          <div class="pw-change-msg" id="pw-change-msg"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 <!-- ============================================================================ -->
+
+<!-- 토스트 영역 -->
+<div id="toast-zone"></div>
 
 
 <div class="app-layout">
@@ -2471,6 +3035,12 @@
 <!-- SIDEBAR_END -->
   </div><!-- /sidebar-inner -->
 
+  <!-- 4차: PDF 출력 버튼 (데이터 업데이트 버튼과 동일 디자인, 그 위에 배치) -->
+  <button class="admin-sidebar-btn pdf-export-btn" id="pdf-export-btn" title="현재 패널을 A4로 저장/인쇄">
+    <span class="ad-icon">&#9636;</span>
+    <span class="ad-label">리포트 출력</span>
+    <span class="ad-badge">PDF</span>
+  </button>
   <!-- 2단계: 데이터 업데이트 버튼 (사이드바 하단, 접으면 자동 숨김) -->
   <button class="admin-sidebar-btn" id="admin-btn" title="엑셀로 리포트 업데이트">
     <span class="ad-icon">&#9881;</span>
@@ -2502,8 +3072,8 @@
     <div class="subtitle" style="font-size:13px;">1·2권역 + 광주권역 · 12개 현장</div>
   </div>
   <div class="meta">
-    <div style="font-size:13px;">기준일: <strong>2026-04-30</strong> · 출력일: 2026.05.16</div>
-    <div class="note">※ 12개 현장 4월 월말 데이터 합산 · 공가세대 점검용 Dummy 건 제외</div>
+    <div style="font-size:13px;">기준일: <strong>2026-04-30</strong> · 출력일: <span id="dash-output-date">2026.05.16</span></div>
+    <div class="note">※ 공가세대 점검용 Dummy 건 제외</div>
   </div>
 </div>
 
@@ -2541,7 +3111,6 @@
   <div class="section-title">
     <span class="badge">⌂</span><span>주차별 추이 한눈에 보기</span>
   </div>
-  <div id="dash-weekly-note" style="display:none;padding:6px 16px 0;background:white;font-size:10.5px;color:#6b7280;"></div>
   <div id="dash-weekly-chart" style="padding:12px 16px;background:white;">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 340" style="width:100%;height:auto;display:block;"><defs><filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0.6" dy="0.6" stdDeviation="0.8" flood-color="#000000" flood-opacity="0.85"/></filter></defs><rect x="65" y="35" width="1325" height="245" fill="white" stroke="#08213f" stroke-width="1"/><g stroke="#d1d5db" stroke-width="0.5" stroke-dasharray="2,2"><line x1="65" y1="231.0" x2="1390" y2="231.0"/><line x1="65" y1="182.0" x2="1390" y2="182.0"/><line x1="65" y1="133.0" x2="1390" y2="133.0"/><line x1="65" y1="84.0" x2="1390" y2="84.0"/></g><g stroke="#eef0f3" stroke-width="0.5"><line x1="138.6" y1="35" x2="138.6" y2="280"/><line x1="212.2" y1="35" x2="212.2" y2="280"/><line x1="285.8" y1="35" x2="285.8" y2="280"/><line x1="359.4" y1="35" x2="359.4" y2="280"/><line x1="433.0" y1="35" x2="433.0" y2="280"/><line x1="506.6" y1="35" x2="506.6" y2="280"/><line x1="580.2" y1="35" x2="580.2" y2="280"/><line x1="653.8" y1="35" x2="653.8" y2="280"/><line x1="727.4" y1="35" x2="727.4" y2="280"/><line x1="801.0" y1="35" x2="801.0" y2="280"/><line x1="874.6" y1="35" x2="874.6" y2="280"/><line x1="948.2" y1="35" x2="948.2" y2="280"/><line x1="1021.8" y1="35" x2="1021.8" y2="280"/><line x1="1095.4" y1="35" x2="1095.4" y2="280"/><line x1="1169.0" y1="35" x2="1169.0" y2="280"/><line x1="1242.6" y1="35" x2="1242.6" y2="280"/><line x1="1316.2" y1="35" x2="1316.2" y2="280"/></g><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#4a5568" text-anchor="end"><text x="57" y="284.0">0</text><text x="57" y="235.0">7,000</text><text x="57" y="186.0">14,000</text><text x="57" y="137.0">21,000</text><text x="57" y="88.0">28,000</text><text x="57" y="39.0">35,000</text></g><text x="65" y="23" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700">미처리(건)</text><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#4a5568" text-anchor="start"><text x="1398" y="284.0">700K</text><text x="1398" y="235.0">715K</text><text x="1398" y="186.0">730K</text><text x="1398" y="137.0">745K</text><text x="1398" y="88.0">760K</text><text x="1398" y="39.0">775K</text></g><text x="1390" y="23" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700">접수·처리(건)</text><rect x="79.7" y="239.8" width="44.2" height="40.2" fill="#c3d7e9"/><rect x="79.7" y="102.9" width="44.2" height="136.9" fill="#ecadad"/><text x="101.8" y="263.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,747</text><text x="101.8" y="175.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,560</text><text x="101.8" y="96.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,307</text><text x="101.8" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="101.8" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="153.3" y="241.9" width="44.2" height="38.1" fill="#c3d7e9"/><rect x="153.3" y="106.4" width="44.2" height="135.4" fill="#ecadad"/><text x="175.4" y="264.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,449</text><text x="175.4" y="178.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,345</text><text x="175.4" y="100.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,794</text><text x="175.4" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="175.4" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="226.9" y="241.5" width="44.2" height="38.5" fill="#c3d7e9"/><rect x="226.9" y="101.3" width="44.2" height="140.1" fill="#ecadad"/><text x="249.0" y="264.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,505</text><text x="249.0" y="175.3" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,020</text><text x="249.0" y="95.3" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,525</text><text x="249.0" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="249.0" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="300.6" y="231.8" width="44.2" height="48.2" fill="#c3d7e9"/><rect x="300.6" y="93.4" width="44.2" height="138.4" fill="#ecadad"/><text x="322.7" y="259.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,886</text><text x="322.7" y="166.6" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,769</text><text x="322.7" y="87.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">26,655</text><text x="322.7" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="322.7" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="374.2" y="227.6" width="44.2" height="52.4" fill="#c3d7e9"/><rect x="374.2" y="89.6" width="44.2" height="138.0" fill="#ecadad"/><text x="396.3" y="257.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">7,489</text><text x="396.3" y="162.6" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,717</text><text x="396.3" y="83.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">27,206</text><text x="396.3" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1월</text><text x="396.3" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">5주</text><rect x="447.8" y="232.6" width="44.2" height="47.4" fill="#c3d7e9"/><rect x="447.8" y="96.9" width="44.2" height="135.7" fill="#ecadad"/><text x="469.9" y="260.3" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,773</text><text x="469.9" y="168.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,390</text><text x="469.9" y="90.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">26,163</text><text x="469.9" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="469.9" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="521.4" y="235.8" width="44.2" height="44.2" fill="#c3d7e9"/><rect x="521.4" y="100.5" width="44.2" height="135.3" fill="#ecadad"/><text x="543.5" y="261.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">6,310</text><text x="543.5" y="172.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,332</text><text x="543.5" y="94.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,642</text><text x="543.5" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="543.5" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="595.0" y="242.9" width="44.2" height="37.1" fill="#c3d7e9"/><rect x="595.0" y="99.5" width="44.2" height="143.4" fill="#ecadad"/><text x="617.1" y="265.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,296</text><text x="617.1" y="175.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,488</text><text x="617.1" y="93.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,784</text><text x="617.1" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="617.1" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="668.6" y="251.3" width="44.2" height="28.7" fill="#c3d7e9"/><rect x="668.6" y="104.2" width="44.2" height="147.1" fill="#ecadad"/><text x="690.7" y="269.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">4,097</text><text x="690.7" y="181.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">21,017</text><text x="690.7" y="98.2" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">25,114</text><text x="690.7" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2월</text><text x="690.7" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="742.2" y="252.1" width="44.2" height="27.9" fill="#c3d7e9"/><rect x="742.2" y="107.8" width="44.2" height="144.3" fill="#ecadad"/><text x="764.3" y="270.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,988</text><text x="764.3" y="183.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">20,615</text><text x="764.3" y="101.8" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,603</text><text x="764.3" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="764.3" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="815.8" y="255.3" width="44.2" height="24.7" fill="#c3d7e9"/><rect x="815.8" y="119.0" width="44.2" height="136.4" fill="#ecadad"/><text x="837.9" y="271.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,527</text><text x="837.9" y="191.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">19,479</text><text x="837.9" y="113.0" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">23,006</text><text x="837.9" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="837.9" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="889.4" y="253.0" width="44.2" height="27.0" fill="#c3d7e9"/><rect x="889.4" y="125.5" width="44.2" height="127.5" fill="#ecadad"/><text x="911.5" y="270.5" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,862</text><text x="911.5" y="193.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">18,210</text><text x="911.5" y="119.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">22,072</text><text x="911.5" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="911.5" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="963.1" y="252.8" width="44.2" height="27.2" fill="#c3d7e9"/><rect x="963.1" y="127.3" width="44.2" height="125.5" fill="#ecadad"/><text x="985.2" y="270.4" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,886</text><text x="985.2" y="194.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,924</text><text x="985.2" y="121.3" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">21,810</text><text x="985.2" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3월</text><text x="985.2" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="1036.7" y="254.4" width="44.2" height="25.6" fill="#c3d7e9"/><rect x="1036.7" y="131.6" width="44.2" height="122.8" fill="#ecadad"/><text x="1058.8" y="271.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,652</text><text x="1058.8" y="197.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,545</text><text x="1058.8" y="125.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">21,197</text><text x="1058.8" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1058.8" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">1주</text><rect x="1110.3" y="255.7" width="44.2" height="24.3" fill="#c3d7e9"/><rect x="1110.3" y="135.5" width="44.2" height="120.3" fill="#ecadad"/><text x="1132.4" y="271.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">3,467</text><text x="1132.4" y="199.7" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">17,179</text><text x="1132.4" y="129.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">20,646</text><text x="1132.4" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1132.4" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">2주</text><rect x="1183.9" y="238.5" width="44.2" height="41.5" fill="#c3d7e9"/><rect x="1183.9" y="121.4" width="44.2" height="117.1" fill="#ecadad"/><text x="1206.0" y="263.2" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">5,933</text><text x="1206.0" y="183.9" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,723</text><text x="1206.0" y="115.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">22,656</text><text x="1206.0" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1206.0" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">3주</text><rect x="1257.5" y="222.2" width="44.2" height="57.8" fill="#c3d7e9"/><rect x="1257.5" y="107.5" width="44.2" height="114.6" fill="#ecadad"/><text x="1279.6" y="255.1" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">8,264</text><text x="1279.6" y="168.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,374</text><text x="1279.6" y="101.5" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">24,638</text><text x="1279.6" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1279.6" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4주</text><rect x="1331.1" y="201.7" width="44.2" height="78.3" fill="#c3d7e9"/><rect x="1331.1" y="87.9" width="44.2" height="113.8" fill="#ecadad"/><text x="1353.2" y="244.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#08213f" font-weight="700" text-anchor="middle">11,184</text><text x="1353.2" y="148.8" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#5a0c0c" font-weight="700" text-anchor="middle">16,259</text><text x="1353.2" y="81.9" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#08213f" font-weight="700" text-anchor="middle">27,443</text><text x="1353.2" y="296.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">4월</text><text x="1353.2" y="310.0" font-family="Malgun Gothic, sans-serif" font-size="10.5" fill="#4a5568" text-anchor="middle">마감</text><polyline points="101.8,178.6 175.4,173.2 249.0,164.4 322.6,153.7 396.2,144.8 469.9,139.7 543.5,133.5 617.1,130.7 690.7,124.5 764.3,120.1 837.9,115.5 911.5,110.3 985.1,105.1 1058.8,101.2 1132.4,96.5 1206.0,84.2 1279.6,72.1 1353.2,59.8" fill="none" stroke="#fdbb31" stroke-width="2.4"/><polyline points="101.8,261.2 175.4,254.2 249.0,247.8 322.6,240.8 396.2,233.7 469.9,225.2 543.5,217.3 617.1,215.0 690.7,206.5 764.3,200.4 837.9,190.7 911.5,182.4 985.1,176.4 1058.8,170.5 1132.4,163.9 1206.0,158.2 1279.6,152.6 1353.2,149.4" fill="none" stroke="#265e99" stroke-width="2.4"/><circle cx="101.8" cy="178.6" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="101.8" cy="261.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="175.4" cy="173.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="175.4" cy="254.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="249.0" cy="164.4" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="249.0" cy="247.8" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="322.6" cy="153.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="322.6" cy="240.8" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="396.2" cy="144.8" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="396.2" cy="233.7" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="469.9" cy="139.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="469.9" cy="225.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="543.5" cy="133.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="543.5" cy="217.3" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="617.1" cy="130.7" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="617.1" cy="215.0" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="690.7" cy="124.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="690.7" cy="206.5" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="764.3" cy="120.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="764.3" cy="200.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="837.9" cy="115.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="837.9" cy="190.7" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="911.5" cy="110.3" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="911.5" cy="182.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="985.1" cy="105.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="985.1" cy="176.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1058.8" cy="101.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1058.8" cy="170.5" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1132.4" cy="96.5" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1132.4" cy="163.9" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1206.0" cy="84.2" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1206.0" cy="158.2" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1279.6" cy="72.1" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1279.6" cy="152.6" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><circle cx="1353.2" cy="59.8" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><circle cx="1353.2" cy="149.4" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><text x="126.8" y="176.6" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#fdbb31" font-weight="700" text-anchor="start" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">731,040</text><text x="126.8" y="269.2" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#265e99" font-weight="700" text-anchor="start" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">705,733</text><text x="1345.2" y="57.8" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#fdbb31" font-weight="700" text-anchor="end" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">767,418</text><text x="1345.2" y="161.4" font-family="Malgun Gothic, sans-serif" font-size="11" fill="#265e99" font-weight="700" text-anchor="end" filter="url(#textShadow)" stroke="white" stroke-width="2.5" paint-order="stroke fill">739,975</text><g font-family="Malgun Gothic, sans-serif" font-size="11" fill="#1a1a1a"><rect x="65" y="317" width="14" height="12" fill="#ecadad"/><text x="84" y="327">장기미처리</text><rect x="160" y="317" width="14" height="12" fill="#c3d7e9"/><text x="179" y="327">일반하자</text><line x1="250" y1="323" x2="270" y2="323" stroke="#fdbb31" stroke-width="2.4"/><circle cx="260" cy="323" r="3" fill="#fdbb31" stroke="white" stroke-width="1.2"/><text x="276" y="327">전체 접수</text><line x1="350" y1="323" x2="370" y2="323" stroke="#265e99" stroke-width="2.4"/><circle cx="360" cy="323" r="3" fill="#265e99" stroke="white" stroke-width="1.2"/><text x="376" y="327">누계 처리</text></g></svg>
   </div>
@@ -13096,6 +13665,47 @@
     });
   });
 
+  /* ---- siteData 전체 초기화 (옛 손상 데이터 정리용) ---- */
+  var resetBtn = document.getElementById('admin-reset-btn');
+  var resetResult = document.getElementById('admin-reset-result');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      if (!FB.ready) {
+        if (resetResult) resetResult.innerHTML =
+          '<div class="admin-msg err">Firebase 미설정 — 초기화할 수 없습니다.</div>';
+        return;
+      }
+      if (!resetBtn.classList.contains('confirm')) {
+        resetBtn.classList.add('confirm');
+        resetBtn.textContent = '정말 초기화하려면 한번 더 누르세요';
+        return;
+      }
+      resetBtn.disabled = true;
+      resetBtn.textContent = '초기화 중...';
+      // siteData + layout 둘 다 삭제 (옛 손상 데이터 + 오염된 사이드바 배치)
+      Promise.all([
+        FB.db.ref('siteData').remove(),
+        FB.db.ref('layout').remove()
+      ]).then(function () {
+        if (resetResult) resetResult.innerHTML =
+          '<div class="admin-msg ok">✓ 업로드 데이터와 배치를 모두 초기화했습니다. 엑셀을 다시 올리면 깨끗하게 재구성됩니다.</div>';
+        resetBtn.classList.remove('confirm');
+        resetBtn.textContent = '업로드 데이터 · 배치 전체 초기화';
+        resetBtn.disabled = false;
+        // 사이드바를 원본 순서로 즉시 복원
+        if (window.LayoutManager) {
+          try { window.LayoutManager.applyLayout(null); } catch (e) {}
+        }
+      }).catch(function (e) {
+        resetBtn.disabled = false;
+        resetBtn.classList.remove('confirm');
+        resetBtn.textContent = '업로드 데이터 · 배치 전체 초기화';
+        if (resetResult) resetResult.innerHTML =
+          '<div class="admin-msg err">초기화 실패: ' + escHtml(e.message) + '</div>';
+      });
+    });
+  }
+
   /* ---- 제거 목록 렌더링 (전체 현장: 기존 + 업로드) ---- */
   function renderRemoveList() {
     if (!removeListEl) return;
@@ -13252,7 +13862,33 @@
             return o;
           });
         if (!rows.length) throw new Error('데이터 행을 찾지 못했습니다.');
-        var sd = Engine.analyze(rows);
+
+        // 출력일 추출: AO2 셀의 '...출력시간: 2026-05-18 07:44' 에서 날짜만
+        var 출력일 = null;
+        try {
+          var ao2 = ws['AO2'] && (ws['AO2'].w || ws['AO2'].v);
+          if (ao2) {
+            var m = String(ao2).match(/(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+            if (m) {
+              출력일 = m[1] + '.' +
+                ('0' + m[2]).slice(-2) + '.' + ('0' + m[3]).slice(-2);
+            }
+          }
+          // AO2에 없으면 2행 전체에서 날짜 패턴 탐색
+          if (!출력일 && aoa[1]) {
+            for (var ci = 0; ci < aoa[1].length; ci++) {
+              var cv = aoa[1][ci];
+              if (cv == null) continue;
+              var mm = String(cv).match(/출력시간[:\s]*(\d{4})[-.\/](\d{1,2})[-.\/](\d{1,2})/);
+              if (mm) {
+                출력일 = mm[1] + '.' + ('0' + mm[2]).slice(-2) + '.' + ('0' + mm[3]).slice(-2);
+                break;
+              }
+            }
+          }
+        } catch (e) { /* 출력일 추출 실패는 무시 */ }
+
+        var sd = Engine.analyze(rows, { 출력일: 출력일 });
         pending = sd;
         showConfirm(sd);
       } catch (err) {
@@ -13300,6 +13936,63 @@
     });
   }
 
+  /* ---- 정합성 검사 결과를 사이드바 배지로 표시 ---- */
+  function applyHealthFlags(all) {
+    var flags = {};
+    if (!window.DefectEngine || !window.DefectEngine.verifyIntegrity) {
+      window.__siteHealth = flags;
+      return;
+    }
+    Object.keys(all).forEach(function (code) {
+      try {
+        var v = window.DefectEngine.verifyIntegrity(all[code]);
+        flags[code] = v;
+      } catch (e) {
+        flags[code] = { level: 'error', summary: '검사 실패', problems: [String(e)], isStale: true };
+      }
+    });
+    window.__siteHealth = flags;
+
+    // 사이드바 항목에 배지 적용 — 패널 ID는 'panel_XX', siteData는 현장코드 기준이므로
+    // 각 현장의 패널 ID를 찾아 매핑
+    Object.keys(flags).forEach(function (code) {
+      var sd = all[code];
+      if (!sd) return;
+      var panel = findPanelByCode(code, sd.현장명);
+      if (!panel) return;
+      var item = document.querySelector('.sidebar .site-item[data-site="' + panel.id + '"]');
+      if (!item) return;
+
+      // 기존 배지 제거
+      var old = item.querySelector('.site-health-badge');
+      if (old) old.remove();
+
+      var v = flags[code];
+      if (v.level === 'ok') return;
+
+      var badge = document.createElement('span');
+      badge.className = 'site-health-badge ' + v.level;
+      badge.textContent = (v.level === 'error') ? '!' : '⟳';
+      badge.title = v.summary + (v.problems.length ? ' — ' + v.problems.slice(0, 3).join(' / ') : '');
+      item.appendChild(badge);
+    });
+  }
+
+  function findPanelByCode(code, siteName) {
+    // 자동 생성 패널은 data-site-code 속성을 가짐 — 가장 정확한 매칭
+    var p = document.querySelector('.site-panel[data-site-code="' + code + '"]');
+    if (p) return p;
+    // 기존 12개 패널은 data-site-code가 없으므로 텍스트로 매칭
+    if (siteName) {
+      var panels = document.querySelectorAll('.site-panel');
+      for (var i = 0; i < panels.length; i++) {
+        var h = panels[i].querySelector('h1, h2, .site-header-title');
+        if (h && h.textContent.indexOf(siteName) >= 0) return panels[i];
+      }
+    }
+    return null;
+  }
+
   /* ---- siteData 실시간 구독: 누가 올리면 모두에게 반영 ---- */
   if (FB.ready) {
     FB.db.ref('siteData').on('value', function (snap) {
@@ -13319,6 +14012,9 @@
           try { window.DashboardRenderer.updateDashboard(all); }
           catch (e) { console.warn('[통합] 대시보드 갱신 오류', e); }
         }
+        // 정합성 검사 — applySiteData 다음에 호출(패널 DOM 준비 후)
+        try { applyHealthFlags(all); }
+        catch (e) { console.warn('[통합] 정합성 검사 오류', e); }
         // 제거 탭이 열려 있으면 목록도 갱신
         var rmPane = document.getElementById('admin-pane-remove');
         if (rmPane && rmPane.classList.contains('active')) renderRemoveList();
@@ -13382,10 +14078,25 @@
     if (!inner || !baseLayout) return;
 
     // 병합: 기본 + Firebase 변경분
+    // order: Firebase order + baseLayout.order 권역별 폴백.
+    // 단, 버전 표식(v>=2)이 없는 옛 layout의 order는 옛 버그로 오염됐을 수 있어 무시.
+    var layoutOrderTrusted = !!(layout && layout.v && layout.v >= LAYOUT_VERSION);
+    var mergedOrder = {};
+    if (baseLayout.order) {
+      Object.keys(baseLayout.order).forEach(function (r) {
+        mergedOrder[r] = baseLayout.order[r].slice();
+      });
+    }
+    if (layoutOrderTrusted && layout.order) {
+      Object.keys(layout.order).forEach(function (r) {
+        var arr = layout.order[r];
+        if (Array.isArray(arr) && arr.length) mergedOrder[r] = arr.slice();
+      });
+    }
     var merged = {
       regions: (layout && layout.regions) ? layout.regions.slice() : baseLayout.regions.slice(),
       assign: {},
-      order: (layout && layout.order) ? layout.order : null,
+      order: mergedOrder,
       removed: (layout && layout.removed) ? layout.removed.slice() : []
     };
     // assign: 기본값에 Firebase 변경분 덮어쓰기
@@ -13612,8 +14323,11 @@
   }
 
   /* layout을 Firebase에 저장 (없으면 로컬 적용만) */
+  var LAYOUT_VERSION = 2;   // order 신뢰 가능 버전. 이 값이 없는 옛 layout의 order는 무시.
+
   function saveLayout(L) {
     var payload = {
+      v: LAYOUT_VERSION,
       regions: L.regions,
       assign: L.assign,
       order: L.order,
@@ -13802,6 +14516,288 @@
   // 패널이 동적으로 새로 그려질 때도 다시 감싸기 (업로드/렌더 후)
   window.__wrapMobileTables = wrapTables;
 })();
+</script>
+
+<script>
+/* ============== 비밀번호 게이트 (가장 먼저 실행) ==============
+   - localStorage 'reportAuthed'='1'이면 자동 통과
+   - 기본 비밀번호 해시(초기 2314916)와 Firebase 저장 해시 중 더 새것을 기준으로 검증
+   - 입력 통과 시 localStorage에 도장 + 게이트 제거
+*/
+(function () {
+  'use strict';
+  var DEFAULT_HASH = 'debc2e78cdedd3fda44e3543b39a4e82a5c31ee6b044223d05370c53820e96d6'; // SHA-256('2314916')
+  var STORAGE_KEY = 'reportAuthed';
+  var STORAGE_VER = 'reportAuthedHash';  // 어떤 해시로 통과했는지(서버 해시가 바뀌면 재인증)
+
+  document.documentElement.classList.add('gate-locked-pre');
+  // body가 아직 없을 수 있으므로 DOMContentLoaded 직후에 클래스 부여
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.classList.add('gate-locked');
+  });
+
+  async function sha256(str) {
+    if (window.crypto && window.crypto.subtle) {
+      var buf = new TextEncoder().encode(str);
+      var d = await window.crypto.subtle.digest('SHA-256', buf);
+      return Array.from(new Uint8Array(d)).map(function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+    }
+    // crypto.subtle 미지원 — 못 들어옴(보안상 차라리 막음)
+    throw new Error('이 브라우저는 SHA-256을 지원하지 않습니다.');
+  }
+  window.__pwSha256 = sha256;
+
+  function getServerHash(cb) {
+    if (window.__FB && window.__FB.ready) {
+      try {
+        window.__FB.db.ref('auth/passwordHash').once('value').then(function (snap) {
+          cb(snap.val() || null);
+        }).catch(function () { cb(null); });
+      } catch (e) { cb(null); }
+    } else {
+      cb(null);
+    }
+  }
+  window.__pwGetServerHash = getServerHash;
+
+  function unlock() {
+    document.body.classList.remove('gate-locked');
+    var g = document.getElementById('pw-gate');
+    if (g) g.classList.add('hidden');
+  }
+
+  function tryAutoPass() {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved !== '1') return false;
+    // 저장 시점의 해시 비교 — 서버 해시가 바뀌었으면 자동 통과 막음
+    var savedHash = localStorage.getItem(STORAGE_VER);
+    getServerHash(function (serverHash) {
+      var current = serverHash || DEFAULT_HASH;
+      if (savedHash && savedHash === current) {
+        unlock();
+      } else {
+        // 비밀번호 변경된 후 첫 방문 — 다시 입력 받음
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_VER);
+        wireGate();
+      }
+    });
+    return true;
+  }
+
+  function wireGate() {
+    var input = document.getElementById('pw-input');
+    var btn = document.getElementById('pw-submit');
+    var msg = document.getElementById('pw-msg');
+    if (!input || !btn) return;
+    var working = false;
+    async function submit() {
+      if (working) return;
+      var v = input.value;
+      if (!v) { msg.className = 'pw-msg err'; msg.textContent = '비밀번호를 입력하세요'; input.focus(); return; }
+      working = true; btn.disabled = true; msg.className = 'pw-msg'; msg.textContent = '확인 중...';
+      try {
+        var inputHash = await sha256(v);
+        getServerHash(function (serverHash) {
+          var expected = serverHash || DEFAULT_HASH;
+          if (inputHash === expected) {
+            localStorage.setItem(STORAGE_KEY, '1');
+            localStorage.setItem(STORAGE_VER, expected);
+            msg.className = 'pw-msg ok'; msg.textContent = '✓ 인증 완료';
+            setTimeout(unlock, 200);
+          } else {
+            msg.className = 'pw-msg err'; msg.textContent = '비밀번호가 일치하지 않습니다';
+            input.value = ''; input.focus();
+            working = false; btn.disabled = false;
+          }
+        });
+      } catch (e) {
+        msg.className = 'pw-msg err'; msg.textContent = String(e.message || e);
+        working = false; btn.disabled = false;
+      }
+    }
+    btn.addEventListener('click', submit);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!tryAutoPass()) wireGate();
+    });
+  } else {
+    if (!tryAutoPass()) wireGate();
+  }
+})();
+
+/* ============== 토스트 알림 헬퍼 ============== */
+(function () {
+  window.toast = function (msg, type, duration) {
+    type = type || 'info'; duration = duration || 2400;
+    var zone = document.getElementById('toast-zone');
+    if (!zone) { zone = document.createElement('div'); zone.id = 'toast-zone'; document.body.appendChild(zone); }
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || '');
+    t.textContent = msg;
+    zone.appendChild(t);
+    setTimeout(function () {
+      t.classList.add('leaving');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 240);
+    }, duration);
+  };
+})();
+
+/* ============== 정합성 경고 패널 헤더 삽입 ============== */
+(function () {
+  // integration.js의 applyHealthFlags가 사이드바 배지만 처리 — 여기서 패널 내부 경고 줄도 같이.
+  function refreshIntegrityBars() {
+    var health = window.__siteHealth || {};
+    var all = window.__latestSiteData || {};
+    Object.keys(health).forEach(function (code) {
+      var v = health[code];
+      var sd = all[code];
+      if (!sd) return;
+      var panel = document.querySelector('.site-panel[data-site-code="' + code + '"]');
+      if (!panel) {
+        // 기존 12개 패널 - 현장명으로 매칭
+        var panels = document.querySelectorAll('.site-panel');
+        for (var i = 0; i < panels.length; i++) {
+          var h = panels[i].querySelector('h1, h2, .site-header-title');
+          if (h && h.textContent.indexOf(sd.현장명) >= 0) { panel = panels[i]; break; }
+        }
+      }
+      if (!panel) return;
+      var old = panel.querySelector('.integrity-warning');
+      if (old) old.remove();
+      if (v.level === 'ok') return;
+
+      var bar = document.createElement('div');
+      bar.className = 'integrity-warning ' + v.level;
+      var icon = (v.level === 'error') ? '⛔' : '⚠';
+      var html = '<span class="iw-icon">' + icon + '</span><span>' +
+        (v.level === 'error' ? '데이터 정합성 문제 — 이 화면의 숫자는 신뢰할 수 없습니다.' :
+                              '데이터 버전이 옛 엔진입니다. 엑셀 재업로드를 권장합니다.') + '</span>';
+      if (v.problems && v.problems.length) {
+        html += '<details><summary>자세히</summary><ul>' +
+          v.problems.slice(0, 8).map(function (p) {
+            return '<li>' + String(p).replace(/[<>&]/g, function (c) { return ({'<':'&lt;','>':'&gt;','&':'&amp;'})[c]; }) + '</li>';
+          }).join('') + '</ul></details>';
+      }
+      bar.innerHTML = html;
+      // 패널 첫 자식 앞에 삽입
+      panel.insertBefore(bar, panel.firstChild);
+    });
+  }
+  window.__refreshIntegrityBars = refreshIntegrityBars;
+  // siteData 적용 후 충분한 지연(applySiteData + Renderer가 끝난 뒤) 호출
+  var prev = null;
+  setInterval(function () {
+    var s = JSON.stringify(window.__siteHealth || {});
+    if (s !== prev) { prev = s; refreshIntegrityBars(); }
+  }, 800);
+})();
+
+/* ============== PDF 출력 (A4) ============== */
+(function () {
+  function attachBtn() {
+    // 버튼 본체는 ADMIN_SIDEBAR_BTN 으로 사이드바에 이미 삽입되어 있음
+    var btn = document.getElementById('pdf-export-btn');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', exportCurrent);
+  }
+  function exportCurrent() {
+    // 활성 패널 한 장만 print-target으로 표시
+    var active = document.querySelector('.site-panel.active');
+    if (!active) { window.toast && window.toast('출력할 패널이 없습니다', 'warn'); return; }
+    document.querySelectorAll('.site-panel.print-target').forEach(function (p) { p.classList.remove('print-target'); });
+    active.classList.add('print-target');
+    document.body.classList.add('print-a4');
+
+    // ▼ 두번째 페이지 시작 마커: 권역별 현장 현황 섹션 앞에 페이지 break
+    //   (대시보드 패널에만 .db-region-cards가 존재. 현장 패널은 영향 없음)
+    var pageBreakTargets = [];
+    active.querySelectorAll('.section').forEach(function (sec) {
+      if (sec.querySelector('.db-region-cards')) {
+        sec.classList.add('pdf-page-break');
+        pageBreakTargets.push(sec);
+      }
+    });
+
+    // 인쇄 종료 후 클래스 정리
+    var cleanup = function () {
+      document.body.classList.remove('print-a4');
+      active.classList.remove('print-target');
+      pageBreakTargets.forEach(function (s) { s.classList.remove('pdf-page-break'); });
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(function () { window.print(); }, 60);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachBtn);
+  } else { attachBtn(); }
+})();
+
+/* ============== 비밀번호 변경 핸들러 (관리자 모달 안) ============== */
+(function () {
+  document.addEventListener('click', async function (e) {
+    if (e.target && e.target.id === 'pw-save') {
+      var msg = document.getElementById('pw-change-msg');
+      var oldEl = document.getElementById('pw-old');
+      var n1 = document.getElementById('pw-new');
+      var n2 = document.getElementById('pw-new2');
+      var btn = e.target;
+      msg.className = 'pw-change-msg'; msg.textContent = '';
+      if (!oldEl.value || !n1.value || !n2.value) {
+        msg.className = 'pw-change-msg err'; msg.textContent = '모든 칸을 채워주세요'; return;
+      }
+      if (n1.value !== n2.value) {
+        msg.className = 'pw-change-msg err'; msg.textContent = '새 비밀번호가 일치하지 않습니다'; return;
+      }
+      if (n1.value.length < 4) {
+        msg.className = 'pw-change-msg err'; msg.textContent = '새 비밀번호는 4자 이상이어야 합니다'; return;
+      }
+      btn.disabled = true; msg.textContent = '확인 중...';
+      try {
+        var oldHash = await window.__pwSha256(oldEl.value);
+        window.__pwGetServerHash(async function (serverHash) {
+          var expected = serverHash || 'debc2e78cdedd3fda44e3543b39a4e82a5c31ee6b044223d05370c53820e96d6';
+          if (oldHash !== expected) {
+            msg.className = 'pw-change-msg err'; msg.textContent = '현재 비밀번호가 일치하지 않습니다';
+            btn.disabled = false; return;
+          }
+          var newHash = await window.__pwSha256(n1.value);
+          if (window.__FB && window.__FB.ready) {
+            window.__FB.db.ref('auth/passwordHash').set(newHash).then(function () {
+              msg.className = 'pw-change-msg ok'; msg.textContent = '✓ 변경 완료 — 모든 사용자가 다음 접속부터 새 비밀번호를 사용합니다';
+              // 이 기기는 새 해시로 도장 다시 찍기 (즉시 재로그인 안 시키기 위해)
+              localStorage.setItem('reportAuthedHash', newHash);
+              oldEl.value = ''; n1.value = ''; n2.value = '';
+              btn.disabled = false;
+              window.toast && window.toast('비밀번호가 변경되었습니다', 'ok');
+            }).catch(function (err) {
+              msg.className = 'pw-change-msg err'; msg.textContent = 'Firebase 저장 실패: ' + err.message;
+              btn.disabled = false;
+            });
+          } else {
+            msg.className = 'pw-change-msg err'; msg.textContent = 'Firebase 미연결 — 변경 불가';
+            btn.disabled = false;
+          }
+        });
+      } catch (err) {
+        msg.className = 'pw-change-msg err'; msg.textContent = String(err.message || err);
+        btn.disabled = false;
+      }
+    }
+  });
+})();
+
+/* ============== 모션 제거됨 (사용자 요청) ============== */
+/* KPI 카운트업, 차트 폴리라인 그리기, 막대 솟아오르기, 양끝 라벨 페이드/흰박스 모두 삭제.
+   양 끝 폴리라인 수치는 renderer.js의 stroke=white paint-order=stroke fill 흰 외곽선만으로 가독성 확보. */
+
 </script>
 
 </body>
