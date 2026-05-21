@@ -488,42 +488,19 @@
   }
 
   /* ======= 섹션 호버 확대 + 클릭 모달 ======= */
-  .db-expandable {
-    cursor: pointer;
-    transition: transform 0.18s cubic-bezier(.25,.8,.25,1), box-shadow 0.18s;
-    will-change: transform;
-  }
-  .db-expandable:hover {
-    transform: scale(1.009);
-    box-shadow: 0 4px 16px rgba(8,33,63,0.12);
-    position: relative;
-    z-index: 10;
-  }
-  .db-expandable:active { transform: scale(1.004); }
+  .db-expandable { /* 모달 확대 제거 - 평범한 카드처럼 */ }
+  .db-expandable:hover { /* 모달 확대 제거 */ }
+  .db-expandable:active { /* 모달 확대 제거 */ }
 
   /* KPI 카드 개별 호버 */
-  .db-kpi-card.db-expandable {
-    transition: transform 0.18s, box-shadow 0.18s;
-  }
-  .db-kpi-card.db-expandable:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 14px rgba(8,33,63,0.14);
-  }
+  .db-kpi-card.db-expandable { /* 모달 확대 제거 */ }
+  .db-kpi-card.db-expandable:hover { /* 모달 확대 제거 */ }
 
   /* 이슈 카드, 도넛 카드, 권역 카드 개별 호버 */
   .db-issue-card.db-expandable,
   .db-donut-card.db-expandable,
-  .db-region-card.db-expandable {
-    transition: transform 0.18s, box-shadow 0.18s;
-  }
-  .db-issue-card.db-expandable:hover,
-  .db-donut-card.db-expandable:hover,
-  .db-region-card.db-expandable:hover {
-    transform: scale(1.02);
-    box-shadow: 0 4px 16px rgba(8,33,63,0.13);
-    z-index: 10;
-    position: relative;
-  }
+  .db-region-card.db-expandable { /* 모달 확대 제거 */ }
+  .db-issue-card.db-expandable:hover, .db-donut-card.db-expandable:hover, .db-region-card.db-expandable:hover { /* 모달 확대 제거 */ }
 
   /* SVG 차트 비율 고정 */
   .db-chart-wrap { position: relative; width: 100%; }
@@ -2208,7 +2185,7 @@
     var svg = '<svg viewBox="0 0 400 400" style="width:100%;max-width:200px;">' +
       paths.join('') + '<circle cx="200" cy="200" r="26" fill="white"/>' +
       labels.join('') + '</svg>';
-    return { svg: svg, legend: legend.join(''), total: total };
+    return { svg: svg, legend: legend.join(''), legendItems: legend, total: total };
   }
 
   function updateDonutCard(card, items, labelFn) {
@@ -2216,11 +2193,35 @@
     var sorted = items.slice().filter(function (x) { return x.value > 0; })
       .sort(function (a, b) { return b.value - a.value; });
     if (!sorted.length) return;
+
+    // 기타(label === '기타')는 정렬에서 분리 → 마지막으로 강제
+    var etcIdx = -1;
+    sorted.forEach(function (s, i) { if (s.label === '기타') etcIdx = i; });
+    if (etcIdx >= 0) {
+      var etc = sorted.splice(etcIdx, 1)[0];
+      sorted.push(etc);
+    }
+
     var d = renderDonut(sorted, labelFn);
     var svg = card.querySelector('svg');
     if (svg && d.svg) svg.outerHTML = d.svg;
+
+    // ===== 범례를 좌(1~6위) / 우(7위~기타) 분할 =====
     var legend = card.querySelector('.pie-legend');
-    if (legend) legend.innerHTML = d.legend;
+    if (legend) {
+      // legendItems: 항목 HTML 배열로 받아 좌우 분할
+      var n = d.legendItems.length;
+      var half = Math.ceil(n / 2);   // 1~6 / 7~12 (12개면 6:6, 11개면 6:5)
+      var left = d.legendItems.slice(0, half).join('');
+      var right = d.legendItems.slice(half).join('');
+      // 범례 컨테이너를 분할 컬럼 구조로 재구성
+      legend.style.gridTemplateColumns = '1fr 1px 1fr';
+      legend.style.alignItems = 'start';
+      legend.innerHTML =
+        '<div class="pie-legend-col" style="display:flex;flex-direction:column;gap:5px;min-width:0;">' + left + '</div>' +
+        '<div class="pie-legend-divider" style="background:#e5e7eb;width:1px;align-self:stretch;"></div>' +
+        '<div class="pie-legend-col" style="display:flex;flex-direction:column;gap:5px;min-width:0;">' + right + '</div>';
+    }
     var sub = card.querySelector('div[style*="font-size:10px"]');
     if (sub) sub.textContent = '계: ' + fmt(d.total) + '건';
   }
@@ -2598,7 +2599,12 @@
     body.print-a4 #mobile-scrim,
     body.print-a4 .pdf-export-btn,
     body.print-a4 .integrity-warning { display: none !important; }
-    body.print-a4 .main-content { padding: 0 !important; margin: 0 !important; }
+    body.print-a4 .main-content {
+      padding: 0 !important;
+      margin: 0 !important;
+      margin-left: 0 !important;   /* 모바일 미디어쿼리의 margin-left:48px 무력화 */
+      background: white !important;
+    }
     body.print-a4 .site-panel { display: none !important; }
     body.print-a4 .site-panel.print-target {
       display: block !important; padding: 0 !important; margin: 0 !important;
@@ -2613,6 +2619,7 @@
     body.print-a4 .site-panel.print-target .subtitle { font-size: 8.5pt !important; margin-top: 1px !important; }
 
     /* ----- KPI 5장 한 줄: 폭 균일, 라벨 줄바꿈 금지 ----- */
+    /* ※ mobile_patch.css의 .db-kpi-card.navy { grid-column: 1/-1 } 명시 무효화 — 모바일 화면에서 PDF 떠도 5칸 유지 */
     body.print-a4 .db-kpi-row {
       display: grid !important;
       grid-template-columns: repeat(5, 1fr) !important;
@@ -2620,7 +2627,9 @@
       margin: 0 0 5px 0 !important;
       padding: 0 !important;
     }
-    body.print-a4 .db-kpi-card {
+    body.print-a4 .db-kpi-card,
+    body.print-a4 .db-kpi-card.navy {
+      grid-column: auto !important;   /* 모바일에서 강제된 1/-1 무효화 */
       padding: 4px 6px !important;
       min-height: 0 !important;
       min-width: 0 !important;
@@ -2667,13 +2676,30 @@
       max-width: 140px !important; max-height: 140px !important;
       width: 140px !important; margin: 0 auto !important; display: block !important;
     }
-    body.print-a4 .site-panel .pie-legend {
+    /* 분할된 범례 (pie-legend-col 자식 보유)만 3열 grid + 회색 구분선 */
+    body.print-a4 .site-panel .pie-legend:has(> .pie-legend-col) {
+      display: grid !important;
+      grid-template-columns: 1fr 1px 1fr !important;
+      gap: 0 8px !important;
+      margin-top: 6px !important;
+      font-size: 7.5pt !important;
+      align-items: start !important;
+    }
+    body.print-a4 .site-panel .pie-legend-col {
+      display: flex !important; flex-direction: column !important; gap: 2px !important;
+      min-width: 0 !important;
+    }
+    body.print-a4 .site-panel .pie-legend-divider {
+      background: #e5e7eb !important; width: 1px !important; align-self: stretch !important;
+    }
+    /* 분할 안 된 (정적) 범례: 기존 2열 유지 + 폰트 축소만 */
+    body.print-a4 .site-panel .pie-legend:not(:has(> .pie-legend-col)) {
       grid-template-columns: 1fr 1fr !important;
-      gap: 3px 10px !important;             /* 행간격·열간격 충분히 */
+      gap: 2px 8px !important;
       margin-top: 6px !important;
       font-size: 7.5pt !important;
     }
-    body.print-a4 .site-panel .pie-legend > div {
+    body.print-a4 .site-panel .pie-legend > div:not(.pie-legend-col):not(.pie-legend-divider) {
       font-size: 7.5pt !important; gap: 4px !important;
     }
     body.print-a4 .site-panel .pie-legend span[style*="background"] {
@@ -2826,10 +2852,12 @@
 /* ===== 모바일 반응형 패치 ===== */
 /* ============================================================================
  * 모바일 반응형 패치 — 좁은 화면(≤768px)에서만 적용.
+ * screen 한정 — PDF 인쇄(A4 폭 794px가 768px 근처라 미디어쿼리 발동되는 문제)는
+ * 인쇄에서 모바일 룰을 받지 않도록 'screen and'를 명시.
  * 데스크톱 레이아웃·구조는 일절 변경하지 않음 (미디어쿼리 안에서만 재정의).
  * ========================================================================== */
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   /* ----- 도넛: 4열 → 2열 ----- */
   .db-donut-card { min-width: 0; }
   .section > div[style*="repeat(4,1fr)"],
@@ -2875,6 +2903,15 @@
     padding: 3px 4px !important;
     white-space: nowrap;
   }
+  /* 공가세대 KPI(empty-summary)는 표와 같은 .section 안에 있음.
+     표가 너무 길어 가로로 스크롤될 때 KPI도 같이 우측으로 밀려나는 현상 방지:
+     - empty-summary는 sticky로 좌측 0 고정. 배경은 원본(#08213f 네이비) 그대로. */
+  .section .empty-summary {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    /* background는 원본 #08213f 유지 — 덮어쓰지 않음 */
+  }
   /* 패널/섹션이 표 때문에 가로로 밀리지 않도록 */
   .section { overflow-x: hidden; max-width: 100%; margin-bottom: 8px; }
   .site-panel { overflow-x: hidden; max-width: 100%; }
@@ -2883,12 +2920,51 @@
   #dash-weekly-chart { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   #dash-weekly-chart svg { min-width: 680px; }
 
-  /* ----- 본문 여백 ----- */
+  /* ----- 본문 여백 + 배경: 흰색 (사용자 요청) ----- */
   .main-content {
     padding: 8px !important;
     margin-left: 48px;
     overflow-x: hidden;
     max-width: 100%;
+    background: white;
+  }
+  body { background: white !important; }
+
+  /* ----- 헤더 가독성 개선 -----
+     데스크톱: 좌(타이틀) | 우(meta) flex 양끝 정렬.
+     모바일: 세로로 쌓고, 좌우 영역 너비 분리 명시. 타이틀 줄바꿈 차단, 폰트 축소. */
+  .report-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 4px;
+    padding: 8px 4px 6px 4px;
+  }
+  .report-header .breadcrumb { font-size: 11px !important; margin-bottom: 0 !important; }
+  .report-header .title {
+    font-size: 17px !important; line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  /* 인라인 style="font-size:22px" 도 강제 override */
+  .report-header .title[style*="font-size:22px"],
+  .report-header .title[style*="font-size: 22px"] { font-size: 17px !important; }
+  .report-header .subtitle { font-size: 11px !important; margin-top: 1px !important; }
+  .report-header .meta {
+    text-align: left !important;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 4px; margin-top: 2px;
+  }
+  .report-header .meta > div { font-size: 11px !important; }
+  .report-header .meta > div[style*="font-size:13px"] { font-size: 11px !important; }
+  .report-header .note { font-size: 10px !important; margin-top: 2px !important; }
+
+  /* ----- 자동 저장 활성 인디케이터: 모바일에서는 우상단 고정 위치 너무 큼 → 작게 ----- */
+  #save-indicator {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    top: 6px !important;
+    right: 6px !important;
   }
 
   /* ----- 사이드바: 오버레이 방식 ----- */
@@ -2915,7 +2991,7 @@
   body.sidebar-open #mobile-scrim { display: block; }
 }
 
-@media (max-width: 480px) {
+@media screen and (max-width: 480px) {
   /* 아주 좁은 화면: 도넛만 1열, KPI는 1/2/2 유지 */
   .section > div[style*="repeat(4,1fr)"],
   .section > div[style*="repeat(4, 1fr)"] {
@@ -13130,14 +13206,7 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDbModal(); });
 
   // ===== 대시보드 섹션 클릭 → 모달 =====
-  document.querySelectorAll('.db-expandable').forEach(el => {
-    el.addEventListener('click', function(e) {
-      // 사이드바 버튼은 제외
-      if (this.id === 'dashboard-btn') return;
-      e.stopPropagation();
-      openDbModal(this);
-    });
-  });
+  // 모달 확대 기능 제거됨 (사용자 요청)
 
   // ===== 사이드바 탭 전환 =====
   document.querySelectorAll('.site-item').forEach(item => {
@@ -14715,6 +14784,9 @@
     active.classList.add('print-target');
     document.body.classList.add('print-a4');
 
+    // 도넛 범례 좌/우 분할 보장 (정적이든 동적이든 인쇄 직전 한 번 더)
+    if (typeof window.__splitDonutLegends === 'function') window.__splitDonutLegends();
+
     // ▼ 두번째 페이지 시작 마커: 권역별 현장 현황 섹션 앞에 페이지 break
     //   (대시보드 패널에만 .db-region-cards가 존재. 현장 패널은 영향 없음)
     var pageBreakTargets = [];
@@ -14795,8 +14867,75 @@
 })();
 
 /* ============== 모션 제거됨 (사용자 요청) ============== */
-/* KPI 카운트업, 차트 폴리라인 그리기, 막대 솟아오르기, 양끝 라벨 페이드/흰박스 모두 삭제.
-   양 끝 폴리라인 수치는 renderer.js의 stroke=white paint-order=stroke fill 흰 외곽선만으로 가독성 확보. */
+/* KPI 카운트업, 차트 폴리라인 그리기, 막대 솟아오르기, 양끝 라벨 페이드/흰박스 모두 삭제. */
+
+/* ============== 정적 도넛 범례 좌/우 분할 (페이지 로드 시 1회) ==============
+   첫 로드(엑셀 업로드 전)엔 dashboard.js가 못 그리므로 정적 범례가 그대로 노출됨.
+   여기서 그 정적 범례 4개를 좌/우 분할 + 회색 구분선 구조로 변환. '기타'는 끝으로.
+   DOM 균형은 부모를 건드리지 않고 자식 div만 재배치하므로 안전. */
+(function () {
+  function splitLegend(legend) {
+    if (!legend || legend.dataset.splitDone === '1') return;
+    // 이미 분할 구조면 스킵
+    if (legend.querySelector(':scope > .pie-legend-col')) {
+      legend.dataset.splitDone = '1';
+      return;
+    }
+    // 항목 div 수집
+    var items = Array.prototype.slice.call(legend.children);
+    if (items.length < 4) return;  // 항목 4개 미만이면 분할 의미 없음
+    // '기타' 항목을 끝으로
+    var etcIdx = -1;
+    items.forEach(function (it, i) {
+      var spans = it.querySelectorAll('span');
+      for (var j = 0; j < spans.length; j++) {
+        if ((spans[j].textContent || '').trim() === '기타') { etcIdx = i; break; }
+      }
+    });
+    if (etcIdx >= 0) {
+      var etc = items.splice(etcIdx, 1)[0];
+      items.push(etc);
+    }
+    var n = items.length;
+    var half = Math.ceil(n / 2);  // 6/5, 6/6 분할
+    var leftItems = items.slice(0, half);
+    var rightItems = items.slice(half);
+
+    // 범례 컨테이너 재구성
+    legend.innerHTML = '';
+    legend.style.display = 'grid';
+    legend.style.gridTemplateColumns = '1fr 1px 1fr';
+    legend.style.gap = '3px 10px';
+    legend.style.alignItems = 'start';
+
+    var colL = document.createElement('div');
+    colL.className = 'pie-legend-col';
+    colL.style.cssText = 'display:flex;flex-direction:column;gap:5px;min-width:0;';
+    leftItems.forEach(function (it) { colL.appendChild(it); });
+
+    var div = document.createElement('div');
+    div.className = 'pie-legend-divider';
+    div.style.cssText = 'background:#e5e7eb;width:1px;align-self:stretch;';
+
+    var colR = document.createElement('div');
+    colR.className = 'pie-legend-col';
+    colR.style.cssText = 'display:flex;flex-direction:column;gap:5px;min-width:0;';
+    rightItems.forEach(function (it) { colR.appendChild(it); });
+
+    legend.appendChild(colL);
+    legend.appendChild(div);
+    legend.appendChild(colR);
+    legend.dataset.splitDone = '1';
+  }
+  function splitAll() {
+    document.querySelectorAll('.pie-legend').forEach(splitLegend);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', splitAll);
+  } else { splitAll(); }
+  // dashboard.js가 데이터 업데이트로 범례를 재생성할 수 있으니, 재호출 가능하게 노출
+  window.__splitDonutLegends = splitAll;
+})();
 
 </script>
 
