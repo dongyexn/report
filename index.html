@@ -923,10 +923,9 @@ input,select,textarea,button{display:none!important;}
         </div>
         <div class="set-col">
           <div class="card mb12">
-            <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">Firebase 연결 (Realtime Database)</div>
-            <p style="font-size:11.5px;color:var(--lbl2);margin-bottom:12px">연결 시 처리계획·현장·분석이 실시간 동기화됩니다. 미연결 시 localStorage에 자동 저장됩니다 (이 브라우저 한정).</p>
-            <div class="g2"><div class="ig2"><label class="il" for="cfgk">API Key</label><input class="inp" id="cfgk" placeholder="AIzaSy..."></div><div class="ig2"><label class="il" for="cfgp">Project ID</label><input class="inp" id="cfgp" placeholder="my-project"></div><div class="ig2"><label class="il" for="cfga">Auth Domain</label><input class="inp" id="cfga" placeholder="project.firebaseapp.com"></div><div class="ig2"><label class="il" for="cfgd">Database URL</label><input class="inp" id="cfgd" placeholder="https://project-default-rtdb.firebaseio.com"></div><div class="ig2" style="grid-column:span 2"><label class="il" for="cfgi">App ID</label><input class="inp" id="cfgi" placeholder="1:123:web:..."></div></div>
-            <div class="fg" style="margin-top:10px"><button class="btn bp bsm" onclick="initFB()">연결</button><button class="btn bg2 bsm" onclick="disconnectFB()">연결 해제</button><span id="fbst" style="font-size:12px;color:var(--lbl2)"></span></div>
+            <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">데이터 저장</div>
+            <p style="font-size:12px;color:var(--lbl2);line-height:1.6">처리계획·현장·분석은 <b>Firebase 실시간 데이터베이스</b>에 자동 저장되어 모든 사용자와 공유됩니다. 별도 설정 없이 접속 시 자동 연결됩니다.<br><span style="color:var(--lbl3);font-size:11.5px">• 입력 즉시 자동 저장 (별도 저장 버튼 없음)<br>• 하자 리스트(대용량)는 각 브라우저 IndexedDB에 보관</span></p>
+            <div class="fg" style="margin-top:12px"><span id="fbstatusdot" style="width:9px;height:9px;border-radius:50%;background:#8E8E93;display:inline-block"></span><span id="fbstatustxt" style="font-size:12px;color:var(--lbl2)">연결 확인 중...</span></div>
           </div>
           <div class="card mb12">
             <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">AI 분석 (Gemini API)</div>
@@ -991,7 +990,7 @@ function closeMobileSB(){document.getElementById('sidebar').classList.remove('mo
 
 // PERSISTENCE — Firebase Realtime DB (연결 시) + localStorage (항상 백업).
 // FB는 멀티유저 실시간 동기화용, IndexedDB는 영구 로컬 저장소.
-const LS_KEY='hdec_state_v1',LS_FB_KEY='hdec_fb_cfg_v1';// LS_KEY는 마이그레이션용으로만 유지
+const LS_KEY='hdec_state_v1';// IndexedDB 마이그레이션용
 const FB={ready:false,app:null,db:null,unsubs:[],applyingRemote:false};
 window.__FB=FB;
 
@@ -1102,36 +1101,33 @@ function setFBChip(label,color){
   const dot=chip.querySelector('circle');if(dot)dot.setAttribute('fill',color),dot.setAttribute('stroke',color);
 }
 
-function initFB(){
-  const cfg={
-    apiKey:document.getElementById('cfgk').value.trim(),
-    projectId:document.getElementById('cfgp').value.trim(),
-    authDomain:document.getElementById('cfga').value.trim(),
-    databaseURL:document.getElementById('cfgd').value.trim(),
-    appId:document.getElementById('cfgi').value.trim()
-  };
-  if(!cfg.apiKey||!cfg.databaseURL){toast('API Key와 Database URL은 필수입니다');return;}
+// 고정 Firebase 설정 — 항상 이 프로젝트로 자동 연결/저장.
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyDX5yANupr5xqLbCq_UcSVHc-iZvobRM3g",
+  authDomain:"report-c29a1.firebaseapp.com",
+  databaseURL:"https://report-c29a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"report-c29a1",
+  storageBucket:"report-c29a1.firebasestorage.app",
+  messagingSenderId:"625677240502",
+  appId:"1:625677240502:web:f66c629db928c2b801fe17",
+  measurementId:"G-YT6MVSE221"
+};
+function connectFB(){
+  if(typeof firebase==='undefined'){console.warn('[FB] SDK 미로딩');setFBChip('오프라인 · IndexedDB','#8E8E93');return false;}
   try{
     FB.unsubs.forEach(u=>u());FB.unsubs=[];
-    if(!FB.app){FB.app=firebase.initializeApp(cfg);}
+    if(!FB.app){FB.app=firebase.initializeApp(FIREBASE_CONFIG);}
     FB.db=firebase.database();FB.ready=true;
-    localStorage.setItem(LS_FB_KEY,JSON.stringify(cfg));
-    document.getElementById('fbst').textContent='✓ 연결됨';document.getElementById('fbst').style.color='var(--gn)';
     setFBChip('Firebase 동기화','#34C759');
     subscribeFB();
-    toast('Firebase 연결 성공');
+    console.log('[FB] connected');
+    return true;
   }catch(e){
     FB.ready=false;
-    document.getElementById('fbst').textContent='✗ '+e.message;document.getElementById('fbst').style.color='var(--rd)';
-    setFBChip('연결 실패 · LS만','#FF3B30');
+    console.error('[FB] connect failed',e);
+    setFBChip('연결 실패 · IndexedDB','#FF3B30');
+    return false;
   }
-}
-function disconnectFB(){
-  FB.unsubs.forEach(u=>u());FB.unsubs=[];FB.ready=false;FB.db=null;
-  localStorage.removeItem(LS_FB_KEY);
-  const st=document.getElementById('fbst');if(st){st.textContent='연결 해제됨';st.style.color='var(--lbl2)';}
-  setFBChip('IndexedDB','#8E8E93');
-  toast('Firebase 연결 해제');
 }
 // 원격 → 로컬 반영 (다른 사용자의 편집이 push되면 받음)
 function subscribeFB(){
@@ -1921,8 +1917,11 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
-  try{const c=JSON.parse(localStorage.getItem(LS_FB_KEY)||'null');if(c){document.getElementById('cfgk').value=c.apiKey||'';document.getElementById('cfgp').value=c.projectId||'';document.getElementById('cfga').value=c.authDomain||'';document.getElementById('cfgd').value=c.databaseURL||'';document.getElementById('cfgi').value=c.appId||'';}}catch(e){}
-  const st=document.getElementById('fbst');if(st){st.textContent=FB.ready?'✓ 연결됨':'미연결';st.style.color=FB.ready?'var(--gn)':'var(--lbl2)';}
+  const dot=document.getElementById('fbstatusdot'),txt=document.getElementById('fbstatustxt');
+  if(dot&&txt){
+    if(FB.ready){dot.style.background='#34C759';txt.textContent='Firebase 연결됨 · 실시간 동기화 중';txt.style.color='var(--gn)';}
+    else{dot.style.background='#FF9500';txt.textContent='오프라인 · 로컬에만 저장됨';txt.style.color='var(--am)';}
+  }
   rSMgr();
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${RGS.map(r=>`<option ${site?.region===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${site?.name||''}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2" style="grid-column:span 2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''}> 공가상가 포함 현장</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" onclick="closeMo()">취소</button><button class="btn bp bsm" onclick="confirmSM('${sid||''}')">저장</button>`;openMo();}
@@ -2123,20 +2122,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   try{seeded=await loadEmbedded();}catch(e){console.error('[boot] loadEmbedded failed',e);}
   try{await metaLoad();}catch(e){console.error('[boot] metaLoad failed',e);}
   try{await defLoadAll();}catch(e){console.error('[boot] defLoadAll failed',e);}
-  // Firebase 설정이 저장되어 있으면 자동 연결 시도
-  let autoFB=false;
-  try{
-    const c=JSON.parse(localStorage.getItem(LS_FB_KEY)||'null');
-    if(c&&c.apiKey&&c.databaseURL&&typeof firebase!=='undefined'){
-      FB.app=firebase.initializeApp(c);FB.db=firebase.database();FB.ready=true;
-      setFBChip('Firebase 동기화','#34C759');
-      subscribeFB();
-      autoFB=true;
-    }
-  }catch(e){console.warn('FB autoinit failed',e);}
-  if(!autoFB)setFBChip('IndexedDB','#8E8E93');
-  if(!S.sites.length&&!autoFB&&!seeded)loadDemo();
-  // 기준월 chip 표시 + 사이드바 초기 렌더 (이 두 호출이 부팅 시 누락되어 새로고침 후 사이드바·기준월 표시가 비어 있었음)
+  // Firebase 항상 자동 연결 (고정 설정). subscribeFB가 원격 데이터를 받아 로컬과 동기화.
+  let fbOK=false;
+  try{fbOK=connectFB();}catch(e){console.warn('[boot] connectFB failed',e);}
+  // 데모는 Firebase에도 로컬에도 데이터가 전혀 없을 때만
+  if(!S.sites.length&&!seeded&&!fbOK)loadDemo();
+  // 기준월 chip 표시 + 사이드바 초기 렌더
   const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;
   rNav();rSel();rSMgr();
   go('dashboard');
