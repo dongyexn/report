@@ -650,6 +650,7 @@ input,select,textarea,button{display:none!important;}
 
 /* ===== MOBILE (≤768px) — screen only, 인쇄에는 적용 X ===== */
 @media screen and (max-width:768px){
+  .hide-mobile{display:none!important;}
   /* 사이드바: floating overlay */
   #sidebar{position:fixed;top:0;left:0;height:100vh;z-index:300;transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 28px rgba(0,0,0,.22);width:var(--sw)!important;min-width:var(--sw)!important;}
   #sidebar.mob-open{transform:translateX(0);}
@@ -823,9 +824,8 @@ input,select,textarea,button{display:none!important;}
     </div>
     <div class="tbr">
       <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/></svg><span id="mchip"></span></div>
-      <div id="fbchip" class="mc no-print" title="저장 위치" style="display:none"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="5"/></svg><span id="fbchipt"></span></div>
       <button class="btn bg2 bsm no-print" onclick="openMP()">기준월 변경</button>
-      <button id="pbtn" class="bpr no-print" onclick="doPrint()" style="height: 29px; font-size: 12px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"/></svg>인쇄</button>
+      <button id="pbtn" class="bpr no-print hide-mobile" onclick="doPrint()" style="height: 29px; font-size: 12px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"/></svg>인쇄</button>
     </div>
   </header>
   <div id="content">
@@ -1130,70 +1130,55 @@ function connectFB(){
   }
 }
 // 원격 → 로컬 반영 (다른 사용자의 편집이 push되면 받음)
+// comments/analysis는 키(공종명)에 Firebase 금지문자(. # $ [ ] /)가 들어갈 수 있어
+// 노드를 통째로 JSON 문자열로 저장/복원한다 (키 충돌 원천 차단).
 function subscribeFB(){
   if(!FB.ready)return;
-  // Firebase 리스너 핵심 규칙:
-  // (1) snapshot.val()이 null = Firebase에 데이터 자체가 없음 → 로컬을 Firebase로 push (첫 사용자 시드).
-  //     이때 로컬도 비어 있으면 아무것도 안 함 (정상).
-  // (2) snapshot.val()에 실제 값 = 다른 사용자/이전 자신이 푸시한 데이터 → 그것을 진실로 받아들임.
-  //     빈 배열 []·빈 객체 {} 도 명시적 데이터로 간주 (예: 모든 현장 삭제).
-  // 이전 버그: ||{} 와 if(!v)가 null과 빈 컨테이너를 구분 못 해, Firebase가 비어 있을 때 로컬을 덮어썼음.
-  const onComments=FB.db.ref('comments').on('value',snap=>{
+  const onComments=FB.db.ref('comments_json').on('value',snap=>{
     const v=snap.val();
     if(v==null){
-      if(Object.keys(S.cmt||{}).length){
-        try{for(const sid of Object.keys(S.cmt))FB.db.ref(`comments/${fbKey(sid)}`).set(S.cmt[sid]);}catch(e){console.warn('FB seed comments failed',e);}
-      }
+      if(Object.keys(S.cmt||{}).length){try{FB.db.ref('comments_json').set(JSON.stringify(S.cmt));}catch(e){console.warn('FB seed comments failed',e);}}
       return;
     }
     FB.applyingRemote=true;
-    S.cmt=v;lsSave();
+    try{S.cmt=JSON.parse(v)||{};}catch(e){console.warn('comments parse failed',e);}
+    lsSave();
     if(S.view==='site'&&S.sid)rSite(S.sid);
     FB.applyingRemote=false;
   });
-  const onSites=FB.db.ref('sites').on('value',snap=>{
+  const onSites=FB.db.ref('sites_json').on('value',snap=>{
     const v=snap.val();
     if(v==null){
-      if(S.sites.length){
-        try{FB.db.ref('sites').set(S.sites);}catch(e){console.warn('FB seed sites failed',e);}
-      }
+      if(S.sites.length){try{FB.db.ref('sites_json').set(JSON.stringify({sites:S.sites,regionOrder:S.regionOrder,rm:S.rm}));}catch(e){console.warn('FB seed sites failed',e);}}
       return;
     }
     FB.applyingRemote=true;
-    S.sites=Array.isArray(v)?v:Object.values(v);
+    try{const o=JSON.parse(v);if(Array.isArray(o.sites))S.sites=o.sites;if(Array.isArray(o.regionOrder))S.regionOrder=o.regionOrder;if(typeof o.rm==='string'&&/^\d{4}-\d{2}$/.test(o.rm)){S.rm=o.rm;const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;}}catch(e){console.warn('sites parse failed',e);}
     lsSave();
     rNav();rSel();rSMgr();
     if(S.view==='dashboard')rDash();
     FB.applyingRemote=false;
   });
-  const onAna=FB.db.ref('analysis').on('value',snap=>{
+  const onAna=FB.db.ref('analysis_json').on('value',snap=>{
     const v=snap.val();
     if(v==null){
-      if(Object.keys(S.ana||{}).length){
-        try{for(const sid of Object.keys(S.ana))FB.db.ref(`analysis/${fbKey(sid)}`).set(S.ana[sid]);}catch(e){console.warn('FB seed ana failed',e);}
-      }
+      if(Object.keys(S.ana||{}).length){try{FB.db.ref('analysis_json').set(JSON.stringify(S.ana));}catch(e){console.warn('FB seed ana failed',e);}}
       return;
     }
     FB.applyingRemote=true;
-    S.ana=v;lsSave();
+    try{S.ana=JSON.parse(v)||{};}catch(e){console.warn('analysis parse failed',e);}
+    lsSave();
     if(S.view==='site'&&S.sid)rSite(S.sid);
     FB.applyingRemote=false;
   });
-  FB.unsubs.push(()=>FB.db.ref('comments').off('value',onComments));
-  FB.unsubs.push(()=>FB.db.ref('sites').off('value',onSites));
-  FB.unsubs.push(()=>FB.db.ref('analysis').off('value',onAna));
+  FB.unsubs.push(()=>FB.db.ref('comments_json').off('value',onComments));
+  FB.unsubs.push(()=>FB.db.ref('sites_json').off('value',onSites));
+  FB.unsubs.push(()=>FB.db.ref('analysis_json').off('value',onAna));
 }
-// 로컬 → 원격 (편집 직후 호출)
-function fbPushComments(sid,field,key){
-  if(!FB.ready||FB.applyingRemote)return;
-  try{
-    const base=`comments/${fbKey(sid)}/${fbKey(field)}`;
-    if(key){const v=S.cmt[sid]?.[field]?.[key];FB.db.ref(`${base}/${fbKey(key)}`).set(v==null?null:v);}
-    else{const v=S.cmt[sid]?.[field];FB.db.ref(base).set(v==null?null:v);}
-  }catch(e){console.warn('fbPushComments failed',e);}
-}
-function fbPushSites(){if(!FB.ready||FB.applyingRemote)return;try{FB.db.ref('sites').set(S.sites);}catch(e){console.warn('fbPushSites failed',e);}}
-function fbPushAna(sid){if(!FB.ready||FB.applyingRemote)return;try{FB.db.ref(`analysis/${fbKey(sid)}`).set(S.ana[sid]||null);}catch(e){console.warn('fbPushAna failed',e);}}
+// 로컬 → 원격 (편집 직후 호출). 통째로 JSON 문자열 저장.
+function fbPushComments(){if(!FB.ready||FB.applyingRemote)return;try{FB.db.ref('comments_json').set(JSON.stringify(S.cmt));}catch(e){console.warn('fbPushComments failed',e);}}
+function fbPushSites(){if(!FB.ready||FB.applyingRemote)return;try{FB.db.ref('sites_json').set(JSON.stringify({sites:S.sites,regionOrder:S.regionOrder,rm:S.rm}));}catch(e){console.warn('fbPushSites failed',e);}}
+function fbPushAna(){if(!FB.ready||FB.applyingRemote)return;try{FB.db.ref('analysis_json').set(JSON.stringify(S.ana));}catch(e){console.warn('fbPushAna failed',e);}}
 
 // 처리계획 textarea — 디바운스 자동저장 + ✓ 인디케이터
 const _planTimers=new WeakMap();
@@ -1209,7 +1194,7 @@ function commitPlanSave(el){
     else{S.cmt[sid][field]=value;}
   }
   lsSave();
-  fbPushComments(sid,field,key);
+  fbPushComments();
   showSaved(el);
 }
 function showSaved(el){
@@ -1344,7 +1329,7 @@ function reorderRegion(dragR,targetR,after){
   insertAt=after?insertAt+1:insertAt;
   ord.splice(insertAt,0,dragR);
   S.regionOrder=ord;
-  lsSave();rNav();
+  lsSave();fbPushSites();rNav();
 }
 function tRg(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('closed',!el.classList.contains('open'));}
 function rSel(){const sel=document.getElementById('ulsite');if(!sel)return;sel.innerHTML='<option value="">현장 선택</option>'+RGS.flatMap(r=>S.sites.filter(s=>s.region===r).map(s=>`<option value="${s.id}">[${s.region}] ${s.name}</option>`)).join('');}
@@ -1565,7 +1550,7 @@ function rSite(sid){
     const pc=st.topPrev?.[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const coCell=`${t.co||'-'}${t.coN>1?` <span style="color:var(--lbl3);font-size:11px">외 ${(t.coN-1).toLocaleString()}개 업체</span>`:''}`;
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" data-plan-id="cmt|${sid}|processingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" name="plan-${sid}-pp-${t.t}" data-plan-id="cmt|${sid}|processingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
   }).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
   const vBase=st.vTop.filter(t=>!t.isT&&!t.isO);
   const vRows=vBase.map((t,i)=>{
@@ -1574,7 +1559,7 @@ function rSite(sid){
     const pc=st.vTopPrev?.[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const coCell=`${t.co||'-'}${t.coN>1?` <span style="color:var(--lbl3);font-size:11px">외 ${(t.coN-1).toLocaleString()}개 업체</span>`:''}`;
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" data-plan-id="cmt|${sid}|vacantProcessingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" name="plan-${sid}-vp-${t.t}" data-plan-id="cmt|${sid}|vacantProcessingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
   }).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
   const wRows=st.weekly.map(w=>{const wr=w.r>0?(w.res/w.r*100).toFixed(1):0;return`<tr><td class="cc"><b>${w.label}</b></td><td class="n">${w.r.toLocaleString()}</td><td class="n" style="color:var(--gn)">${w.res.toLocaleString()}</td><td class="n">${w.u.toLocaleString()}</td><td class="n" style="color:var(--am)">${w.d0.toLocaleString()}</td><td class="n" style="color:var(--b600)">${w.d30.toLocaleString()}</td><td class="n" style="color:var(--b900)">${w.d60.toLocaleString()}</td><td class="cc"><span class="ba ${Number(wr)>=80?'bgn':Number(wr)>=60?'bam':'brd'}">${wr}%</span></td></tr>`;}).join('');
   // All-trade table for trade tab — 시공업체 최다 사용 1개 + 추가 N
@@ -1665,12 +1650,12 @@ function renderTabCharts(sid,st){
 
 // SAVE
 // 호환용 — 이제 textarea는 schedulePlanSave를 통해 자동저장. 외부에서 직접 호출하는 경우만 남김.
-function savePlan(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].processingPlan)S.cmt[sid].processingPlan={};S.cmt[sid].processingPlan[t]=v;lsSave();fbPushComments(sid,'processingPlan',t);}
-function saveVP(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].vacantProcessingPlan)S.cmt[sid].vacantProcessingPlan={};S.cmt[sid].vacantProcessingPlan[t]=v;lsSave();fbPushComments(sid,'vacantProcessingPlan',t);}
-function saveTL(sid){const v=document.getElementById(`tl-${sid}`)?.value||'';if(!S.cmt[sid])S.cmt[sid]={};S.cmt[sid].teamLeaderComment=v;lsSave();fbPushComments(sid,'teamLeaderComment');toast('팀장 의견 저장');}
+function savePlan(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].processingPlan)S.cmt[sid].processingPlan={};S.cmt[sid].processingPlan[t]=v;lsSave();fbPushComments();}
+function saveVP(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].vacantProcessingPlan)S.cmt[sid].vacantProcessingPlan={};S.cmt[sid].vacantProcessingPlan[t]=v;lsSave();fbPushComments();}
+function saveTL(sid){const v=document.getElementById(`tl-${sid}`)?.value||'';if(!S.cmt[sid])S.cmt[sid]={};S.cmt[sid].teamLeaderComment=v;lsSave();fbPushComments();toast('팀장 의견 저장');}
 async function runAI(sid){if(!S.ck){toast('설정에서 Gemini API 키를 입력하세요');return;}const site=S.sites.find(s=>s.id===sid);if(!site)return;const st=calc(S.def[sid]||[],site,S.rm),el=document.getElementById(`ait-${sid}`);if(el)el.innerHTML='<p style="color:var(--lbl3)">AI 분석 생성 중…</p>';
 const p=`현대건설 H서비스중부팀 하자처리 현황을 분석하여 한국어로 종합 의견을 작성하세요.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}, 기준월 ${S.rm}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건, 미처리 ${st.unr}건, 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[보수주체] ${Object.entries(st.rpb).map(([p,c])=>`${p}:${c}건`).join(', ')}\n[공가] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건\n아래 5개 항목, 항목별 2~3문장, 전체 300자 이내:\n① 보수주체 구성 특이사항 ② 접수·처리·미처리 추이 특이사항 ③ 특정 공종·하자유형 집중 여부 ④ 장기미처리 리스크 및 개선방안 ⑤ 하자처리 개선 실질 조언`;
-try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(S.ck)}`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:700,temperature:0.4}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';S.ana[sid]=txt;lsSave();fbPushAna(sid);if(el)el.innerHTML=txt.split('\n').filter(Boolean).map(l=>`<p>${l}</p>`).join('');toast('AI 분석 완료');}
+try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(S.ck)}`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:700,temperature:0.4}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');const txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';S.ana[sid]=txt;lsSave();fbPushAna();if(el)el.innerHTML=txt.split('\n').filter(Boolean).map(l=>`<p>${l}</p>`).join('');toast('AI 분석 완료');}
 catch(e){if(el)el.innerHTML=`<p style="color:var(--rd)">(AI 오류: ${e.message})</p>`;}}
 
 // UPLOAD
@@ -1860,6 +1845,7 @@ async function doSaveUL(byName,allItems){
   progSet(100,'완료');
   await nextFrame();
   progHide();
+  fbPushSites();// 기준월(rm) 변경분 Firebase 동기화 (def는 동기화 안 함)
   const chip=document.getElementById('mchip');if(chip)chip.textContent=`기준월 ${S.rm}`;
   toast(`${savedCount.toLocaleString()}건 · ${savedSites}개 현장 저장 완료`);
   S.ubuf=null;setStep(3);
@@ -1926,11 +1912,11 @@ function loadSettings(){
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${RGS.map(r=>`<option ${site?.region===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${site?.name||''}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2" style="grid-column:span 2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''}> 공가상가 포함 현장</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" onclick="closeMo()">취소</button><button class="btn bp bsm" onclick="confirmSM('${sid||''}')">저장</button>`;openMo();}
 function confirmSM(eid){const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){d.id=eid;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;S.sites.push(d);}lsSave();fbPushSites();rNav();rSel();rSMgr();closeMo();toast('현장 저장됨');}
-function delS(sid){if(!confirm('현장을 삭제하시겠습니까?'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];defDelete(sid);lsSave();fbPushSites();if(FB.ready){try{FB.db.ref(`comments/${fbKey(sid)}`).set(null);FB.db.ref(`analysis/${fbKey(sid)}`).set(null);}catch(e){}}rNav();rSel();rSMgr();toast('현장 삭제됨');}
+function delS(sid){if(!confirm('현장을 삭제하시겠습니까?'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];defDelete(sid);lsSave();fbPushSites();fbPushComments();fbPushAna();rNav();rSel();rSMgr();toast('현장 삭제됨');}
 
 // MONTH PICKER
 function openMP(){document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" onclick="closeMo()">취소</button><button class="btn bp bsm" onclick="applyM()">적용</button>`;openMo();}
-function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
+function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();fbPushSites();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
 
 
 // PRINT — 화면을 그대로 A4 세로로 출력
@@ -1947,7 +1933,7 @@ const TR=['도배','타일','목공','도장','전기','설비','창호','방수
 function WR(w){let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return i;}return w.length-1;}
 function gD(sid,n){const site=DS.find(s=>s.id===sid),mos=['2026-01','2026-02','2026-03','2026-04','2026-05'],mw=[.14,.18,.22,.26,.20];return Array.from({length:n},(_,i)=>{const mi=WR(mw),mo=mos[mi],day=Math.ceil(Math.random()*28),rd=`${mo}-${String(day).padStart(2,'0')}`,tr=TR[Math.floor(Math.random()*TR.length)],dt=(DT[tr]||['기타'])[Math.floor(Math.random()*(DT[tr]||['기타']).length)],res=Math.random()>(0.28+mi*.025),dl=res?0:Math.floor(Math.random()*95),ss=Math.random()>.92?'미분양':Math.random()>.85?'미납':'분양',isCo=site?.hasCommercial&&Math.random()>.88;return{receiptNo:`H2026-${String(i+1).padStart(5,'0')}`,building:String(100+Math.floor(Math.random()*(site?.buildings||10))+1),unit:String(Math.floor(Math.random()*20)+1).padStart(2,'0')+String(Math.floor(Math.random()*9)+1),trade:tr,defectType:dt,receiptDate:rd,completionDate:res?`${mo}-${String(Math.min(day+Math.floor(Math.random()*14)+1,28)).padStart(2,'0')}`:'',status:res?'처리':'미처리',delayDays:dl,repairParty:RP[Math.floor(Math.random()*RP.length)],contractor:'협력업체'+Math.floor(Math.random()*8+1),saleStatus:ss,unitType:isCo?'상가':'세대',moveIn:isCo?(Math.random()>.5?'Y':'N/A'):'Y'};})}
 async function loadDemo(){S.sites=DS.map(s=>({...s}));S.def={};const cnts={s1:180,s2:140,s3:220,s4:95,s5:160,s6:75};const dbWrites=[];S.sites.forEach(s=>{S.def[s.id]=gD(s.id,cnts[s.id]||100);dbWrites.push(defSave(s.id,S.def[s.id]));});S.rm='2026-05';lsSave();fbPushSites();await Promise.all(dbWrites);document.getElementById('mchip').textContent='기준월 2026-05';rNav();rSel();rSMgr();rDash();toast('데모 데이터 로드 완료');}
-function clearData(){if(!confirm('모든 데이터를 초기화하시겠습니까?'))return;S.sites=[];S.def={};S.cmt={};S.ana={};defClearAll();lsSave();if(FB.ready){try{FB.db.ref('sites').set(null);FB.db.ref('comments').set(null);FB.db.ref('analysis').set(null);}catch(e){}}rNav();rSel();rSMgr();if(S.view==='dashboard')rDash();toast('초기화 완료');}
+function clearData(){if(!confirm('모든 데이터를 초기화하시겠습니까?'))return;S.sites=[];S.def={};S.cmt={};S.ana={};defClearAll();lsSave();if(FB.ready){try{FB.db.ref('sites_json').set(null);FB.db.ref('comments_json').set(null);FB.db.ref('analysis_json').set(null);}catch(e){}}rNav();rSel();rSMgr();if(S.view==='dashboard')rDash();toast('초기화 완료');}
 
 // ===== 정적 빌드 내보내기 =====
 // 현재 IndexedDB의 모든 데이터를 HTML에 embed해서 다운로드.
