@@ -172,7 +172,7 @@ svg{display:block;flex-shrink:0;}
 .dt th.cc{text-align:center;}
 .dt th.n{text-align:right;}
 .dt .sub td{background:var(--fill);font-weight:600;}
-.dt .tot td{background:var(--b50);font-weight:700;color:var(--b900);}
+.dt .tot td{background:transparent;border-top:1px solid var(--sep);font-weight:700;color:var(--lbl);}
 .dt tfoot .tot td{background:transparent;border-top:1px solid var(--sep);color:var(--lbl);}
 
 /* BADGES */
@@ -393,6 +393,10 @@ html,body,#app,#main,#content{display:block!important;height:auto!important;over
 /* 인쇄 시 현장명 줄넘김 방지 + ltrbar 폭 축소로 공간 확보 */
 #dtable th[data-sort="name"],#dtable td:nth-child(2){width:17%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 #dtable th[data-sort="ltr"],#dtable td:nth-child(9){width:19%!important;min-width:0!important;}
+/* 인쇄 시 권역(1열)·전월대비(10열) 폰트 축소 */
+#dtable th[data-sort="region"],#dtable td:nth-child(1){font-size:6.5pt!important;}
+#dtable th[data-sort="delta"],#dtable td:nth-child(10){font-size:6.5pt!important;}
+#dtable td:nth-child(10) .ba{font-size:6.5pt!important;padding:1px 4px!important;}
 
 /* 인쇄 시 카드 overflow 제어 — 차트 라벨이 컨테이너 탈출 방지 */
 .card{overflow:hidden!important;}
@@ -422,11 +426,11 @@ canvas{max-width:100%!important;height:auto!important;}
 
 /* 전월대비 실적 — 인쇄 시 전월/금월 간격 좁히고, 우측 % 배지 폰트 1pt 축소 */
 .mom-row .bars{gap:2px!important;}
-.mom-row .delta .d{font-size:9.5pt!important;padding:1px 6px!important;}
+.mom-row .delta .d{font-size:7.5pt!important;padding:1px 5px!important;}
 
 /* 주요 이슈 / 인사이트 */
 .ic{padding:8px 10px!important;gap:10px!important;}
-.ic-ttl{font-size:8.5pt!important;} .ic-sub{font-size:8pt!important;line-height:1.5!important;}
+.ic-ttl{font-size:8.5pt!important;} .ic-sub{font-size:8pt!important;line-height:1.5!important;display:block!important;-webkit-line-clamp:none!important;overflow:visible!important;}
 .ic-i{width:20px!important;height:20px!important;} .ic-i svg{width:11px!important;height:11px!important;}
 
 /* mom-row, aib */
@@ -595,6 +599,12 @@ input,select,textarea,button{display:none!important;}
 #dtable th .sortmk{display:inline-block;width:10px;color:var(--lbl3);font-size:10px;margin-left:2px;}
 #dtable th.act .sortmk{color:var(--b600);}
 #dtable th.act{color:var(--b700);}
+/* 범용 정렬 헤더 (현장패널 테이블 등) */
+.dt th[data-sort]{cursor:pointer;user-select:none;transition:color .15s;}
+.dt th[data-sort]:hover{color:var(--b700);}
+.dt th .sortmk{display:inline-block;width:10px;color:var(--lbl3);font-size:10px;margin-left:2px;}
+.dt th.act .sortmk{color:var(--b600);}
+.dt th.act{color:var(--b700);}
 .matrix{font-size:12px;}
 .matrix th,.matrix td{padding:7px 9px;}
 .matrix td.heat{position:relative;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;}
@@ -672,6 +682,8 @@ input,select,textarea,button{display:none!important;}
 
   /* KPI: 2열 */
   .akpi,.kg4,.kg5{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
+  /* 첫 슬롯은 가로 2칸 차지 → 1 / 2 3 / 4 5 형태 */
+  .akpi > .kc:first-child,.kg4 > .kc:first-child,.kg5 > .kc:first-child{grid-column:span 2!important;}
   .set-grid{grid-template-columns:1fr!important;}
   .smtbl{font-size:11.5px;}
   .smtbl th,.smtbl td{padding:6px 8px;}
@@ -1248,7 +1260,9 @@ function topT(items,n){
   const s=Object.entries(m).sort((a,b)=>b[1].c-a[1].c);
   const top=s.slice(0,n).map(([t,v])=>{const coEntries=Object.entries(v.co).sort((a,b)=>b[1]-a[1]);return{t,c:v.c,co:coEntries[0]?.[0]||'-',coN:coEntries.length};});
   const oth=s.slice(n).reduce((a,[,v])=>a+v.c,0),tot=s.reduce((a,[,v])=>a+v.c,0);
-  if(oth>0)top.push({t:'기타',c:oth,isO:true});
+  // 기타(6위~끝) 묶음의 고유 시공업체 집합
+  const othCo={};s.slice(n).forEach(([,v])=>{Object.keys(v.co).forEach(c=>{othCo[c]=true;});});
+  if(oth>0)top.push({t:'기타',c:oth,isO:true,coN:Object.keys(othCo).length,keys:s.slice(n).map(([k])=>k)});
   top.push({t:'계',c:tot,isT:true});
   return top;
 }
@@ -1361,6 +1375,29 @@ function rSMgr(){const el=document.getElementById('smlist');if(!el)return;if(!S.
 function sortSM(arr){if(!S.smsort?.col)return arr;const{col,dir}=S.smsort,num=['units','buildings'].includes(col);return arr.slice().sort((a,b)=>{const va=a[col]??(num?0:''),vb=b[col]??(num?0:'');if(num)return dir*((Number(va)||0)-(Number(vb)||0));return dir*String(va).localeCompare(String(vb),'ko');});}
 function sortSMT(col){if(!S.smsort)S.smsort={col:null,dir:1};if(S.smsort.col===col){if(S.smsort.dir===1)S.smsort.dir=-1;else{S.smsort.col=null;S.smsort.dir=1;}}else{S.smsort.col=col;S.smsort.dir=1;}rSMgr();}
 function rSMMark(){document.querySelectorAll('#smtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');th.classList.toggle('act',S.smsort?.col===c);if(mk)mk.textContent=S.smsort?.col===c?(S.smsort.dir===1?'▲':'▼'):'↕';});}
+
+// 범용 패널 테이블 정렬 (DOM 기반). 기타/합계(data-fixed 또는 tr.tot)는 맨 아래 고정.
+window._panelSort={};
+function sortPanel(tableId,th){
+  const tbl=document.getElementById(tableId);if(!tbl||!th)return;
+  const colIdx=Array.prototype.indexOf.call(th.parentNode.children,th);
+  const type=th.dataset.sortType||'num';
+  const st=window._panelSort[tableId]||{col:null,dir:1};
+  if(st.col===colIdx){if(st.dir===-1){st.col=null;st.dir=1;}else st.dir=-1;}
+  else{st.col=colIdx;st.dir=1;}
+  window._panelSort[tableId]=st;
+  // 헤더 마크 갱신
+  tbl.querySelectorAll('thead th[data-sort]').forEach((h,idx)=>{const mk=h.querySelector('.sortmk');h.classList.toggle('act',st.col===idx);if(mk)mk.textContent=st.col===idx?(st.dir===1?'▲':'▼'):'↕';});
+  const tb=tbl.querySelector('tbody');if(!tb)return;
+  const allRows=Array.prototype.slice.call(tb.querySelectorAll(':scope > tr'));
+  const fixed=allRows.filter(r=>r.classList.contains('tot')||r.dataset.fixed==='1');
+  let rows=allRows.filter(r=>!(r.classList.contains('tot')||r.dataset.fixed==='1'));
+  if(st.col!==null){
+    const getVal=(r)=>{const cell=r.children[st.col];if(!cell)return type==='str'?'':-Infinity;let txt=(cell.textContent||'').trim();if(type==='str')return txt;txt=txt.replace(/\u2212/g,'-').replace(/[▲▼]/g,'');const num=parseFloat(txt.replace(/[^0-9.\-]/g,''));return isNaN(num)?-Infinity:num;};
+    rows.sort((a,b)=>{const va=getVal(a),vb=getVal(b);let cmp;if(type==='str')cmp=String(va).localeCompare(String(vb),'ko');else cmp=va-vb;return cmp*st.dir;});
+  }
+  rows.concat(fixed).forEach(r=>tb.appendChild(r));
+}
 
 // DASHBOARD
 const BP=['#538CDE','#3E71D2','#3259B6','#304D9D','#2C437C','#1F2B4C','#74ABE6','#A0C8F0'];
@@ -1480,12 +1517,23 @@ function rChartsImpl(all){
     satTS+=7*86400000;prevCutoff=cutoff;
   }
   const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
+  // y1(누계 접수·처리 라인) 동적 범위 — 0이 아닌 데이터 범위에 맞춰 변화가 잘 보이도록
+  const _y1vals=[...cumR,...cumRes].filter(v=>v>0);
+  let _y1min=0,_y1max;
+  if(_y1vals.length){
+    const lo=Math.min(..._y1vals),hi=Math.max(..._y1vals),span=Math.max(hi-lo,1);
+    const pad=Math.max(span*0.15,Math.round(hi*0.02));
+    _y1min=Math.max(0,Math.floor((lo-pad)));
+    _y1max=Math.ceil(hi+pad);
+    // 변화폭이 전체 대비 너무 작으면(거의 평평) 바닥을 더 끌어올려 차이를 강조
+    if(span<hi*0.08){_y1min=Math.max(0,Math.floor(lo-span*0.6));}
+  }
   // 모션 구성:
   //  - 막대/선 모두 dataset-level animations로 baseline에서 위로 grow
   //  - 막대: easeOutQuart, 선: easeOutCubic (같은 duration, 다른 곡선)
   //  - 라벨: 차트 완성 후 opacity 0→1 raf 페이드인 (350ms smoothstep)
   const MO_DUR=900;
-  const _baseY=(ctx)=>{if(ctx.type!=='data')return;const ds=ctx.chart.data.datasets[ctx.datasetIndex];const sc=ctx.chart.scales[ds?.yAxisID||'y'];return sc?sc.getPixelForValue(0):0;};
+  const _baseY=(ctx)=>{if(ctx.type!=='data')return;const ds=ctx.chart.data.datasets[ctx.datasetIndex];const sc=ctx.chart.scales[ds?.yAxisID||'y'];if(!sc)return 0;const base=(sc.min!=null)?sc.min:0;return sc.getPixelForValue(base);};
   const _barAnim={y:{duration:MO_DUR,easing:'easeOutQuart',from:_baseY}};
   const _lineAnim={y:{duration:MO_DUR,easing:'easeOutCubic',from:_baseY}};
   const _op=(ctx)=>ctx.chart.$la??0;
@@ -1495,7 +1543,7 @@ function rChartsImpl(all){
     {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#3E71D2',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'top',offset:6,clip:false,color:'#2C437C',font:{size:11,weight:700},textStrokeColor:'#fff',textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}},
     {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#F0B144',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'bottom',offset:6,clip:false,color:'#A0590A',font:{size:11,weight:700},textStrokeColor:'#fff',textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}}
   ];
-  S.charts['mo']=new Chart(document.getElementById('c-mo'),{data:{labels:wks.map(x=>`${x.m}월\n${x.w}주`),datasets:moDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:MO_DUR,easing:'easeOutQuart',onComplete(ac){if(!ac.initial||ac.chart.$dlShown)return;ac.chart.$dlShown=true;const ch=ac.chart,t0=performance.now(),fd=350;const tick=()=>{if(!ch||ch.$destroyed||!ch.ctx)return;try{const p=Math.min(1,(performance.now()-t0)/fd);ch.$la=p*p*(3-2*p);ch.update('none');if(p<1)requestAnimationFrame(tick);}catch(e){console.warn('label fade tick aborted',e);}};requestAnimationFrame(tick);}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,position:'aboveAll',yAlign:'top',caretPadding:6,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{label:ctx=>`${ctx.dataset.label}: ${(ctx.parsed.y??ctx.parsed??0).toLocaleString()}건`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#3C3C43',callback:function(v){return this.getLabelForValue(v).split('\n');}}},y:{beginAtZero:true,position:'left',grace:'25%',grid:{color:'rgba(0,0,0,.05)'},title:{display:true,text:'미처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}},y1:{beginAtZero:true,position:'right',grace:'25%',grid:{display:false},title:{display:true,text:'접수·처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}}}}});
+  S.charts['mo']=new Chart(document.getElementById('c-mo'),{data:{labels:wks.map(x=>`${x.m}월\n${x.w}주`),datasets:moDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:MO_DUR,easing:'easeOutQuart',onComplete(ac){if(!ac.initial||ac.chart.$dlShown)return;ac.chart.$dlShown=true;const ch=ac.chart,t0=performance.now(),fd=350;const tick=()=>{if(!ch||ch.$destroyed||!ch.ctx)return;try{const p=Math.min(1,(performance.now()-t0)/fd);ch.$la=p*p*(3-2*p);ch.update('none');if(p<1)requestAnimationFrame(tick);}catch(e){console.warn('label fade tick aborted',e);}};requestAnimationFrame(tick);}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,position:'aboveAll',yAlign:'top',caretPadding:6,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{label:ctx=>`${ctx.dataset.label}: ${(ctx.parsed.y??ctx.parsed??0).toLocaleString()}건`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#3C3C43',callback:function(v){return this.getLabelForValue(v).split('\n');}}},y:{beginAtZero:true,position:'left',grace:'25%',grid:{color:'rgba(0,0,0,.05)'},title:{display:true,text:'미처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}},y1:{beginAtZero:false,min:_y1min,max:_y1max,position:'right',grid:{display:false},title:{display:true,text:'접수·처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}}}}});
   // Custom HTML legend for c-mo
   const lgMo=document.getElementById('c-mo-lg');if(lgMo)lgMo.innerHTML=[
     {label:'장기미처리',type:'bar',color:'#E89C9A'},
@@ -1507,13 +1555,15 @@ function rChartsImpl(all){
   const mPT=all.reduce((a,x)=>a+x.st.prev.total,0),mPRes=all.reduce((a,x)=>a+x.st.prev.res,0),mPU=all.reduce((a,x)=>a+x.st.prev.unr,0),mPL=all.reduce((a,x)=>a+x.st.prev.lt,0);
   const mCT=all.reduce((a,x)=>a+x.st.tR,0),mCRes=all.reduce((a,x)=>a+x.st.res,0),mCU=all.reduce((a,x)=>a+x.st.unr,0),mCL=all.reduce((a,x)=>a+x.st.lt,0);
   const momMetrics=[
-    {label:'전체 접수',prev:mPT,curr:mCT,goodUp:false},
-    {label:'처리 완료',prev:mPRes,curr:mCRes,goodUp:true},
-    {label:'미처리',prev:mPU,curr:mCU,goodUp:false},
-    {label:'장기미처리',prev:mPL,curr:mCL,goodUp:false}
+    {label:'전체 접수',prev:mPT,curr:mCT,goodUp:false,grp:'in'},
+    {label:'처리 완료',prev:mPRes,curr:mCRes,goodUp:true,grp:'in'},
+    {label:'미처리',prev:mPU,curr:mCU,goodUp:false,grp:'un'},
+    {label:'장기미처리',prev:mPL,curr:mCL,goodUp:false,grp:'un'}
   ];
-  const momMax=Math.max(...momMetrics.flatMap(m=>[m.prev,m.curr]),1);
-  const momEl=document.getElementById('c-mom');if(momEl){momEl.innerHTML=momMetrics.map(m=>{const diff=m.curr-m.prev,pct=m.prev>0?(diff/m.prev*100):0,isUp=diff>0,isEq=diff===0,arrow=isEq?'—':isUp?'▲':'▼',good=isEq?'eq':(m.goodUp===isUp?'up':'dn'),pctTxt=isEq?'변동 없음':(m.prev>0?(diff>0?'+':'')+pct.toFixed(1)+'%':'—');return`<div class="mom-row"><div class="label">${m.label}</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="${m.prev/momMax*100}"></div></div><span class="vl">${m.prev.toLocaleString()}</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="${m.curr/momMax*100}"></div></div><span class="vl">${m.curr.toLocaleString()}</span></div></div><div class="delta"><span class="d ${good}">${arrow} ${pctTxt}</span></div></div>`;}).join('');requestAnimationFrame(()=>{momEl.querySelectorAll('.fl').forEach((fl,i)=>{setTimeout(()=>{fl.style.width=fl.dataset.w+'%';},60+i*40);});});}
+  // 그룹별 max로 정규화: 접수·처리는 큰 스케일, 미처리·장기미처리는 작은 스케일을 각각 꽉 채워 비교가 잘 보이도록
+  const momMaxIn=Math.max(...momMetrics.filter(m=>m.grp==='in').flatMap(m=>[m.prev,m.curr]),1);
+  const momMaxUn=Math.max(...momMetrics.filter(m=>m.grp==='un').flatMap(m=>[m.prev,m.curr]),1);
+  const momEl=document.getElementById('c-mom');if(momEl){momEl.innerHTML=momMetrics.map(m=>{const mx=m.grp==='in'?momMaxIn:momMaxUn;const diff=m.curr-m.prev,pct=m.prev>0?(diff/m.prev*100):0,isUp=diff>0,isEq=diff===0,arrow=isEq?'—':isUp?'▲':'▼',good=isEq?'eq':(m.goodUp===isUp?'up':'dn'),pctTxt=isEq?'변동 없음':(m.prev>0?(diff>0?'+':'')+pct.toFixed(1)+'%':'—');return`<div class="mom-row"><div class="label">${m.label}</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="${m.prev/mx*100}"></div></div><span class="vl">${m.prev.toLocaleString()}</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="${m.curr/mx*100}"></div></div><span class="vl">${m.curr.toLocaleString()}</span></div></div><div class="delta"><span class="d ${good}">${arrow} ${pctTxt}</span></div></div>`;}).join('');requestAnimationFrame(()=>{momEl.querySelectorAll('.fl').forEach((fl,i)=>{setTimeout(()=>{fl.style.width=fl.dataset.w+'%';},60+i*40);});});}
 
   // 3) Top trades treemap (with fallback if library missing)
   dC('mx');const mxEl=document.getElementById('c-mx');if(mxEl){
@@ -1554,55 +1604,107 @@ function rSite(sid){
     {cls:'wh',label:'미처리',val:st.unr,unit:'건',meta:`세대당 ${units>0?(st.unr/units).toFixed(1):'0.0'}건`,icon:'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'},
     {cls:'wh',label:'장기미처리(30일+)',val:st.lt,unit:'건',meta:`미처리 ${st.ltr.toFixed(1)}%`,icon:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2'},
   ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="${k.icon}"/></svg></div></div>`).join('');
-  const cmp=[{l:'접수 건수',c:st.tR,p:st.prev.total,rv:false},{l:'처리 건수',c:st.res,p:st.prev.res,rv:false},{l:'미처리',c:st.unr,p:st.prev.unr,rv:true},{l:'장기미처리',c:st.lt,p:st.prev.lt,rv:true}].map(x=>{const d=x.c-x.p,g=x.rv?d<=0:d>=0,cls=d===0?'csm':g?'cdn':'cup',ar=d>0?'▲':d<0?'▼':'─';return`<div class="cmpc"><div class="cmpl">${x.l}</div><div class="cmpv">${x.c.toLocaleString()}<span class="u">건</span></div><div class="cmpd"><span class="${cls}">${ar} ${Math.abs(d).toLocaleString()}건</span> <span style="color:var(--lbl3)">전월 ${x.p.toLocaleString()}</span></div></div>`;}).join('');
-  // 공종 TOP5 표 — 기타/계 행 제거. 비율(미처리 대비) + 증감(전월대비) 컬럼 추가. 시공업체는 최다 1개 + 외 N개 업체.
-  const trBase=st.top.filter(t=>!t.isT&&!t.isO);
-  const trRows=trBase.map((t,i)=>{
-    const plan=cm.processingPlan?.[t.t]||'';
+  // 공종 TOP5 표 — 미처리를 전월/금월 분개 + 증감. 기타 행(6위~끝, 시공업체 외 N개) + 합계 행 추가.
+  // colspan: 순위/공종/시공업체/전월/금월/증감/비율/처리계획 = 8열
+  const trRowFn=(t,i,planMap,planKey)=>{
+    const plan=planMap?.[t.t]||'';
     const ratio=st.unr>0?(t.c/st.unr*100).toFixed(1):'0.0';
     const pc=st.topPrev?.[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const coCell=`${t.co||'-'}${t.coN>1?` <span style="color:var(--lbl3);font-size:11px">외 ${(t.coN-1).toLocaleString()}개 업체</span>`:''}`;
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" name="plan-${sid}-pp-${t.t}" data-plan-id="cmt|${sid}|processingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
-  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
-  const vBase=st.vTop.filter(t=>!t.isT&&!t.isO);
-  const vRows=vBase.map((t,i)=>{
+    const coCell=t.co||'-';
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--am);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td><textarea class="inp plan-ta" name="plan-${sid}-${planKey}-${t.t}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
+  };
+  // 기타 행 — 순위 없음, 시공업체는 외 N개 업체, 전월=기타 묶음 공종들의 전월 합
+  const trEtcFn=(etc,prevMap)=>{
+    if(!etc)return'';
+    const pc=(etc.keys||[]).reduce((a,k)=>a+(prevMap?.[k]||0),0),dN=etc.c-pc;
+    const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    const ratio=st.unr>0?(etc.c/st.unr*100).toFixed(1):'0.0';
+    const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--am);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td><div style="min-height:32px"></div></td></tr>`;
+  };
+  // 합계 행
+  const trTotFn=(tot,prevTot)=>{
+    if(!tot)return'';
+    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc"><b>100.0%</b></td><td><div style="min-height:32px"></div></td></tr>`;
+  };
+  const trBase=st.top.filter(t=>!t.isT&&!t.isO);
+  const trEtc=st.top.find(t=>t.isO),trTot=st.top.find(t=>t.isT);
+  const prevTrTot=Object.values(st.topPrev||{}).reduce((a,b)=>a+b,0);
+  const trRows=(trBase.map((t,i)=>trRowFn(t,i,cm.processingPlan,'pp')).join('')
+    +trEtcFn(trEtc,st.topPrev)+trTotFn(trTot,prevTrTot))
+    ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
+  // 공가세대 미처리 상위 — 동일 구조
+  const vRowFn=(t,i)=>{
     const plan=cm.vacantProcessingPlan?.[t.t]||'';
     const ratio=st.vUnr>0?(t.c/st.vUnr*100).toFixed(1):'0.0';
     const pc=st.vTopPrev?.[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const coCell=`${t.co||'-'}${t.coN>1?` <span style="color:var(--lbl3);font-size:11px">외 ${(t.coN-1).toLocaleString()}개 업체</span>`:''}`;
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n" style="color:var(--am)">${t.c.toLocaleString()}</td><td class="n" style="font-weight:600">${ratio}%</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" title="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td><textarea class="inp plan-ta" name="plan-${sid}-vp-${t.t}" data-plan-id="cmt|${sid}|vacantProcessingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
-  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
+    const coCell=t.co||'-';
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--am);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td><textarea class="inp plan-ta" name="plan-${sid}-vp-${t.t}" data-plan-id="cmt|${sid}|vacantProcessingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="처리계획 입력 (Enter로 줄바꿈)" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
+  };
+  const vEtcFn=(etc)=>{
+    if(!etc)return'';
+    const pc=(etc.keys||[]).reduce((a,k)=>a+(st.vTopPrev?.[k]||0),0),dN=etc.c-pc;
+    const dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    const ratio=st.vUnr>0?(etc.c/st.vUnr*100).toFixed(1):'0.0';
+    const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--am);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td><div style="min-height:32px"></div></td></tr>`;
+  };
+  const vTotFn=(tot,prevTot)=>{
+    if(!tot)return'';
+    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dSign=dN===0?'':dN>0?'+':'−',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dSign}${Math.abs(dN).toLocaleString()}</span></td><td class="cc"><b>100.0%</b></td><td><div style="min-height:32px"></div></td></tr>`;
+  };
+  const vBase=st.vTop.filter(t=>!t.isT&&!t.isO);
+  const vEtc=st.vTop.find(t=>t.isO),vTot=st.vTop.find(t=>t.isT);
+  const prevVTot=Object.values(st.vTopPrev||{}).reduce((a,b)=>a+b,0);
+  const vRows=(vBase.map((t,i)=>vRowFn(t,i)).join('')
+    +vEtcFn(vEtc)+vTotFn(vTot,prevVTot))
+    ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
   const wRows=st.weekly.map(w=>{const wr=w.r>0?(w.res/w.r*100).toFixed(1):0;return`<tr><td class="cc"><b>${w.label}</b></td><td class="n">${w.r.toLocaleString()}</td><td class="n" style="color:var(--gn)">${w.res.toLocaleString()}</td><td class="n">${w.u.toLocaleString()}</td><td class="n" style="color:var(--am)">${w.d0.toLocaleString()}</td><td class="n" style="color:var(--b600)">${w.d30.toLocaleString()}</td><td class="n" style="color:var(--b900)">${w.d60.toLocaleString()}</td><td class="cc"><span class="ba ${Number(wr)>=80?'bgn':Number(wr)>=60?'bam':'brd'}">${wr}%</span></td></tr>`;}).join('');
   // All-trade table for trade tab — 시공업체 최다 사용 1개 + 추가 N
-  const allTrade={};filtered.forEach(i=>{const t=i.trade||'기타';if(!allTrade[t])allTrade[t]={t,r:0,res:0,u:0,lt:0,co:{}};allTrade[t].r++;if(i.status==='처리')allTrade[t].res++;else{allTrade[t].u++;if(Number(i.delayDays)>=30)allTrade[t].lt++;}const co=i.contractor||'';if(co)allTrade[t].co[co]=(allTrade[t].co[co]||0)+1;});const allTradeRows=Object.values(allTrade).sort((a,b)=>b.u-a.u).map(x=>{const rt=x.r>0?(x.res/x.r*100).toFixed(1):0;const coE=Object.entries(x.co).sort((a,b)=>b[1]-a[1]);const coTop=coE[0]?.[0]||'-',coN=coE.length;return`<tr><td><b>${x.t}</b></td><td>${coTop}${coN>1?` <span style="color:var(--lbl3);font-size:11px">외 ${(coN-1).toLocaleString()}개 업체</span>`:''}</td><td class="n">${x.r.toLocaleString()}</td><td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td><td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td><td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td><td class="cc"><div style="display:flex;align-items:center;gap:6px;justify-content:center"><div class="pg" style="width:50px"><div class="pgf ${rt>=80?'gn':rt>=60?'am':'rd'}" style="width:${Math.min(rt,100)}%"></div></div><span style="font-size:11.5px;font-weight:600">${rt}%</span></div></td></tr>`;}).join('');
+  // 공종별 전체 처리 현황 — 현장별 하자처리 현황과 동일 구성
+  // NO/공종/시공업체/전체접수/처리/처리율/미처리/장기미처리/장기미처리비율(바)/전월대비
+  const allTrade={};filtered.forEach(i=>{const t=i.trade||'기타';if(!allTrade[t])allTrade[t]={t,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,co:{}};const inRef=i.receiptDate&&i.receiptDate.slice(0,7)<=S.rm;if(!inRef)return;allTrade[t].r++;if(i.status==='처리')allTrade[t].res++;else if(i.status==='미처리'){allTrade[t].u++;const dd=Number(i.delayDays);if(dd>=60)allTrade[t].d60++;else if(dd>=30){allTrade[t].d30++;allTrade[t].lt++;}else allTrade[t].d0++;if(dd>=60)allTrade[t].lt++;}const co=i.contractor||'';if(co)allTrade[t].co[co]=(allTrade[t].co[co]||0)+1;});
+  // 전월(st.pm) 기준 공종별 장기미처리 비율 — 증감 계산용
+  const _pmTrade={};filtered.forEach(i=>{if(!i.receiptDate||i.receiptDate.slice(0,7)>st.pm)return;const t=i.trade||'기타';if(!_pmTrade[t])_pmTrade[t]={u:0,lt:0};if(i.status==='미처리'){_pmTrade[t].u++;if(Number(i.delayDays)>=30)_pmTrade[t].lt++;}});
+  const allTradeRows=Object.values(allTrade).sort((a,b)=>b.u-a.u).map((x,i)=>{
+    const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
+    const coE=Object.entries(x.co).sort((a,b)=>b[1]-a[1]);const coTop=coE[0]?.[0]||'-';
+    const ltr=x.u>0?(x.lt/x.u*100):0;
+    const p=_pmTrade[x.t]||{u:0,lt:0},pLtr=p.u>0?(p.lt/p.u*100):0;
+    const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';
+    const p60=x.u>0?Math.min(x.d60/x.u*100,100):0,p30=x.u>0?Math.min(x.d30/x.u*100,100):0,p0=x.u>0?Math.min(x.d0/x.u*100,100):0;
+    return`<tr><td class="cc">${i+1}</td><td><b>${x.t}</b></td><td>${coTop}</td><td class="n">${x.r.toLocaleString()}</td><td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td><td class="n" style="font-weight:600">${rt}%</td><td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td><td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${x.t}|${x.u}|${x.d60}|${x.d30}|${x.d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" title="전월 ${pLtr.toFixed(1)}% → 금월 ${ltr.toFixed(1)}%">${arrow} ${sign}${Math.abs(dN).toFixed(1)}%</span></td></tr>`;
+  }).join('');
 
   document.getElementById('scontent').innerHTML=`
 <div class="akpi mb12">${kpis}</div>
 <div class="tnav">
-  <button class="tnav-i ${S.tab==='overview'?'act':''}" data-tab="overview" onclick="setTab('overview')">📊 종합 <span class="cnt">${st.tR.toLocaleString()}</span></button>
-  <button class="tnav-i ${S.tab==='trade'?'act':''}" data-tab="trade" onclick="setTab('trade')">🔧 공종 분석 <span class="cnt">${Object.keys(allTrade).length.toLocaleString()}</span></button>
+  <button class="tnav-i ${S.tab==='overview'?'act':''}" data-tab="overview" onclick="setTab('overview')">📊 종합</button>
+  <button class="tnav-i ${S.tab==='trade'?'act':''}" data-tab="trade" onclick="setTab('trade')">🔧 공종 분석</button>
   <button class="tnav-i ${S.tab==='timeline'?'act':''}" data-tab="timeline" onclick="setTab('timeline')">📈 상세 현황</button>
-  <button class="tnav-i ${S.tab==='long'?'act':''}" data-tab="long" onclick="setTab('long')">⚠ 장기미처리 <span class="cnt">${st.lt.toLocaleString()}</span></button>
-  <button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" onclick="setTab('vacant')">🏢 ${vl} <span class="cnt">${st.vUnr.toLocaleString()}</span></button>
+  <button class="tnav-i ${S.tab==='long'?'act':''}" data-tab="long" onclick="setTab('long')">⚠ 장기미처리</button>
+  <button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" onclick="setTab('vacant')">🏢 ${vl}</button>
 </div>
 
 <div class="tpane ${S.tab==='overview'?'act':''}" data-tab="overview">
   <div class="as">
-    <div class="card"><div class="sh"><div class="st"><span class="snum">1</span>전월 대비 핵심 변화</div><span style="font-size:11px;color:var(--lbl2)">${pM(S.rm)} → ${S.rm}</span></div><div class="cmprow">${cmp}</div></div>
-    <div class="cr">
-      <div class="card"><div class="ct">주차별 접수·처리 추이</div><div class="cw h180"><canvas id="cwR-${sid}"></canvas></div></div>
-      <div class="card"><div class="ct">미처리 공종 TOP5</div><div class="cw h180"><canvas id="cwT-${sid}"></canvas></div></div>
+    <div class="card mb12 main-chart-card"><div class="ct" style="font-size:16px;color:rgb(92,92,96);flex-shrink:0">하자접수 · 처리 주차별 추이</div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo-${sid}"></canvas></div><div id="c-mo-lg-${sid}" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+    <div class="opsr">
+      <div class="card"><div class="ct" style="font-size:16px;color:rgb(92,92,96)">전월대비 실적 현황</div><div id="c-mom-${sid}" class="mom-wrap"></div></div>
+      <div class="card"><div class="ct" style="font-size:16px;color:rgb(92,92,96)">공종별 미처리 분포</div><div class="dn-side"><div class="canv" style="padding:0px"><canvas id="c-mx-${sid}"></canvas></div><div class="lg lg-2col" id="c-mx-lg-${sid}"></div></div></div>
     </div>
-    <div class="card"><div class="sh"><div class="st"><span class="snum">2</span>종합 분석 의견</div><button class="btn bo bsm" onclick="runAI('${sid}')">AI 분석 생성</button></div><div class="aib"><div class="ail">AI 분석</div><div id="ait-${sid}" class="ait">${ai?ai.split('\n').filter(Boolean).map(l=>`<p>${l}</p>`).join(''):'<p style="color:var(--lbl3)">AI 분석 생성 버튼을 클릭하세요. (설정에서 Gemini API 키 필요)</p>'}</div></div></div>
+    <div class="card"><div class="sh"><div class="st">종합 분석 의견</div><button class="btn bo bsm" onclick="runAI('${sid}')">AI 분석 생성</button></div><div class="aib"><div class="ail">AI 분석</div><div id="ait-${sid}" class="ait">${ai?ai.split('\n').filter(Boolean).map(l=>`<p>${l}</p>`).join(''):'<p style="color:var(--lbl3)">AI 분석 생성 버튼을 클릭하세요. (설정에서 Gemini API 키 필요)</p>'}</div></div></div>
   </div>
 </div>
 
 <div class="tpane ${S.tab==='trade'?'act':''}" data-tab="trade">
   <div class="as">
-    <div class="card"><div class="sh"><div class="st"><span class="snum">2</span>미처리 상위 5개 공종 처리현황</div><span style="font-size:11px;color:var(--lbl2)">처리계획 입력 후 자동 저장</span></div><table class="dt"><thead><tr><th style="width:64px;text-align:center">순위</th><th style="width:14%">공종</th><th style="width:18%">시공업체</th><th class="n" style="width:9%">미처리</th><th class="n" style="width:8%">비율</th><th class="cc" style="width:10%;white-space:nowrap">증감</th><th>처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card"><div class="ct">공종별 전체 처리 현황</div><table class="dt"><thead><tr><th>공종</th><th>시공업체</th><th class="n">접수</th><th class="n">처리</th><th class="n">미처리</th><th class="n">장기</th><th class="cc" style="min-width:140px">처리율</th></tr></thead><tbody>${allTradeRows||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody></table></div>
+    <div class="card"><div class="sh"><div class="st">미처리 상위 5개 공종 처리현황</div><span style="font-size:11px;color:var(--lbl2)">처리계획 입력 후 자동 저장</span></div><table class="dt" id="ttop-${sid}"><thead><tr><th class="cc" style="width:52px" data-sort data-sort-type="num" onclick="sortPanel('ttop-${sid}',this)">순위 <span class="sortmk">↕</span></th><th style="width:13%" data-sort data-sort-type="str" onclick="sortPanel('ttop-${sid}',this)">공종 <span class="sortmk">↕</span></th><th style="width:13%" data-sort data-sort-type="str" onclick="sortPanel('ttop-${sid}',this)">시공업체 <span class="sortmk">↕</span></th><th class="n" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('ttop-${sid}',this)">전월 <span class="sortmk">↕</span></th><th class="n" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('ttop-${sid}',this)">금월 <span class="sortmk">↕</span></th><th class="cc" style="width:9%;white-space:nowrap" data-sort data-sort-type="num" onclick="sortPanel('ttop-${sid}',this)">증감 <span class="sortmk">↕</span></th><th class="cc" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('ttop-${sid}',this)">비율 <span class="sortmk">↕</span></th><th>처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
+    <div class="card"><div class="ct">공종별 전체 처리 현황</div><table class="dt" id="trade-${sid}"><thead><tr><th class="cc" style="width:48px" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">NO <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('trade-${sid}',this)">공종 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('trade-${sid}',this)">시공업체 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">전체 접수 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">처리 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">처리율 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">미처리 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="min-width:140px">장기미처리 비율</th><th class="cc" style="white-space:nowrap" data-sort data-sort-type="num" onclick="sortPanel('trade-${sid}',this)">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${allTradeRows||'<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody></table></div>
   </div>
 </div>
 
@@ -1612,7 +1714,7 @@ function rSite(sid){
       <div class="card"><div class="ct">주차별 접수·처리·미처리</div><div class="cw h180"><canvas id="cwR2-${sid}"></canvas></div></div>
       <div class="card"><div class="ct">미처리 지연 구간 추이 (주차별)</div><div class="cw h180"><canvas id="cwD-${sid}"></canvas></div></div>
     </div>
-    <div class="card"><div class="ct">주차별 상세 집계</div><div style="overflow-x:auto"><table class="dt"><thead><tr><th>주차</th><th class="n">접수</th><th class="n">처리</th><th class="n">미처리</th><th class="n" style="color:var(--am)">~29일</th><th class="n" style="color:var(--b600)">30~59일</th><th class="n" style="color:var(--b900)">60일+</th><th class="cc">처리율</th></tr></thead><tbody>${wRows}<tr class="tot"><td><b>합계</b></td><td class="n"><b>${st.tR.toLocaleString()}</b></td><td class="n"><b>${st.res.toLocaleString()}</b></td><td class="n"><b>${st.unr.toLocaleString()}</b></td><td class="n"><b>${st.dd[0].toLocaleString()}</b></td><td class="n"><b>${st.dd[1].toLocaleString()}</b></td><td class="n"><b>${st.dd[2].toLocaleString()}</b></td><td class="cc"><b>${st.rate.toFixed(1)}%</b></td></tr></tbody></table></div></div>
+    <div class="card"><div class="ct">주차별 상세 집계</div><div style="overflow-x:auto"><table class="dt" id="wk-${sid}"><thead><tr><th data-sort data-sort-type="str" onclick="sortPanel('wk-${sid}',this)">주차 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">접수 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">처리 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">미처리 <span class="sortmk">↕</span></th><th class="n" style="color:var(--am)" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">~29일 <span class="sortmk">↕</span></th><th class="n" style="color:var(--b600)" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">30~59일 <span class="sortmk">↕</span></th><th class="n" style="color:var(--b900)" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">60일+ <span class="sortmk">↕</span></th><th class="cc" data-sort data-sort-type="num" onclick="sortPanel('wk-${sid}',this)">처리율 <span class="sortmk">↕</span></th></tr></thead><tbody>${wRows}<tr class="tot"><td><b>합계</b></td><td class="n"><b>${st.tR.toLocaleString()}</b></td><td class="n"><b>${st.res.toLocaleString()}</b></td><td class="n"><b>${st.unr.toLocaleString()}</b></td><td class="n"><b>${st.dd[0].toLocaleString()}</b></td><td class="n"><b>${st.dd[1].toLocaleString()}</b></td><td class="n"><b>${st.dd[2].toLocaleString()}</b></td><td class="cc"><b>${st.rate.toFixed(1)}%</b></td></tr></tbody></table></div></div>
   </div>
 </div>
 
@@ -1623,27 +1725,92 @@ function rSite(sid){
       <div class="card"><div class="ct">지연 구간 분포</div><div class="cw h180"><canvas id="cLD-${sid}"></canvas></div></div>
       <div class="card"><div class="ct">보수주체별 미처리 분포</div><div class="cw h180"><canvas id="cLR-${sid}"></canvas></div></div>
     </div>
-    <div class="card"><div class="ct">장기미처리 상세 (30일+)</div><div style="max-height:320px;overflow-y:auto"><table class="dt"><thead><tr><th>접수번호</th><th>동·호</th><th>공종</th><th>하자유형</th><th>접수일</th><th class="n">지연일수</th><th>보수주체</th></tr></thead><tbody>${filtered.filter(i=>i.status==='미처리'&&Number(i.delayDays)>=30).sort((a,b)=>Number(b.delayDays)-Number(a.delayDays)).slice(0,40).map(i=>`<tr><td style="font-family:monospace;font-size:11px">${i.receiptNo||'-'}</td><td>${i.building||'-'}동 ${i.unit||''}호</td><td><b>${i.trade}</b></td><td>${i.defectType||'-'}</td><td>${i.receiptDate||'-'}</td><td class="n" style="color:${Number(i.delayDays)>=60?'var(--rd)':'var(--am)'};font-weight:700">${Number(i.delayDays).toLocaleString()}일</td><td>${i.repairParty||'-'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">장기미처리 없음</td></tr>'}</tbody></table></div></div>
+    <div class="card"><div class="ct">장기미처리 상세 (30일+)</div><div style="max-height:320px;overflow-y:auto"><table class="dt" id="lt-${sid}"><thead><tr><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">접수번호 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">동·호 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">공종 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">하자유형 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">접수일 <span class="sortmk">↕</span></th><th class="n" data-sort data-sort-type="num" onclick="sortPanel('lt-${sid}',this)">지연일수 <span class="sortmk">↕</span></th><th data-sort data-sort-type="str" onclick="sortPanel('lt-${sid}',this)">보수주체 <span class="sortmk">↕</span></th></tr></thead><tbody>${filtered.filter(i=>i.status==='미처리'&&Number(i.delayDays)>=30).sort((a,b)=>Number(b.delayDays)-Number(a.delayDays)).slice(0,40).map(i=>`<tr><td style="font-family:monospace;font-size:11px">${i.receiptNo||'-'}</td><td>${i.building||'-'}동 ${i.unit||''}호</td><td><b>${i.trade}</b></td><td>${i.defectType||'-'}</td><td>${i.receiptDate||'-'}</td><td class="n" style="color:${Number(i.delayDays)>=60?'var(--rd)':'var(--am)'};font-weight:700">${Number(i.delayDays).toLocaleString()}일</td><td>${i.repairParty||'-'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:14px;color:var(--lbl3)">장기미처리 없음</td></tr>'}</tbody></table></div></div>
   </div>
 </div>
 
 <div class="tpane ${S.tab==='vacant'?'act':''}" data-tab="vacant">
   <div class="as">
-    <div class="card"><div class="sh"><div class="st"><span class="snum">4</span>${vl} 하자처리 현황</div></div><div class="kg" style="grid-template-columns:repeat(4,1fr);margin-bottom:0"><div class="kc bl"><div class="kl">총 접수</div><div class="kv" style="font-size:22px">${st.vT.toLocaleString()}<span class="u">건</span></div></div><div class="kc sk"><div class="kl">처리</div><div class="kv" style="font-size:22px">${st.vRes.toLocaleString()}<span class="u">건</span></div></div><div class="kc ms"><div class="kl">미처리</div><div class="kv" style="font-size:22px">${st.vUnr.toLocaleString()}<span class="u">건</span></div></div><div class="kc wh"><div class="kl">처리율</div><div class="kv" style="font-size:22px">${st.vRate.toFixed(1)}<span class="u">%</span></div></div></div></div>
-    <div class="card"><div class="sh"><div class="st"><span class="snum">5</span>${vl} 미처리 상위 5개 공종</div></div><table class="dt"><thead><tr><th style="width:64px;text-align:center">순위</th><th style="width:14%">공종</th><th style="width:18%">시공업체</th><th class="n" style="width:9%">미처리</th><th class="n" style="width:8%">비율</th><th class="cc" style="width:10%;white-space:nowrap">증감</th><th>처리계획</th></tr></thead><tbody>${vRows}</tbody></table></div>
+    <div class="card"><div class="sh"><div class="st">${vl} 하자처리 현황</div></div><div class="kg kg5" style="grid-template-columns:repeat(5,1fr);margin-bottom:0">${(()=>{
+      const vacItems=filtered.filter(i=>i.receiptDate&&i.receiptDate.slice(0,7)<=S.rm&&isVac(i,site));
+      const vacUnitSet=new Set(vacItems.map(i=>`${i.building||''}-${i.unit||''}`));vacUnitSet.delete('-');
+      const vacUnits=vacUnitSet.size;
+      const occRate=units>0?((units-vacUnits)/units*100):0;
+      const vLt=vacItems.filter(i=>i.status==='미처리'&&Number(i.delayDays)>=30).length;
+      const vacLabel=site.hasCommercial?'공가상가':'공가세대';
+      return`<div class="kc bl"><div class="kl">${vacLabel}</div><div class="kv" style="font-size:22px">${vacUnits.toLocaleString()}<span class="u">세대</span></div><div class="km">입주율 ${occRate.toFixed(1)}%</div></div><div class="kc sk"><div class="kl">전체 접수</div><div class="kv" style="font-size:22px">${st.vT.toLocaleString()}<span class="u">건</span></div></div><div class="kc ms"><div class="kl">처리 완료</div><div class="kv" style="font-size:22px">${st.vRes.toLocaleString()}<span class="u">건</span></div></div><div class="kc wh"><div class="kl">미처리</div><div class="kv" style="font-size:22px">${st.vUnr.toLocaleString()}<span class="u">건</span></div></div><div class="kc wh"><div class="kl">장기미처리</div><div class="kv" style="font-size:22px">${vLt.toLocaleString()}<span class="u">건</span></div></div>`;
+    })()}</div></div>
+    <div class="card"><div class="sh"><div class="st">${vl} 미처리 상위 5개 공종</div></div><table class="dt" id="vtop-${sid}"><thead><tr><th class="cc" style="width:52px" data-sort data-sort-type="num" onclick="sortPanel('vtop-${sid}',this)">순위 <span class="sortmk">↕</span></th><th style="width:13%" data-sort data-sort-type="str" onclick="sortPanel('vtop-${sid}',this)">공종 <span class="sortmk">↕</span></th><th style="width:13%" data-sort data-sort-type="str" onclick="sortPanel('vtop-${sid}',this)">시공업체 <span class="sortmk">↕</span></th><th class="n" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('vtop-${sid}',this)">전월 <span class="sortmk">↕</span></th><th class="n" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('vtop-${sid}',this)">금월 <span class="sortmk">↕</span></th><th class="cc" style="width:9%;white-space:nowrap" data-sort data-sort-type="num" onclick="sortPanel('vtop-${sid}',this)">증감 <span class="sortmk">↕</span></th><th class="cc" style="width:8%" data-sort data-sort-type="num" onclick="sortPanel('vtop-${sid}',this)">비율 <span class="sortmk">↕</span></th><th>처리계획</th></tr></thead><tbody>${vRows}</tbody></table></div>
   </div>
 </div>
 `;
   setTimeout(()=>{renderTabCharts(sid,st);autoSizeAll(document.getElementById('scontent'));},60);
 }
 
+// ===== 종합 탭(현장패널) 대시보드형 차트 — 데이터는 해당 현장 =====
+function buildSiteTrend(sid,st){
+  const moEl=document.getElementById('c-mo-'+sid);if(!moEl)return;
+  const siteDef=(S.def[sid]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+  const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
+  const refLimStr=`${S.rm}-${String(lastDay).padStart(2,'0')}`;
+  const startTS=Date.UTC(2026,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
+  const refLimTS=Date.UTC(ymPart[0],ymPart[1]-1,lastDay);
+  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff='2026-01-01';
+  while(prevCutoff<=refLimStr){
+    const isPartial=satTS>refLimTS,cutTS=isPartial?refLimTS:satTS,cutD=new Date(cutTS);
+    const cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`,m=cutD.getUTCMonth()+1;
+    let weekNum;if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;else weekNum=1;
+    let cR=0,cRes=0,curU=0,curLt=0;
+    for(const it of siteDef){if(it.receiptDate>cutoff)continue;cR++;const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;if(Number(it.delayDays)>=30)curLt++;}}
+    wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt});
+    if(isPartial)break;satTS+=7*86400000;prevCutoff=cutoff;
+  }
+  const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
+  const _y1vals=[...cumR,...cumRes].filter(v=>v>0);let _y1min=0,_y1max;
+  if(_y1vals.length){const lo=Math.min(..._y1vals),hi=Math.max(..._y1vals),span=Math.max(hi-lo,1),pad=Math.max(span*0.15,Math.round(hi*0.02));_y1min=Math.max(0,Math.floor(lo-pad));_y1max=Math.ceil(hi+pad);if(span<hi*0.08)_y1min=Math.max(0,Math.floor(lo-span*0.6));}
+  const MO_DUR=900;
+  const _baseY=(ctx)=>{if(ctx.type!=='data')return;const ds=ctx.chart.data.datasets[ctx.datasetIndex];const sc=ctx.chart.scales[ds?.yAxisID||'y'];if(!sc)return 0;const base=(sc.min!=null)?sc.min:0;return sc.getPixelForValue(base);};
+  const _barAnim={y:{duration:MO_DUR,easing:'easeOutQuart',from:_baseY}},_lineAnim={y:{duration:MO_DUR,easing:'easeOutCubic',from:_baseY}},_op=(ctx)=>ctx.chart.$la??0;
+  const moDs=[
+    {type:'bar',label:'장기미처리',data:wks.map(x=>x.lt),backgroundColor:'#E89C9A',hoverBackgroundColor:'#C76F6D',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#7a3434',font:{size:11,weight:600}}},
+    {type:'bar',label:'일반하자',data:wks.map(x=>x.u-x.lt),backgroundColor:'#B3C7DD',hoverBackgroundColor:'#7E9BBC',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{labels:{value:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#1F2B4C',font:{size:11,weight:600},formatter:v=>v},total:{display:ctx=>{if(window.innerWidth<=768)return false;const t=wks[ctx.dataIndex]?.u||0;return t>0;},opacity:_op,anchor:'end',align:'end',offset:2,clip:false,color:'#1C1C1E',font:{size:11,weight:700},textStrokeColor:'#fff',textStrokeWidth:4,formatter:(v,ctx)=>{const t=wks[ctx.dataIndex].u;return t>0?t.toLocaleString():'';}}}}},
+    {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'top',offset:6,clip:false,color:'#2C437C',font:{size:11,weight:700},textStrokeColor:'#fff',textStrokeWidth:4,formatter:v=>v.toLocaleString()}},
+    {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'bottom',offset:6,clip:false,color:'#A0590A',font:{size:11,weight:700},textStrokeColor:'#fff',textStrokeWidth:4,formatter:v=>v.toLocaleString()}}
+  ];
+  S.charts['mo-'+sid]=new Chart(moEl,{data:{labels:wks.map(x=>`${x.m}월\n${x.w}주`),datasets:moDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:MO_DUR,easing:'easeOutQuart',onComplete(ac){if(!ac.initial||ac.chart.$dlShown)return;ac.chart.$dlShown=true;const ch=ac.chart,t0=performance.now(),fd=350;const tick=()=>{if(!ch||ch.$destroyed||!ch.ctx)return;try{const p=Math.min(1,(performance.now()-t0)/fd);ch.$la=p*p*(3-2*p);ch.update('none');if(p<1)requestAnimationFrame(tick);}catch(e){}};requestAnimationFrame(tick);}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{label:ctx=>`${ctx.dataset.label}: ${(ctx.parsed.y??ctx.parsed??0).toLocaleString()}건`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#3C3C43',callback:function(v){return this.getLabelForValue(v).split('\n');}}},y:{beginAtZero:true,position:'left',grace:'25%',grid:{color:'rgba(0,0,0,.05)'},title:{display:true,text:'미처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}},y1:{beginAtZero:false,min:_y1min,max:_y1max,position:'right',grid:{display:false},title:{display:true,text:'접수·처리(건)',font:{size:13,weight:600},color:'rgba(60,60,67,.42)'}}}}});
+}
+function buildSiteMom(sid,st){
+  const momEl=document.getElementById('c-mom-'+sid);if(!momEl)return;
+  const M=[
+    {label:'전체 접수',prev:st.prev.total,curr:st.tR,goodUp:false,grp:'in'},
+    {label:'처리 완료',prev:st.prev.res,curr:st.res,goodUp:true,grp:'in'},
+    {label:'미처리',prev:st.prev.unr,curr:st.unr,goodUp:false,grp:'un'},
+    {label:'장기미처리',prev:st.prev.lt,curr:st.lt,goodUp:false,grp:'un'}
+  ];
+  const mxIn=Math.max(...M.filter(m=>m.grp==='in').flatMap(m=>[m.prev,m.curr]),1),mxUn=Math.max(...M.filter(m=>m.grp==='un').flatMap(m=>[m.prev,m.curr]),1);
+  momEl.innerHTML=M.map(m=>{const mx=m.grp==='in'?mxIn:mxUn,diff=m.curr-m.prev,pct=m.prev>0?(diff/m.prev*100):0,isUp=diff>0,isEq=diff===0,arrow=isEq?'—':isUp?'▲':'▼',good=isEq?'eq':(m.goodUp===isUp?'up':'dn'),pctTxt=isEq?'변동 없음':(m.prev>0?(diff>0?'+':'')+pct.toFixed(1)+'%':'—');return`<div class="mom-row"><div class="label">${m.label}</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="${m.prev/mx*100}"></div></div><span class="vl">${m.prev.toLocaleString()}</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="${m.curr/mx*100}"></div></div><span class="vl">${m.curr.toLocaleString()}</span></div></div><div class="delta"><span class="d ${good}">${arrow} ${pctTxt}</span></div></div>`;}).join('');
+  requestAnimationFrame(()=>{momEl.querySelectorAll('.fl').forEach((fl,i)=>{setTimeout(()=>{fl.style.width=fl.dataset.w+'%';},60+i*40);});});
+}
+function buildSiteTradeDonut(sid){
+  const mxEl=document.getElementById('c-mx-'+sid);if(!mxEl)return;
+  if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'rgb(92,92,96)';ctx.font=`700 ${opts.valueSize||16}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
+  const am={};(S.def[sid]||[]).filter(i=>i.status==='미처리'&&i.receiptDate&&i.receiptDate.slice(0,7)<=S.rm).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
+  const ownEtc=am['기타']||0;delete am['기타'];
+  const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
+  const tmData=top11.map(([t,c])=>({t,c}));if(etcTotal>0)tmData.push({t:'기타',c:etcTotal});
+  const tot=tmData.reduce((a,x)=>a+x.c,0);
+  const tmColors=['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2','#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC','#B3C7DD'];
+  S.charts['mx-'+sid]=new Chart(mxEl,{type:'doughnut',data:{labels:tmData.map(d=>d.t),datasets:[{data:tmData.map(d=>d.c),backgroundColor:tmColors,borderWidth:3,borderColor:'#fff',hoverOffset:8,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{centerText:{display:true,value:tot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${tot>0?(ctx.parsed/tot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
+  const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${d.t}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+}
 function renderTabCharts(sid,st){
   if(!st){const site=S.sites.find(s=>s.id===sid);if(!site)return;st=calc(applyFlt(S.def[sid]||[],S.flt),site,S.rm);}
   const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},padding:8,usePointStyle:true}}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}};
-  // overview charts
-  ['wr-'+sid,'wt-'+sid].forEach(k=>dC(k));
-  const wctx=document.getElementById('cwR-'+sid);if(wctx)S.charts['wr-'+sid]=new Chart(wctx,{type:'line',data:{labels:st.weekly.map(w=>w.label),datasets:[{label:'접수',data:st.weekly.map(w=>w.r),borderColor:'#538CDE',backgroundColor:'rgba(83,140,222,.1)',fill:true,tension:.35,pointRadius:2.5},{label:'처리',data:st.weekly.map(w=>w.res),borderColor:'#3259B6',backgroundColor:'rgba(50,89,182,.07)',fill:true,tension:.35,pointRadius:2.5}]},options:opts});
-  const wtctx=document.getElementById('cwT-'+sid);if(wtctx){const top=st.top.filter(t=>!t.isT&&!t.isO);S.charts['wt-'+sid]=new Chart(wtctx,{type:'bar',data:{labels:top.map(t=>t.t),datasets:[{data:top.map(t=>t.c),backgroundColor:['#3259B6','#538CDE','#74ABE6','#A0C8F0','#C7DDF6'],borderRadius:6,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'}},y:{grid:{display:false}}}}});}
+  // overview charts — 대시보드와 동일한 구성(추이 복합차트 / 전월대비 실적현황 / 공종 미처리 도넛), 데이터는 해당 현장
+  dC('mo-'+sid);dC('mx-'+sid);
+  buildSiteTrend(sid,st);
+  buildSiteMom(sid,st);
+  buildSiteTradeDonut(sid);
   // timeline charts
   ['wr2-'+sid,'wd-'+sid].forEach(k=>dC(k));
   const wr2=document.getElementById('cwR2-'+sid);if(wr2)S.charts['wr2-'+sid]=new Chart(wr2,{type:'line',data:{labels:st.weekly.map(w=>w.label),datasets:[{label:'접수',data:st.weekly.map(w=>w.r),borderColor:'#538CDE',backgroundColor:'rgba(83,140,222,.1)',fill:true,tension:.35,pointRadius:2.5},{label:'처리',data:st.weekly.map(w=>w.res),borderColor:'#3259B6',backgroundColor:'rgba(50,89,182,.07)',fill:true,tension:.35,pointRadius:2.5},{label:'미처리',data:st.weekly.map(w=>w.u),borderColor:'#A0C8F0',backgroundColor:'transparent',tension:.35,pointRadius:2,borderDash:[5,3]}]},options:opts});
