@@ -8,9 +8,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2/dist/chartjs-plugin-datalabels.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" crossorigin="anonymous"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js" crossorigin="anonymous"></script>
 <style>
 :root{
 --b50:#F1F7FD;--b100:#DFEBFA;--b200:#C7DDF6;--b300:#A0C8F0;--b400:#74ABE6;
@@ -41,8 +41,14 @@ svg{display:block;flex-shrink:0;}
 .sbh{height:var(--th);display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--sep);flex-shrink:0;overflow:hidden;}
 .sbb{display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;transition:opacity var(--tr);}
 #sidebar.mini .sbb{opacity:0;pointer-events:none;}
-.sblogo{flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--fill);display:flex;align-items:center;justify-content:center;}
-.sblogo img{height:19px;width:auto;display:block;}
+.sblogo{flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.sblogo img{height:22px;width:auto;display:block;}
+/* 가림막 로고 호버: 부드럽게 떠오르며 빛남 (진입·복귀 모두 전환) */
+.cvlogo{cursor:pointer;transition:transform .42s cubic-bezier(.22,.61,.36,1),filter .42s ease;filter:drop-shadow(0 0 3px rgba(255,255,255,.45)) drop-shadow(0 0 0 rgba(130,185,255,0)) drop-shadow(0 8px 16px rgba(0,0,0,.55));}
+.cvlogo:hover{transform:translateY(-8px) scale(1.05);filter:drop-shadow(0 0 12px rgba(255,255,255,.95)) drop-shadow(0 0 26px rgba(130,185,255,.8)) drop-shadow(0 16px 30px rgba(0,0,0,.5));}
+/* 가림막 로딩 스피너 — transform 회전만 사용(컴포지터 스레드) → 데이터 로딩으로 메인 스레드가 멈춰도 계속 돈다 */
+.cv-spin{width:30px;height:30px;margin:0 auto;border-radius:50%;border:3px solid rgba(255,255,255,.16);border-top-color:rgba(255,255,255,.9);animation:cvspin .8s linear infinite;will-change:transform;}
+@keyframes cvspin{to{transform:rotate(360deg);}}
 .sbtext{display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .sbn{font-size:14px;font-weight:700;color:var(--lbl);line-height:1.15;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;}
 .sbs{font-size:10.5px;color:var(--lbl2);line-height:1.2;margin-top:1px;}
@@ -92,9 +98,7 @@ svg{display:block;flex-shrink:0;}
 .sti.act .std{background:var(--b500);}
 .stl{transition:opacity var(--tr);}
 #sidebar.mini .stl{opacity:0;}
-#sidebar.mini .sti{padding-left:8px;justify-content:center;gap:0;}
 #sidebar.mini .sti .stl{display:none;}
-#sidebar.mini .nvi{justify-content:center;gap:0;}
 #sidebar.mini .nvi .nil{display:none;}
 
 /* MINI 상태에서 가로 overflow 풀기 — 호버 툴팁이 사이드바 우측 밖으로 나갈 수 있게 */
@@ -153,12 +157,19 @@ svg{display:block;flex-shrink:0;}
 /* SETTINGS 2-column layout — 좌(현장 관리) 더 넓게 */
 .set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
 .set-col{min-width:0;}
+.fbu-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--sep);}
+.fbu-row:last-child{border-bottom:none;}
+.fbu-mail{font-size:13px;color:var(--lbl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fbu-ctl{flex:0 0 auto;display:flex;align-items:center;gap:6px;}
+.fbu-sel{width:auto;min-width:96px;padding:5px 8px;font-size:12.5px;}
+.fbu-role{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.fbu-editor{color:var(--b600);background:rgba(37,99,235,.10);}
+.fbu-viewer{color:var(--lbl2);background:var(--sep);}
+.fbu-blocked{color:#c0392b;background:rgba(192,57,43,.10);}
 .smtbl{table-layout:fixed;}
 .smtbl th{padding:8px 10px;font-size:11px;}
 .smtbl td{padding:9px 10px;font-size:13px;}
 .mc{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--b100),var(--b200));color:var(--b900);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--rp);border:1px solid var(--b200);}
-#fbchip{background:var(--fill);color:var(--lbl2);border-color:var(--sep);}
-#fbchip svg circle{fill:#8E8E93;stroke:#8E8E93;}
 .saved-mark{position:absolute;top:-9px;right:6px;font-size:10px;font-weight:700;color:#1A7A3C;background:rgba(52,199,89,.14);border:1px solid rgba(52,199,89,.3);padding:1px 6px;border-radius:99px;opacity:0;transform:translateY(2px);transition:opacity .25s ease,transform .25s ease;pointer-events:none;letter-spacing:.02em;}
 .saved-mark.show{opacity:1;transform:translateY(0);}
 .bpr{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--b600),var(--b950));color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:var(--rp);border:none;cursor:pointer;transition:opacity .15s;}
@@ -669,69 +680,69 @@ input,select,textarea,button{display:none!important;}
 #view-site.printing #_sp_p4 .ait{break-inside:auto!important;page-break-inside:auto!important;}
 
 /* ── 2페이지: 헤더 제외 영역을 4개 카드가 1:3:1:3 비율로 채움 ── */
-#view-site.printing #_sp_p2{display:flex!important;flex-direction:column!important;height:calc(297mm - 16mm)!important;gap:7px!important;}
-#view-site.printing #_sp_p2 .sp-page-hdr{flex:0 0 auto!important;}
-#view-site.printing #_sp_p2 .card{margin-bottom:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card{flex:0 0 auto!important;}
-#view-site.printing #_sp_p2 .sp-top5-card{flex:1 1 0!important;}
-#view-site.printing #_sp_p2 .sp-vac-card{flex:0 0 auto!important;}
-#view-site.printing #_sp_p2 .sp-vactop5-card{flex:1 1 0!important;}
+#view-site.printing .sp-p2{display:flex!important;flex-direction:column!important;height:calc(297mm - 16mm)!important;gap:7px!important;}
+#view-site.printing .sp-p2 .sp-page-hdr{flex:0 0 auto!important;}
+#view-site.printing .sp-p2 .card{margin-bottom:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+#view-site.printing .sp-p2 .sp-ltr-card{flex:0 0 auto!important;}
+#view-site.printing .sp-p2 .sp-top5-card{flex:0 0 auto!important;}
+#view-site.printing .sp-p2 .sp-vac-card{flex:0 0 auto!important;}
+#view-site.printing .sp-p2 .sp-vactop5-card{flex:0 0 auto!important;}
 
 /* 장기미처리 비율 현황(현황 카드) — 헤더+막대 2행이 카드 높이에 맞게 세로 분산 */
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-body{flex:1 1 auto!important;display:flex!important;align-items:center!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-rows{gap:6px!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-row{grid-template-columns:34px 110px 1fr!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .lm-mo,
-#view-site.printing #_sp_p2 .sp-ltr-card .lm-stat{font-size:8pt!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-bar{height:11px!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .seg .seg-v{font-size:6.5pt!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-lg .li{font-size:7pt!important;gap:4px!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .ltrmom-lg .mk{width:8px!important;height:8px!important;}
-#view-site.printing #_sp_p2 .sp-ltr-card .lm-delta{font-size:7.5pt!important;padding:2px 7px!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-body{flex:1 1 auto!important;display:flex!important;align-items:center!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-rows{gap:6px!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-row{grid-template-columns:34px 110px 1fr!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .lm-mo,
+#view-site.printing .sp-p2 .sp-ltr-card .lm-stat{font-size:8pt!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-bar{height:11px!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .seg .seg-v{font-size:6.5pt!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-lg .li{font-size:7pt!important;gap:4px!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .ltrmom-lg .mk{width:8px!important;height:8px!important;}
+#view-site.printing .sp-p2 .sp-ltr-card .lm-delta{font-size:7.5pt!important;padding:2px 7px!important;}
 
 /* 공가세대 현황(현황 카드) — 높이를 장기미처리 비율 현황 카드와 동일하게 낮춤(내용 축소) */
-#view-site.printing #_sp_p2 .sp-vac-card .vrow{align-items:center!important;}
-#view-site.printing #_sp_p2 .sp-vac-card .vseg{padding-top:0!important;padding-bottom:0!important;}
-#view-site.printing #_sp_p2 .sp-vac-card .vseg-l{font-size:7pt!important;margin-bottom:1px!important;}
-#view-site.printing #_sp_p2 .sp-vac-card .vseg-v{font-size:12pt!important;}
-#view-site.printing #_sp_p2 .sp-vac-card .vseg-v .vseg-u{font-size:7pt!important;}
-#view-site.printing #_sp_p2 .sp-vac-card .vseg-m{font-size:6pt!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vrow{align-items:center!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vseg{padding-top:0!important;padding-bottom:0!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vseg-l{font-size:7pt!important;margin-bottom:1px!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vseg-v{font-size:12pt!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vseg-v .vseg-u{font-size:7pt!important;}
+#view-site.printing .sp-p2 .sp-vac-card .vseg-m{font-size:6pt!important;}
 
-/* 상위 5개 공종 처리 현황(처리현황 카드) — 표가 카드 높이를 채우도록 행간 분산 */
-#view-site.printing #_sp_p2 .sp-top5-card table,
-#view-site.printing #_sp_p2 .sp-vactop5-card table{flex:1 1 auto!important;}
-#view-site.printing #_sp_p2 .sp-top5-card .dt,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt{height:100%!important;font-size:7pt!important;}
-#view-site.printing #_sp_p2 .sp-top5-card .dt th,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt th{font-size:6.5pt!important;padding-top:5px!important;padding-bottom:5px!important;}
-#view-site.printing #_sp_p2 .sp-top5-card .dt td,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt td{padding-top:6px!important;padding-bottom:6px!important;line-height:1.25!important;}
-#view-site.printing #_sp_p2 .sp-top5-card .plan-ta,
-#view-site.printing #_sp_p2 .sp-vactop5-card .plan-ta{font-size:7pt!important;}
+/* 상위 5개 공종 처리 현황 — 표는 자연 높이(행간 분산 없음), 상단 정렬로 정갈하게 */
+#view-site.printing .sp-p2 .sp-top5-card table,
+#view-site.printing .sp-p2 .sp-vactop5-card table{flex:0 0 auto!important;}
+#view-site.printing .sp-p2 .sp-top5-card .dt,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt{height:auto!important;font-size:7pt!important;}
+#view-site.printing .sp-p2 .sp-top5-card .dt th,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt th{font-size:6.5pt!important;padding-top:5px!important;padding-bottom:5px!important;}
+#view-site.printing .sp-p2 .sp-top5-card .dt td,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt td{padding-top:6px!important;padding-bottom:6px!important;line-height:1.25!important;}
+#view-site.printing .sp-p2 .sp-top5-card .plan-ta,
+#view-site.printing .sp-p2 .sp-vactop5-card .plan-ta{font-size:7pt!important;}
 /* 처리계획: 인쇄 시 textarea는 숨겨지므로 값 복제 텍스트(.plan-print)를 표시 */
-#view-site.printing #_sp_p2 .plan-print{display:block!important;font-size:7pt!important;line-height:1.3!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
-/* 데이터/기타 행 높이·행간 동일하게 (vertical-align 상단 정렬로 균일한 시작점) */
-#view-site.printing #_sp_p2 .sp-top5-card .dt tbody td,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt tbody td{vertical-align:middle!important;height:auto!important;}
+#view-site.printing .sp-p2 .plan-print{display:block!important;font-size:7pt!important;line-height:1.3!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
+/* 데이터/기타 행 — 자연 높이, 상단 정렬로 균일한 시작점 */
+#view-site.printing .sp-p2 .sp-top5-card .dt tbody td,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt tbody td{vertical-align:top!important;height:auto!important;}
 /* 합계 행 높이 고정 — 헤더(th) 행과 동일 (처리계획이 길어져도 합계 행은 불변) */
-#view-site.printing #_sp_p2 .sp-top5-card .dt tr.tot td,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt tr.tot td{height:1px!important;line-height:1.2!important;padding-top:10px!important;padding-bottom:10px!important;vertical-align:middle!important;}
-#view-site.printing #_sp_p2 .sp-top5-card .dt tr.tot td>div,
-#view-site.printing #_sp_p2 .sp-vactop5-card .dt tr.tot td>div{min-height:0!important;}
+#view-site.printing .sp-p2 .sp-top5-card .dt tr.tot td,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt tr.tot td{height:1px!important;line-height:1.2!important;padding-top:10px!important;padding-bottom:10px!important;vertical-align:middle!important;}
+#view-site.printing .sp-p2 .sp-top5-card .dt tr.tot td>div,
+#view-site.printing .sp-p2 .sp-vactop5-card .dt tr.tot td>div{min-height:0!important;}
 
 /* 상위 5개 표 열 너비: 처리계획 40%, 시공업체 15%, 공종 11% */
-#view-site.printing #_sp_p2 .sp-top5-card th:nth-child(2),
-#view-site.printing #_sp_p2 .sp-top5-card td:nth-child(2),
-#view-site.printing #_sp_p2 .sp-vactop5-card th:nth-child(2),
-#view-site.printing #_sp_p2 .sp-vactop5-card td:nth-child(2){width:11%!important;}
-#view-site.printing #_sp_p2 .sp-top5-card th:nth-child(3),
-#view-site.printing #_sp_p2 .sp-top5-card td:nth-child(3),
-#view-site.printing #_sp_p2 .sp-vactop5-card th:nth-child(3),
-#view-site.printing #_sp_p2 .sp-vactop5-card td:nth-child(3){width:15%!important;}
-#view-site.printing #_sp_p2 .sp-top5-card th:nth-child(8),
-#view-site.printing #_sp_p2 .sp-top5-card td:nth-child(8),
-#view-site.printing #_sp_p2 .sp-vactop5-card th:nth-child(8),
-#view-site.printing #_sp_p2 .sp-vactop5-card td:nth-child(8){width:40%!important;}
+#view-site.printing .sp-p2 .sp-top5-card th:nth-child(2),
+#view-site.printing .sp-p2 .sp-top5-card td:nth-child(2),
+#view-site.printing .sp-p2 .sp-vactop5-card th:nth-child(2),
+#view-site.printing .sp-p2 .sp-vactop5-card td:nth-child(2){width:11%!important;}
+#view-site.printing .sp-p2 .sp-top5-card th:nth-child(3),
+#view-site.printing .sp-p2 .sp-top5-card td:nth-child(3),
+#view-site.printing .sp-p2 .sp-vactop5-card th:nth-child(3),
+#view-site.printing .sp-p2 .sp-vactop5-card td:nth-child(3){width:15%!important;}
+#view-site.printing .sp-p2 .sp-top5-card th:nth-child(8),
+#view-site.printing .sp-p2 .sp-top5-card td:nth-child(8),
+#view-site.printing .sp-p2 .sp-vactop5-card th:nth-child(8),
+#view-site.printing .sp-p2 .sp-vactop5-card td:nth-child(8){width:40%!important;}
 }
 
 /* FILTER BAR */
@@ -1132,14 +1143,49 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
 .set-grid-1{grid-template-columns:minmax(0,560px)!important;}
 .gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;}
 @media(max-width:720px){.gh-grid{grid-template-columns:1fr;}}
+.snap-badge{display:none;}
+body.snap .nvi[data-view="manage"],body.snap .nvi[data-view="settings"],body.snap .sb-bottom .sbsl{display:none!important;}
+body.snap textarea,body.snap [contenteditable="true"]{pointer-events:none!important;background:transparent!important;}
+/* 사내 뷰어(@hdec.co.kr 로그인) — 업로드/관리/설정만 숨기고 처리계획·분석의견 입력은 허용 */
+body.viewer .nvi[data-view="upload"],body.viewer .sb-bottom .sbsl{display:none!important;}
+/* 사용자(viewer) 현장관리 읽기전용 — 추가·삭제 버튼 숨김, 인라인 편집 비활성화 */
+body.viewer #view-manage .tm-add,body.viewer #view-manage .tm-del,body.viewer #view-manage .tm-upcard{display:none!important;}
+body.viewer #view-manage .mg-inp,body.viewer #view-manage .mg-grid input,body.viewer #view-manage .mg-grid select,body.viewer #view-manage .mgtbl input,body.viewer #view-manage .mgtbl select,body.viewer #view-manage .tm-nameinp{pointer-events:none;background:transparent!important;border-color:transparent!important;opacity:.85;}
+body.viewer #view-manage .sw{pointer-events:none;opacity:.6;}
+body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fff;background:#3E71D2;padding:3px 9px;border-radius:99px;letter-spacing:.02em;}
 </style>
 </head>
 <body>
+<div id="coverGate" style="position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 120% at 50% 0%,#1c2b46 0%,#0f1626 55%,#0a0f1a 100%);font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;">
+  <div style="width:min(380px,90vw);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:38px 32px;backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.45);text-align:center;">
+    <div style="margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 87 66" xmlns="http://www.w3.org/2000/svg" class="cvlogo" style="height:50px;width:auto;display:block;"><path d="M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z" fill="#fff"/><path d="M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z" fill="#fff"/></svg>
+    </div>
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;">H서비스센터 하자처리 현황</div>
+    <div id="cvLoading" style="margin-top:20px"><div class="cv-spin"></div><div style="margin-top:13px;font-size:12.5px;color:#9fb0cc;letter-spacing:.01em">현장 데이터 불러오는 중…</div></div>
+    <div id="cvBody" style="display:none">
+    <div style="margin-top:22px;text-align:left">
+      <input id="fbEmail" type="email" autocomplete="username" placeholder="이름@hdec.co.kr" style="width:100%;height:44px;padding:0 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-size:14px;outline:none;margin-bottom:10px" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('fbPw').focus();}">
+      <input id="fbPw" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상)" style="width:100%;height:44px;padding:0 14px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();fbDoLogin();}">
+    </div>
+    <button id="cvBtn" onclick="fbDoLogin()" style="margin-top:16px;width:100%;height:46px;border:none;border-radius:11px;background:#fff;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s,box-shadow .12s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 8px 22px rgba(0,0,0,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+      로그인
+    </button>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button onclick="fbDoSignup()" style="flex:1;height:40px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:transparent;color:#cdd9ee;font-size:13px;font-weight:600;cursor:pointer">신규 가입</button>
+      <button onclick="fbDoResend()" style="flex:1;height:40px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:transparent;color:#cdd9ee;font-size:13px;font-weight:600;cursor:pointer">인증메일 재발송</button>
+    </div>
+    <div id="cvMsg" style="margin-top:16px;font-size:12px;color:#ff8a80;min-height:16px;line-height:1.5;"></div>
+    <div style="margin-top:14px"><a href="javascript:void(0)" onclick="coverSkip()" style="font-size:12px;color:#7e8ba3;text-decoration:underline;cursor:pointer;">로컬 데이터로 둘러보기(오프라인)</a></div>
+    </div>
+  </div>
+</div>
 <div id="app">
 <aside id="sidebar">
   <div class="sbh">
     <div class="sbb">
-      <div class="sblogo"><img class="logo-light" alt="H서비스센터" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAABECAYAAAD0iqlZAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAABGNJREFUeAHtmsFOE0Ecxv+zrTFKCL1olFPRF1i5eimePTTe8EJ9AqovAPgAAk9A9CDBCz1wApP6BugTWN+gRANYdnecWWhx293Z2d2Z/0wXfgmksHNovvwz33zzLYDF0K5b9766K8JFu8067DXFawzhgMVQn3QJkHUmci1xUYWusZVbociWYa243qHbohTqwH4CD1ZjF31puux5i32qXYpsF1aKy7cDxyH/iUXasdNL6f71Zyby7ssGWISV4ga+sxZO7TW1wHOik7nbbLHf9cj/KhWrppeAZfCpDTzyM+7ZoEoX7i1974X7q0O7MC4uJ/CXYPngG1iAdZNLPbKf9OyuR3bCD5f7az12kVPZAUuwStzQxADcpOfsWWPv4PnKlYklUYfPzTZYgDXbAjcsdvQ6HttrJ1g8eQw//DuQQh9OyQK86fTBINZMLjOsdpqwH//OyAjLqcH9YBUMY8XkikxsSJ86bGofwa+gCpL0ISDPYLnTA0NYMbn86JW2ZvtsNouwHOPBwvjkchMjhAgdvudX4enJPOTC4NHM+ORGk1g8G2dzkBuDwcKouP7R4rqMiX0azEBuKDRMxWJj4nITA0JTHb3Q1A4xFCyMiRuaGIWaaM3G6VxWE0vCSLAwYmgXR27DAdIVrSlkYvGgBwsjk1tJOR1wlGwHUdCDBbq4zMRSk1hncL+YiSVC2piNBaq43MSIhIm9O62BJlCDBaq4MZfgE2yfz6oysXgQGws0ccOjF6Ut0RpuYlxc7SAFCzxxffHpgMNNTOvUjr4MTrBAEXfU5ArgU6vHxBJACBbaxZ1scuN58fshIKM9WGgXl5mY1CU4ynYwDj857DS1HU20intlYsKjF98ONAQGWbQGC73iXpDNtDVoJpaIvmChTdzQxAg0RWvQTSwebcFCm7gyJvbqzwOwAk3BQou4spfgkk0uDhqChfIrR01NLg6K+zblk6upycVBcbBQKi43MZn7g/fnxo5eaSgNFkrF1d7kYqAwWCgTF6XJxUFZsFBiaKGJ+eQ4rXB80p+3c6+dRMmrUEomF7nJxUBJsCg8uYND12WF47FojYYmF4eCR7PCk1t1kt8EH2K9iSVRMFgUElfmElxfk4tAwcYit7iyl+Aam1wcCgSL3OJa0eTikDtY5DI0mfsDbmK8uimBuJxcr0LlmlyrmlwccgWLzJOr/U1we8kcLDJNrsVNLgaZg0Umca1ucjHI2FhIizsFTS4OGYKFvLhT0eQikCFYSIk7RU0uDpLBQkrcqWpycZAKFqniTmWTi4FEYyEUNzQxEB8/eJNbehOLJzVYCMWd6iYXBfGrUInilqDJxUAYLBLFLUWTi4EgWMSKW6ImF4eEYDFxcVPCJheHmL7NmVxTuiYXh5hgEZncUje5GPjkLbzubA3/jExuqZtcDMaCxUjc0je5OESCRbgtcBPj1U2auLcmJsWosQgn9wY1uRiMggW5gU0uDuxoVqU+bDKJe6J1H/jU+rfCZoJUVv4BXzlV8TM4RGUAAAAASUVORK5CYII="></div>
+      <div class="sblogo"><svg viewBox="0 0 87 66" xmlns="http://www.w3.org/2000/svg" style="height:22px;width:auto;display:block"><defs><linearGradient id="sblg" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#6FB0FF"/><stop offset="1" stop-color="#16357C"/></linearGradient></defs><path d="M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z" fill="url(#sblg)"/><path d="M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z" fill="url(#sblg)"/></svg></div>
       <div class="sbtext"><div class="sbn">H서비스센터</div><div class="sbs">하자처리 현황</div></div>
     </div>
     <button class="sbtg" onclick="toggleSB()" title="사이드바 접기/펼치기">
@@ -1161,7 +1207,7 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
       <span class="nil" style="font-size:13px">현장 관리</span>
     </div>
     <div class="nvi act" data-view="settings" data-tip="설정" onclick="go('settings')">
-      <div class="nic"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"></path></svg></div>
+      <div class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
       <span class="nil" style="font-size:13px">설정</span>
     </div>
     </div>
@@ -1197,21 +1243,21 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
       <div class="opsr">
         <div class="card">
           <div class="ct" style="font-size: 16px; color: var(--ct)">전월대비 실적 현황</div>
-          <div id="c-mom" class="mom-wrap"><div class="mom-row"><div class="label">전체 접수</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="91.7315139558673" style="width: 91.7315%;"></div></div><span class="vl">767,519</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="100" style="width: 100%;"></div></div><span class="vl">776,572</span></div></div><div class="delta"><span class="d dn">▲ +1.2%</span></div></div><div class="mom-row"><div class="label">처리 완료</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="66.66666666666666" style="width: 66.6667%;"></div></div><span class="vl">740,076</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="73.11394856057285" style="width: 73.1139%;"></div></div><span class="vl">747,135</span></div></div><div class="delta"><span class="d up">▲ +1.0%</span></div></div><div class="mom-row"><div class="label">미처리</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="93.22621191018106" style="width: 93.2262%;"></div></div><span class="vl">27,443</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="100" style="width: 100%;"></div></div><span class="vl">29,437</span></div></div><div class="delta"><span class="d dn">▲ +7.3%</span></div></div><div class="mom-row"><div class="label">장기미처리</div><div class="bars"><div class="bar prev"><span class="lb">전월</span><div class="tr"><div class="fl" data-w="55.236606991201555" style="width: 55.2366%;"></div></div><span class="vl">16,260</span></div><div class="bar curr"><span class="lb">금월</span><div class="tr"><div class="fl" data-w="76.17963787070693" style="width: 76.1796%;"></div></div><span class="vl">22,425</span></div></div><div class="delta"><span class="d dn">▲ +37.9%</span></div></div></div>
+          <div id="c-mom" class="mom-wrap"></div>
         </div>
         <div class="card">
           <div class="ct" style="font-size: 16px; color: var(--ct)">현장별 미처리 분포</div>
-          <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-sx"></canvas></div><div class="lg lg-2col" id="c-sx-lg"><div class="it" data-idx="0" title="힐스테이트 신용 더리버"><span class="l"><span class="dt" style="background:#1F2B4C"></span><span class="nm">신용</span></span><span class="cnt">13,441건</span><span class="pct">45.7%</span></div><div class="it" data-idx="1" title="힐스테이트 고덕 스카이시티"><span class="l"><span class="dt" style="background:#2C437C"></span><span class="nm">고덕</span></span><span class="cnt">3,368건</span><span class="pct">11.4%</span></div><div class="it" data-idx="2" title="힐스테이트 첨단"><span class="l"><span class="dt" style="background:#304D9D"></span><span class="nm">첨단</span></span><span class="cnt">2,381건</span><span class="pct">8.1%</span></div><div class="it" data-idx="3" title="힐스테이트 두정역"><span class="l"><span class="dt" style="background:#3259B6"></span><span class="nm">두정</span></span><span class="cnt">2,111건</span><span class="pct">7.2%</span></div><div class="it" data-idx="4" title="힐스테이트 익산 더퍼스트"><span class="l"><span class="dt" style="background:#3E71D2"></span><span class="nm">익산</span></span><span class="cnt">1,993건</span><span class="pct">6.8%</span></div><div class="it" data-idx="5" title="힐스테이트 오산 더퍼스트"><span class="l"><span class="dt" style="background:#538CDE"></span><span class="nm">오산</span></span><span class="cnt">1,645건</span><span class="pct">5.6%</span></div><div class="it" data-idx="6" title="힐스테이트 도안 퍼스트"><span class="l"><span class="dt" style="background:#74ABE6"></span><span class="nm">도안</span></span><span class="cnt">1,286건</span><span class="pct">4.4%</span></div><div class="it" data-idx="7" title="갑천1 트리풀시티 힐스테이트"><span class="l"><span class="dt" style="background:#A0C8F0"></span><span class="nm">갑천</span></span><span class="cnt">1,274건</span><span class="pct">4.3%</span></div><div class="it" data-idx="8" title="힐스테이트 가양 더와이즈"><span class="l"><span class="dt" style="background:#C7DDF6"></span><span class="nm">가양</span></span><span class="cnt">529건</span><span class="pct">1.8%</span></div><div class="it" data-idx="9" title="힐스테이트 평택 더퍼스트"><span class="l"><span class="dt" style="background:#DFEBFA"></span><span class="nm">평택</span></span><span class="cnt">491건</span><span class="pct">1.7%</span></div><div class="it" data-idx="10" title="라펜트힐"><span class="l"><span class="dt" style="background:#EAF2FC"></span><span class="nm">라펜</span></span><span class="cnt">471건</span><span class="pct">1.6%</span></div><div class="it" data-idx="11" title="힐스테이트 유성"><span class="l"><span class="dt" style="background:#B3C7DD"></span><span class="nm">유성</span></span><span class="cnt">447건</span><span class="pct">1.5%</span></div></div></div>
+          <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-sx"></canvas></div><div class="lg lg-2col" id="c-sx-lg"></div></div>
         </div>
       </div>
       <div class="opsr">
-        <div class="card"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">주요 이슈 및 분석 의견</div><button class="btn bo bsm" onclick="runDashAI()">AI 분석 생성</button></div><div id="d-insight" class="ins-grid"><div class="ic bad"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2"></path></svg></div><div class="ic-t"><div class="ic-ttl">전월대비 장기미처리 급증</div><div class="ic-sub">30일+ <b>22,425건</b> (전월대비 <b style="color:#C0392B">+6,165</b>, <b>+38%</b>) · 급증 <b>첨단</b><br>신규 장기진입 가속 — 30일 도래 임박건 집중 처리, 60일+ 별도 동결 분류</div></div></div><div class="ic bad"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path></svg></div><div class="ic-t"><div class="ic-ttl">품의(대기) 적체 — 당사 의사결정 병목</div><div class="ic-sub">품의(대기) <b>1,513건</b> · 평균지연 <b>286일</b> · 집중 <b>신용</b>·<b>고덕</b>·<b>두정</b><br>쏠림: <b>도장</b> 510건 · <b>흠집</b> 393건 · <b>동방건영(주)</b> — 30일↑ 외주 전환·품의 승인 가속 필요</div></div></div><div class="ic ok"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7M21 10V4h-6"></path></svg></div><div class="ic-t"><div class="ic-ttl">종합 처리 성과</div><div class="ic-sub">처리율 <b>96.2%</b> (전월대비 <b style="color:#C0392B">-0.2%p</b>) · 미처리 <b>29,437건</b> (전월대비 <b style="color:#C0392B">+1,994</b>)<br>괄목 <b>첨단</b> <b style="color:#1A7A3C">+3.2%p</b> · 문제 <b>오산</b> <b style="color:#C0392B">-2.1%p</b> 하락</div></div></div></div></div>
+        <div class="card"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">주요 이슈 및 분석 의견</div><button class="btn bo bsm" onclick="runDashAI()">AI 분석 생성</button></div><div id="d-insight" class="ins-grid"></div></div>
         <div class="card">
           <div class="ct" style="font-size: 16px; color: var(--ct)">공종별 미처리 분포</div>
-          <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-mx"></canvas></div><div class="lg lg-2col" id="c-mx-lg"><div class="it" data-idx="0"><span class="l"><span class="dt" style="background:#1F2B4C"></span><span class="nm">강마루</span></span><span class="cnt">4,871건</span><span class="pct">16.5%</span></div><div class="it" data-idx="1"><span class="l"><span class="dt" style="background:#2C437C"></span><span class="nm">타일</span></span><span class="cnt">3,189건</span><span class="pct">10.8%</span></div><div class="it" data-idx="2"><span class="l"><span class="dt" style="background:#304D9D"></span><span class="nm">도배</span></span><span class="cnt">3,175건</span><span class="pct">10.8%</span></div><div class="it" data-idx="3"><span class="l"><span class="dt" style="background:#3259B6"></span><span class="nm">도장</span></span><span class="cnt">2,348건</span><span class="pct">8.0%</span></div><div class="it" data-idx="4"><span class="l"><span class="dt" style="background:#3E71D2"></span><span class="nm">PVC창호</span></span><span class="cnt">2,181건</span><span class="pct">7.4%</span></div><div class="it" data-idx="5"><span class="l"><span class="dt" style="background:#538CDE"></span><span class="nm">욕실장</span></span><span class="cnt">1,159건</span><span class="pct">3.9%</span></div><div class="it" data-idx="6"><span class="l"><span class="dt" style="background:#74ABE6"></span><span class="nm">유리</span></span><span class="cnt">1,078건</span><span class="pct">3.7%</span></div><div class="it" data-idx="7"><span class="l"><span class="dt" style="background:#A0C8F0"></span><span class="nm">콘크리트</span></span><span class="cnt">972건</span><span class="pct">3.3%</span></div><div class="it" data-idx="8"><span class="l"><span class="dt" style="background:#C7DDF6"></span><span class="nm">일반가구</span></span><span class="cnt">714건</span><span class="pct">2.4%</span></div><div class="it" data-idx="9"><span class="l"><span class="dt" style="background:#DFEBFA"></span><span class="nm">주방가구</span></span><span class="cnt">652건</span><span class="pct">2.2%</span></div><div class="it" data-idx="10"><span class="l"><span class="dt" style="background:#EAF2FC"></span><span class="nm">목문짝</span></span><span class="cnt">644건</span><span class="pct">2.2%</span></div><div class="it" data-idx="11"><span class="l"><span class="dt" style="background:#B3C7DD"></span><span class="nm">기타</span></span><span class="cnt">8,454건</span><span class="pct">28.7%</span></div></div></div>
+          <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-mx"></canvas></div><div class="lg lg-2col" id="c-mx-lg"></div></div>
         </div>
       </div>
-      <div class="card mb12"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" onchange="setDashMonthYear(this.value)"><option value="2023">2023년</option><option value="2024">2024년</option><option value="2025">2025년</option><option value="2026" selected="">2026년</option></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"><colgroup><col style="width:9%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:6.5%"><col style="width:16%"><col style="width:6.5%"></colgroup><thead><tr><th class="cc ">월</th><th class="cc  tl-grp">전체 접수</th><th class="cc recv-sub">월간 접수</th><th class="cc  tl-grp">전체 처리</th><th class="cc rate-col">처리율</th><th class="cc ">월간 처리</th><th class="cc ">전월대비</th><th class="cc  tl-grp">전체 미처리</th><th class="cc ">전월대비</th><th class="cc tl-grp-ltr">장기미처리</th><th class="cc tl-grp-ltr">장기미처리 비율</th><th class="cc">전월대비</th></tr></thead><tbody><tr><td class="cc mcell">1월</td><td class="cc recv-total tl-grp">741,480</td><td class="cc recv-weekly">11,967</td><td class="cc proc-blue tl-grp">714,271</td><td class="rate-col proc-blue">96.3%</td><td class="cc proc-blue">10,021</td><td class="cc"><span class="ba bgn">▼ −355</span></td><td class="cc unr-red tl-grp">27,209</td><td class="cc"><span class="ba brd">▲ +1,946</span></td><td class="cc ltr-red tl-grp-ltr">19,720</td><td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar"><div class="seg s60" style="width:59.9%"></div><div class="seg s30" style="width:12.5%"></div><div class="seg s0" style="width:27.5%"></div></div><span class="ltrbar-pct">72.5%</span></div></td><td class="cc"><span class="ba bgn">▼ −130</span></td></tr><tr><td class="cc mcell">2월</td><td class="cc recv-total tl-grp">747,703</td><td class="cc recv-weekly">6,223</td><td class="cc proc-blue tl-grp">722,587</td><td class="rate-col proc-blue">96.6%</td><td class="cc proc-blue">8,316</td><td class="cc"><span class="ba bgn">▼ −1,705</span></td><td class="cc unr-red tl-grp">25,116</td><td class="cc"><span class="ba bgn">▼ −2,093</span></td><td class="cc ltr-red tl-grp-ltr">21,019</td><td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar"><div class="seg s60" style="width:63.6%"></div><div class="seg s30" style="width:20.1%"></div><div class="seg s0" style="width:16.3%"></div></div><span class="ltrbar-pct">83.7%</span></div></td><td class="cc"><span class="ba brd">▲ +1,299</span></td></tr><tr><td class="cc mcell">3월</td><td class="cc recv-total tl-grp">753,634</td><td class="cc recv-weekly">5,931</td><td class="cc proc-blue tl-grp">731,823</td><td class="rate-col proc-blue">97.1%</td><td class="cc proc-blue">9,236</td><td class="cc"><span class="ba brd">▲ +920</span></td><td class="cc unr-red tl-grp">21,811</td><td class="cc"><span class="ba bgn">▼ −3,305</span></td><td class="cc ltr-red tl-grp-ltr">17,925</td><td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar"><div class="seg s60" style="width:70.9%"></div><div class="seg s30" style="width:11.3%"></div><div class="seg s0" style="width:17.8%"></div></div><span class="ltrbar-pct">82.2%</span></div></td><td class="cc"><span class="ba bgn">▼ −3,094</span></td></tr><tr><td class="cc mcell">4월</td><td class="cc recv-total tl-grp">763,745</td><td class="cc recv-weekly">10,111</td><td class="cc proc-blue tl-grp">739,107</td><td class="rate-col proc-blue">96.8%</td><td class="cc proc-blue">7,284</td><td class="cc"><span class="ba bgn">▼ −1,952</span></td><td class="cc unr-red tl-grp">24,638</td><td class="cc"><span class="ba brd">▲ +2,827</span></td><td class="cc ltr-red tl-grp-ltr">16,375</td><td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar"><div class="seg s60" style="width:58.1%"></div><div class="seg s30" style="width:8.3%"></div><div class="seg s0" style="width:33.5%"></div></div><span class="ltrbar-pct">66.5%</span></div></td><td class="cc"><span class="ba bgn">▼ −1,550</span></td></tr><tr><td class="cc mcell">5월</td><td class="cc recv-total tl-grp">776,572</td><td class="cc recv-weekly">12,827</td><td class="cc proc-blue tl-grp">747,135</td><td class="rate-col proc-blue">96.2%</td><td class="cc proc-blue">8,028</td><td class="cc"><span class="ba brd">▲ +744</span></td><td class="cc unr-red tl-grp">29,437</td><td class="cc"><span class="ba brd">▲ +4,799</span></td><td class="cc ltr-red tl-grp-ltr">22,425</td><td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar"><div class="seg s60" style="width:46.7%"></div><div class="seg s30" style="width:29.5%"></div><div class="seg s0" style="width:23.8%"></div></div><span class="ltrbar-pct">76.2%</span></div></td><td class="cc"><span class="ba brd">▲ +6,050</span></td></tr></tbody></table></div></div>
+      <div class="card mb12"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" onchange="setDashMonthYear(this.value)"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
       <div class="card mb12"><div class="ct" style="font-size: 16px; color: var(--ct)">현장별 하자처리 현황</div>
         <table class="dt" id="dtable"><thead><tr>
           <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" onclick="sortDT('region')">권역 <span class="sortmk">↕</span></th>
@@ -1235,31 +1281,41 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
       <div class="set-grid">
         <div class="set-col">
           <div class="card">
-            <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">데이터 저장</div>
-            <p style="font-size:12px;color:var(--lbl2);line-height:1.6">팀·권역·현장·처리계획·분석은 <b>Firebase 실시간 데이터베이스</b>에 자동 저장되어 모든 사용자와 공유됩니다. 별도 설정 없이 접속 시 자동 연결됩니다.<br><span style="color:var(--lbl3);font-size:11.5px">• 입력 즉시 자동 저장 (별도 저장 버튼 없음)<br>• 하자 리스트(대용량)는 각 브라우저 IndexedDB에 보관</span></p>
-            <div class="fg" style="margin-top:12px"><span id="fbstatusdot" style="width: 9px; height: 9px; border-radius: 50%; background: rgb(52, 199, 89); display: inline-block;"></span><span id="fbstatustxt" style="font-size: 12px; color: var(--gn);">Firebase 연결됨 · 실시간 동기화 중</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">공유용 스냅샷 (뷰어 배포)</div>
+              <button class="btn bg1 bsm" onclick="exportSnapshot()">스냅샷 내보내기</button>
+            </div>
+            <div style="font-size:12px;color:var(--lbl2);line-height:1.6">현재 대시보드를 <b>읽기전용 집계 스냅샷</b>으로 내보냅니다.</div>
+          </div>
+        </div>
+        <div class="set-col" id="set-fb" style="display:none">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">사내 게시 (Firebase 실시간 공유)</div>
+              <button class="btn bp bsm" id="fbPubBtn" onclick="fb2Publish()">등록</button>
+            </div>
+            <div class="fg" style="margin-top:2px"><span style="font-size:12px;color:var(--lbl2)">계정</span>&nbsp;<b id="fbAcct" style="font-size:12.5px;color:var(--lbl)">—</b></div>
+            <div class="fg"><span style="font-size:12px;color:var(--lbl2)">최신 등록일</span>&nbsp;<b id="fbPubAt" style="font-size:12.5px;color:var(--lbl)">—</b></div>
+          </div>
+        </div>
+        <div class="set-col" id="set-users" style="display:none">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:12px">
+              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">계정 관리 (관리자 전용)</div>
+            </div>
+            <div id="fbUserList"></div>
           </div>
         </div>
         <div class="set-col">
           <div class="card">
-            <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">AI 분석 (Gemini API)</div>
-            <div class="ig2"><label class="il" for="cfgc">Google AI Studio API Key</label><input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." oninput="S.ck=this.value;localStorage.setItem('ck',this.value);fbPushGHConfig()"></div>
-            <p style="font-size:11.5px;color:var(--lbl2)">무료 키는 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--b600);font-weight:600">Google AI Studio</a>에서 발급. 키는 <b>Firebase로 모든 사용자와 공유</b>되어 한 번만 입력하면 됩니다.</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">AI 분석 (Google AI Studio API Key)</div>
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--b600);font-weight:700;white-space:nowrap">Google AI Studio ↗</a>
+            </div>
+            <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." oninput="S.ck=this.value;localStorage.setItem('ck',this.value);fbPushConfig()">
           </div>
         </div>
       </div>
-      <div class="card" style="margin-top:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
-          <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">하자 리스트 저장 (GitHub 비공개 저장소)</div>
-          <div style="display:flex;align-items:center;gap:10px"><span id="ghstatus" style="font-size:11.5px;color:var(--lbl3)"></span><button class="btn bg2 bsm" onclick="ghSyncNow()">지금 동기화</button></div>
-        </div>
-        <p style="font-size:11.5px;color:var(--lbl2);line-height:1.6;margin-bottom:14px">업로드한 하자 원데이터(모든 컬럼)를 현장별로 압축해 비공개 저장소에 저장하고, 모든 사용자가 이 저장소에서 데이터를 받습니다. <b>읽기 토큰</b>·저장소 주소는 Firebase로 공유되고, <b>쓰기 토큰</b>은 이 브라우저에만 저장됩니다(업로드 담당자만 입력).<br><span style="color:var(--lbl3)">권장: 이 저장소에만 권한을 준 fine-grained PAT 2개(읽기용 contents:read / 쓰기용 contents:read·write).</span></p>
-        <div class="gh-grid">
-          <div class="ig2"><label class="il" for="gho">저장소 소유자 (owner)</label><input class="inp" id="gho" placeholder="예: dongyeon" oninput="GH.cfg.owner=this.value.trim();ghSaveCfg();fbPushGHConfig();ghRenderStatus()"></div>
-          <div class="ig2"><label class="il" for="ghr">저장소 이름 (repo)</label><input class="inp" id="ghr" placeholder="예: hdec-defects" oninput="GH.cfg.repo=this.value.trim();ghSaveCfg();fbPushGHConfig();ghRenderStatus()"></div>
-          <div class="ig2"><label class="il" for="ghb">브랜치</label><input class="inp" id="ghb" placeholder="main" oninput="GH.cfg.branch=this.value.trim()||'main';ghSaveCfg();fbPushGHConfig()"></div>
-          <div class="ig2"><label class="il" for="ghrt">읽기 토큰 (공유)</label><input type="password" class="inp" id="ghrt" placeholder="github_pat_..." oninput="GH.cfg.readToken=this.value.trim();ghSaveCfg();fbPushGHConfig();ghRenderStatus()"></div>
-          <div class="ig2" style="grid-column:1/-1"><label class="il" for="ghwt">쓰기 토큰 (이 기기 전용 · 업로드 담당자)</label><input type="password" class="inp" id="ghwt" placeholder="github_pat_... (업로드할 사람만)" oninput="GH.writeToken=this.value.trim();try{localStorage.setItem('gh_write',GH.writeToken)}catch(e){};ghRenderStatus()"></div>
         </div>
       </div>
     </div>
@@ -1272,7 +1328,7 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" onclick="closeMo()" class=""><div id="mb" onclick="event.stopPropagation()"><div class="mt2" id="mt"></div><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>
 <script>
-const S={view:'dashboard',sid:null,sites:[],def:{},cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,flt:{rp:'',tr:'',dl:'',ss:'',ut:''},tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,defVer:0,teams:[],teamId:null};
+const S={view:'dashboard',sid:null,sites:[],def:{},cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,defVer:0,teams:[],teamId:null};
 // calc() 메모이즈 캐시. 키 = 현장id|기준월|defVer|필터서명.
 // S.def 내용이 바뀌면 bumpDef()가 defVer를 올려 전체 캐시를 무효화한다.
 const _calcCache=new Map();
@@ -1307,16 +1363,20 @@ function switchTeam(id){
   if(!S.teams.some(t=>t.id===id))return;
   S.teamId=id;S.smsort=null;S.dsort=null;
   if(S.view==='site'&&!teamSites().some(s=>s.id===S.sid)){go('dashboard');}
-  else{rTeamSel();rNav();rSel();if(S.view==='manage')rManage();else rSMgr();if(S.view==='dashboard')rDash();if(S.view==='settings')loadSettings();}
+  else{rTeamSel();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='dashboard')rDash();if(S.view==='settings')loadSettings();}
 }
+// 사용자(viewer)는 현장/팀/권역 구조를 변경할 수 없음(읽기 전용). 관리자·로컬 모드만 변경 가능.
+function manageLocked(){try{return FB2.role==='viewer';}catch(e){return false;}}
 function addTeam(name){
+  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return null;}
   name=(name||'').trim();if(!name){toast('팀 이름을 입력하세요');return null;}
   if(S.teams.some(t=>t.name===name)){toast('같은 이름의 팀이 있습니다');return null;}
   const t={id:uid('t'),name,regions:[],regionOrder:[]};
   S.teams.push(t);lsSave();fbPushTeams();return t;
 }
-function renameTeam(id,name){name=(name||'').trim();if(!name)return;const t=S.teams.find(x=>x.id===id);if(!t)return;t.name=name;lsSave();fbPushTeams();rTeamSel();}
+function renameTeam(id,name){if(manageLocked())return;name=(name||'').trim();if(!name)return;const t=S.teams.find(x=>x.id===id);if(!t)return;t.name=name;lsSave();fbPushTeams();rTeamSel();}
 function deleteTeam(id){
+  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}
   if(S.teams.length<=1){toast('마지막 팀은 삭제할 수 없습니다');return;}
   const t=S.teams.find(x=>x.id===id);if(!t)return;
   const cnt=S.sites.filter(s=>s.teamId===id).length;
@@ -1326,11 +1386,11 @@ function deleteTeam(id){
   S.teams=S.teams.filter(x=>x.id!==id);
   if(S.teamId===id)S.teamId=S.teams[0].id;
   bumpDef();lsSave();fbPushTeams();fbPushSites();fbPushComments();fbPushAna();
-  rTeamSel();rNav();rSel();rSMgr();if(S.view==='dashboard')rDash();toast('팀 삭제됨');
+  rTeamSel();rNav();rSMgr();if(S.view==='dashboard')rDash();toast('팀 삭제됨');
 }
-function addRegion(name){const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();fbPushTeams();rNav();rSel();rSMgr();}
-function renameRegion(oldName,name){const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();fbPushTeams();fbPushSites();rNav();rSel();rSMgr();if(S.view==='dashboard')rDash();}
-function deleteRegion(name){const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();fbPushTeams();rNav();rSel();rSMgr();}
+function addRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();fbPushTeams();rNav();rSMgr();}
+function renameRegion(oldName,name){if(manageLocked())return;const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();fbPushTeams();fbPushSites();rNav();rSMgr();if(S.view==='dashboard')rDash();}
+function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();fbPushTeams();rNav();rSMgr();}
 // 사용자 정의 권역 순서 반영 (없으면 팀 기본 순서). 목록에 없는/추가된 권역은 뒤에 붙임.
 function orderedRGS(){const t=curTeam();const base=(t&&Array.isArray(t.regions))?t.regions.filter(r=>r!==PERM_REGION):[];const ord=(t&&Array.isArray(t.regionOrder))?t.regionOrder:[];const seen=new Set();const out=[];for(const r of ord){if(base.includes(r)&&!seen.has(r)){out.push(r);seen.add(r);}}for(const r of base){if(!seen.has(r)){out.push(r);seen.add(r);}}out.push(PERM_REGION);return out;}
 // 사이드바 팀 선택기 렌더
@@ -1358,7 +1418,7 @@ function rManage(){
     if(r===PERM_REGION)return `<div class="tm-row tm-locked"><span class="tm-nameinp tm-lockname">${esc(r)}</span><span class="tm-cnt">${used}</span><span class="tm-x tm-lockicon" title="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외">${ICON_LOCK}</span></div>`;
     return `<div class="tm-row"><input class="mg-inp tm-nameinp" value="${esc(r)}" onchange="updRegionName('${jss(r)}',this.value)"><span class="tm-cnt">${used}</span><button class="tm-x tm-del" onclick="tmDeleteRegion('${jss(r)}')" title="삭제">${ICON_TRASH}</button></div>`;
   }).join('');
-  el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" onclick="tmAddTeam()">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" onclick="tmAddRegion()">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');if(event.dataTransfer.files[0])onFile(event.dataTransfer.files[0])"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" onchange="onFile(this.files[0])"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" oninput="S.exTk=this.value;localStorage.setItem('exTk',this.value)"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" onclick="openSM(null)">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
+  el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" onclick="tmAddTeam()">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" onclick="tmAddRegion()">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card tm-upcard"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="event.preventDefault();this.classList.remove('drag');if(event.dataTransfer.files[0])onFile(event.dataTransfer.files[0])"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" onchange="onFile(this.files[0])"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" oninput="S.exTk=this.value;localStorage.setItem('exTk',this.value)"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" onclick="openSM(null)">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
   rSMgr();
 }
 function uniqName(base,existing){let n=base,i=2;const set=new Set(existing);while(set.has(n)){n=base+' '+i;i++;}return n;}
@@ -1370,12 +1430,13 @@ function updRegionName(oldR,val){renameRegion(oldR,val);rManage();}
 function tmDeleteRegion(r){deleteRegion(r);rManage();}
 // 현장 인라인 수정 — 리스트 행에서 바로 편집 (모달 없이)
 function updSite(id,field,value){
+  if(manageLocked())return;
   const s=S.sites.find(x=>x.id===id);if(!s)return;
   if(field==='units'||field==='buildings'||field==='commercialUnits')s[field]=Number(value)||0;
   else if(field==='hasCommercial'||field==='showVacant')s[field]=!!value;
   else s[field]=value;
   lsSave();fbPushSites();
-  rNav();rSel();
+  rNav();
   if((field==='name'||field==='region')&&S.view==='dashboard')rDash();
   if((field==='hasCommercial'||field==='showVacant')&&S.view==='site'&&S.sid===id)rSite(id);
 }
@@ -1401,10 +1462,6 @@ if(typeof Chart!=='undefined'&&Chart.Tooltip&&!Chart.Tooltip.positioners.aboveAl
 }
 
 // FILTER helpers
-function applyFlt(items,flt){if(!flt)return items;return items.filter(i=>{if(flt.rp&&i.repairParty!==flt.rp)return false;if(flt.tr&&i.trade!==flt.tr)return false;if(flt.ss&&i.saleStatus!==flt.ss)return false;if(flt.ut&&i.unitType!==flt.ut)return false;if(flt.dl){const d=Number(i.delayDays)||0;if(flt.dl==='lt30'&&d>=30)return false;if(flt.dl==='30-59'&&!(d>=30&&d<60))return false;if(flt.dl==='gte60'&&d<60)return false;}return true;});}
-function fltActive(){return Object.values(S.flt).some(v=>v);}
-function clearFlt(){S.flt={rp:'',tr:'',dl:'',ss:'',ut:''};if(S.view==='site'&&S.sid)rSite(S.sid);}
-function setFlt(k,v){S.flt[k]=S.flt[k]===v?'':v;if(S.view==='site'&&S.sid)rSite(S.sid);}
 function setTab(t){S.tab=t;document.querySelectorAll('.tnav-i').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));document.querySelectorAll('.tpane').forEach(p=>p.classList.toggle('act',p.dataset.tab===t));
   // pane이 display:block이 된 직후 동기 측정 → display:none일 때 scrollHeight=0으로 잘못 잡혔던
   // textarea 높이를 페인트 전에 즉시 교정 (첫 진입 시 "작았다 커지는" 깜빡임 방지).
@@ -1417,11 +1474,10 @@ function toggleSB(){S.mini=!S.mini;document.getElementById('sidebar').classList.
 function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');}
 function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');}
 
-// PERSISTENCE — Firebase Realtime DB (연결 시) + localStorage (항상 백업).
+// PERSISTENCE — 공유 폴더(File System Access API, OneDrive 등) + localStorage/IndexedDB 백업.
+// 주의: fb* 명칭은 과거 Firebase 시절의 호환 shim. 실제 저장은 전부 폴더(sh*) 경유.
 // FB는 멀티유저 실시간 동기화용, IndexedDB는 영구 로컬 저장소.
 const LS_KEY='hdec_state_v1';// IndexedDB 마이그레이션용
-const FB={ready:false,app:null,db:null,unsubs:[],applyingRemote:false,_lastCmtPush:null,_lastSitesPush:null,_lastAnaPush:null,_lastTeamsPush:null};
-window.__FB=FB;
 
 // ===== IndexedDB =====
 // 저장 구조:
@@ -1454,7 +1510,6 @@ function dbTx(store,mode){return dbOpen().then(db=>db.transaction(store,mode).ob
 function dbGet(store,key){return dbTx(store,'readonly').then(os=>new Promise((res,rej)=>{const r=os.get(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));}
 function dbPut(store,value){return dbTx(store,'readwrite').then(os=>new Promise((res,rej)=>{const r=os.put(value);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);}));}
 function dbDel(store,key){return dbTx(store,'readwrite').then(os=>new Promise((res,rej)=>{const r=os.delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);}));}
-function dbClear(store){return dbTx(store,'readwrite').then(os=>new Promise((res,rej)=>{const r=os.clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error);}));}
 function dbAll(store){return dbTx(store,'readonly').then(os=>new Promise((res,rej)=>{const r=os.getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);}));}
 
 // 메타 저장/로드 (sites/cmt/ana/rm). 동기 호환을 위해 in-memory 캐시 + 비동기 백그라운드 쓰기.
@@ -1477,7 +1532,7 @@ async function metaLoad(){
     if(!o){
       // 마이그레이션: 이전 localStorage 버전이 있으면 한 번 흡수
       const raw=localStorage.getItem(LS_KEY);
-      if(raw){try{const v=JSON.parse(raw);if(Array.isArray(v.sites))S.sites=v.sites;if(v.cmt)S.cmt=v.cmt;if(v.ana)S.ana=v.ana;if(typeof v.rm==='string'&&/^\d{4}-\d{2}$/.test(v.rm))S.rm=v.rm;await dbPut('meta',{id:'state',sites:S.sites,cmt:S.cmt,ana:S.ana,rm:S.rm,teams:S.teams,teamId:S.teamId});localStorage.removeItem(LS_KEY);console.log('[db] migrated localStorage → IndexedDB');}catch(e){console.warn('migration failed',e);}}
+      if(raw){try{const v=JSON.parse(raw);if(Array.isArray(v.sites))S.sites=v.sites;if(v.cmt)S.cmt=v.cmt;if(v.ana)S.ana=v.ana;if(typeof v.rm==='string'&&/^\d{4}-\d{2}$/.test(v.rm))S.rm=v.rm;await dbPut('meta',{id:'state',sites:S.sites,cmt:S.cmt,ana:S.ana,rm:S.rm,teams:S.teams,teamId:S.teamId});localStorage.removeItem(LS_KEY);}catch(e){console.warn('migration failed',e);}}
       return;
     }
     if(Array.isArray(o.sites))S.sites=o.sites;
@@ -1524,278 +1579,419 @@ async function defLoadAll(){
         if(raw)S.def[row.sid]=JSON.parse(raw);
       }catch(e){console.warn('defLoad parse failed for',row.sid,e);}
     }
-    console.log('[db] loaded def for',rows.length,'sites');
   }catch(e){console.warn('defLoadAll failed',e);}
   bumpDef();
 }
 async function defDelete(sid){try{await dbDel('defects',sid);}catch(e){console.warn('defDelete failed',e);}}
-async function defClearAll(){try{await dbClear('defects');}catch(e){console.warn('defClearAll failed',e);}}
 
-// Firebase 경로용 키 인코딩 — Realtime DB는 . # $ [ ] / 사용 불가
-function fbKey(s){return String(s||'').replace(/[.#$\[\]\/]/g,'_');}
-function setFBChip(label,color){
-  const chip=document.getElementById('fbchip'),t=document.getElementById('fbchipt');
-  if(!chip||!t)return;
-  chip.style.display='inline-flex';t.textContent=label;
-  const dot=chip.querySelector('circle');if(dot)dot.setAttribute('fill',color),dot.setAttribute('stroke',color);
-}
 
-// 고정 Firebase 설정 — 항상 이 프로젝트로 자동 연결/저장.
-const FIREBASE_CONFIG={
-  apiKey:"AIzaSyDX5yANupr5xqLbCq_UcSVHc-iZvobRM3g",
-  authDomain:"report-c29a1.firebaseapp.com",
-  databaseURL:"https://report-c29a1-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"report-c29a1",
-  storageBucket:"report-c29a1.firebasestorage.app",
-  messagingSenderId:"625677240502",
-  appId:"1:625677240502:web:f66c629db928c2b801fe17",
-  measurementId:"G-YT6MVSE221"
+// ===== 화면 가림막(커버) — Firebase 인증 게이트가 사용 =====
+function showCover(){const g=document.getElementById('coverGate');if(g)g.style.display='flex';}
+function hideCover(){const g=document.getElementById('coverGate');if(g)g.style.display='none';}
+function coverSkip(){try{FB2._bypassLocal=true;}catch(e){}hideCover();} // Firebase 없이 로컬 캐시로 진입(오프라인/개발용)
+// 입력 중(텍스트영역/인풋) 여부 — 실시간 동기화가 타이핑을 덮어쓰지 않도록 FB2가 사용
+function shEditing(){const a=document.activeElement;return !!(a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.isContentEditable));}
+
+// ===== 구 OneDrive 공유 폴더 방식 제거됨 — 공유·인증은 Firebase(FB2)가 전담 =====
+// 아래는 앱 곳곳(팀·권역·현장 관리·업로드)에서 호출되는 옛 동기화 훅의 무해한 no-op 스텁.
+// (로컬 저장은 IndexedDB: metaLoad/defLoadAll/lsSave / 공유는 FB2: plans·analysis·report)
+function fbPushSites(){}
+function fbPushComments(){}
+function fbPushCommentsDebounced(){}
+function fbPushTeams(){}
+function fbPushAna(){}
+function fbPushConfig(){}
+function fbDeleteDefects(){}
+
+// ===================================================================
+// ===== 사내 Firebase 공유 (report-c29a1) — 인증 게이트 + 실시간 =====
+// 정적 HTML은 데이터 0인 껍데기. 집계는 관리자가 report/{기준월}에 "게시",
+// 처리계획·분석의견은 plans/·analysis/ 리프에 실시간 read/write.
+// @hdec.co.kr + 이메일 인증 통과 계정만 데이터 수신(서버 규칙으로 강제).
+// ===================================================================
+const FB2={
+  cfg:{
+    apiKey:"AIzaSyDX5yANupr5xqLbCq_UcSVHc-iZvobRM3g",
+    authDomain:"report-c29a1.firebaseapp.com",
+    databaseURL:"https://report-c29a1-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"report-c29a1",
+    storageBucket:"report-c29a1.firebasestorage.app",
+    messagingSenderId:"625677240502",
+    appId:"1:625677240502:web:f66c629db928c2b801fe17",
+    measurementId:"G-YT6MVSE221"
+  },
+  app:null,auth:null,db:null,
+  ready:false,role:null,user:null,
+  users:{},_usersBound:false,
+  subs:[],_foBound:false,_bypassLocal:false,
+  _pendRerender:false,_pendReport:null,_pendReportRm:null
 };
-function connectFB(){
-  if(typeof firebase==='undefined'){console.error('[FB] SDK 미로딩 — gstatic 스크립트 차단 여부 확인 (광고/추적 차단기?)');setFBChip('오프라인 · IndexedDB','#8E8E93');return false;}
-  try{
-    FB.unsubs.forEach(u=>u());FB.unsubs=[];
-    if(!FB.app){FB.app=firebase.initializeApp(FIREBASE_CONFIG);}
-    setFBChip('인증 중…','#FF9500');
-    firebase.auth().signInAnonymously()
-      .then(()=>{
-        FB.db=firebase.database();FB.ready=true;
-        setFBChip('Firebase 동기화','#34C759');
-        subscribeFB();
-        console.log('[FB] connected ✓ (auth) — databaseURL:',FIREBASE_CONFIG.databaseURL);
-      })
-      .catch(e=>{
-        FB.ready=false;
-        console.error('[FB] 익명 인증 실패',e&&e.code,e&&e.message);
-        setFBChip('인증 실패 · IndexedDB','#FF3B30');
-      });
-    return true;
-  }catch(e){
-    FB.ready=false;
-    console.error('[FB] connect failed',e);
-    setFBChip('연결 실패 · IndexedDB','#FF3B30');
-    return false;
-  }
-}
-// 원격 → 로컬 반영 (다른 사용자의 편집이 push되면 받음)
-// comments/analysis는 키(공종명)에 Firebase 금지문자(. # $ [ ] /)가 들어갈 수 있어
-// 노드를 통째로 JSON 문자열로 저장/복원한다 (키 충돌 원천 차단).
-function subscribeFB(){
-  if(!FB.ready)return;
-  // app_config: GitHub 저장소 주소·읽기토큰 (전 사용자 공유)
-  const onConfig=FB.db.ref('app_config').on('value',snap=>{
-    const v=snap.val();
-    if(v==null)return;
-    if(v===GH._lastCfgPush)return;
-    try{const o=JSON.parse(v);if(o){if(o.github){GH.cfg.owner=o.github.owner||'';GH.cfg.repo=o.github.repo||'';GH.cfg.branch=o.github.branch||'main';GH.cfg.readToken=o.github.readToken||'';ghSaveCfg();}if(typeof o.gemini==='string'){S.ck=o.gemini;try{localStorage.setItem('ck',o.gemini);}catch(e){}}}}catch(e){console.warn('config parse failed',e);}
-    if(S.view==='settings')loadSettings();
-    ghSyncDown();
-  });
-  FB.unsubs.push(()=>FB.db.ref('app_config').off('value',onConfig));
-  // teams_meta: 팀 레지스트리(팀·권역·권역순서) 전역 동기화
-  const onTeams=FB.db.ref('teams_meta').on('value',snap=>{
-    const v=snap.val();
-    if(v==null){
-      if(Array.isArray(S.teams)&&S.teams.length){try{FB.db.ref('teams_meta').set(JSON.stringify({teams:S.teams}));}catch(e){console.warn('FB seed teams failed',e);}}
-      return;
-    }
-    if(v===FB._lastTeamsPush){return;}
-    FB.applyingRemote=true;
-    try{const o=JSON.parse(v);if(Array.isArray(o.teams))S.teams=o.teams;}catch(e){console.warn('teams parse failed',e);}
-    ensureTeams();
-    lsSave();
-    rTeamSel();rNav();rSel();rSMgr();
-    if(S.view==='dashboard')rDash();
-    FB.applyingRemote=false;
-  });
-  const onComments=FB.db.ref('comments_json').on('value',snap=>{
-    const v=snap.val();
-    if(v==null){
-      if(Object.keys(S.cmt||{}).length){try{FB.db.ref('comments_json').set(JSON.stringify(S.cmt));}catch(e){console.warn('FB seed comments failed',e);}}
-      return;
-    }
-    // 내가 방금 보낸 값의 메아리면 무시 — 화면 깜빡임·포커스 튐 방지
-    if(v===FB._lastCmtPush){return;}
-    FB.applyingRemote=true;
-    try{S.cmt=JSON.parse(v)||{};}catch(e){console.warn('comments parse failed',e);}
-    lsSave();
-    if(S.view==='site'&&S.sid)rSite(S.sid);
-    FB.applyingRemote=false;
-  });
-  const onSites=FB.db.ref('sites_json').on('value',snap=>{
-    const v=snap.val();
-    if(v==null){
-      if(S.sites.length){try{FB.db.ref('sites_json').set(JSON.stringify({sites:S.sites,rm:S.rm}));}catch(e){console.warn('FB seed sites failed',e);}}
-      return;
-    }
-    if(v===FB._lastSitesPush){return;}
-    FB.applyingRemote=true;
-    try{const o=JSON.parse(v);if(Array.isArray(o.sites))S.sites=o.sites;if(typeof o.rm==='string'&&/^\d{4}-\d{2}$/.test(o.rm)){S.rm=o.rm;const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;}}catch(e){console.warn('sites parse failed',e);}
-    ensureTeams();
-    lsSave();
-    rTeamSel();rNav();rSel();rSMgr();
-    if(S.view==='dashboard')rDash();
-    FB.applyingRemote=false;
-  });
-  const onAna=FB.db.ref('analysis_json').on('value',snap=>{
-    const v=snap.val();
-    if(v==null){
-      if(Object.keys(S.ana||{}).length){try{FB.db.ref('analysis_json').set(JSON.stringify(S.ana));}catch(e){console.warn('FB seed ana failed',e);}}
-      return;
-    }
-    if(v===FB._lastAnaPush){return;}
-    FB.applyingRemote=true;
-    try{S.ana=JSON.parse(v)||{};}catch(e){console.warn('analysis parse failed',e);}
-    lsSave();
-    if(S.view==='site'&&S.sid)rSite(S.sid);
-    FB.applyingRemote=false;
-  });
-  FB.unsubs.push(()=>FB.db.ref('teams_meta').off('value',onTeams));
-  FB.unsubs.push(()=>FB.db.ref('comments_json').off('value',onComments));
-  FB.unsubs.push(()=>FB.db.ref('sites_json').off('value',onSites));
-  FB.unsubs.push(()=>FB.db.ref('analysis_json').off('value',onAna));
-}
-// 로컬 → 원격 (편집 직후 호출). 통째로 JSON 문자열 저장.
-function fbPushComments(){
-  if(FB.applyingRemote){console.log('[FB] push 보류 (원격 반영 중)');return;}
-  if(!FB.ready){console.warn('[FB] 저장 안 됨 — Firebase 미연결 (FB.ready=false). 상단 상태칩 확인');return;}
-  const payload=JSON.stringify(S.cmt);
-  FB._lastCmtPush=payload;// 메아리 식별용 — 이 값과 같은 스냅샷이 오면 렌더 건너뜀
-  console.log('[FB] comments 저장 시도…');
-  try{
-    FB.db.ref('comments_json').set(payload)
-      .then(()=>console.log('[FB] comments 저장 성공'))
-      .catch(e=>{console.error('[FB] comments 저장 실패:',e&&e.code,e&&e.message);toast('동기화 실패: '+(e&&e.code||e&&e.message||'알 수 없음'),4000);});
-  }catch(e){console.error('[FB] fbPushComments 예외',e);}
-}
-// 처리계획 다중 칸을 연속 편집할 때, 각 칸 커밋마다 전체 S.cmt를 직렬화·전송하는 비용을
-// 한 번으로 합침(트레일링 디바운스). 로컬 저장(lsSave)·✓ 표시는 즉시 유지되고 원격 전송만 지연.
-let _cmtPushTimer=null;
-function fbPushCommentsDebounced(){
-  clearTimeout(_cmtPushTimer);
-  _cmtPushTimer=setTimeout(()=>{_cmtPushTimer=null;fbPushComments();},500);
-}
-function fbPushSites(){if(!FB.ready||FB.applyingRemote)return;const payload=JSON.stringify({sites:S.sites,rm:S.rm});FB._lastSitesPush=payload;try{FB.db.ref('sites_json').set(payload).catch(e=>{console.error('[FB] sites 저장 실패:',e&&e.code,e&&e.message);toast('동기화 실패: '+(e&&e.code||'오류'),4000);});}catch(e){console.warn('fbPushSites failed',e);}}
-function fbPushTeams(){if(!FB.ready||FB.applyingRemote)return;const payload=JSON.stringify({teams:S.teams});FB._lastTeamsPush=payload;try{FB.db.ref('teams_meta').set(payload).catch(e=>{console.error('[FB] teams 저장 실패:',e&&e.code,e&&e.message);});}catch(e){console.warn('fbPushTeams failed',e);}}
-function fbPushAna(){if(!FB.ready||FB.applyingRemote)return;const payload=JSON.stringify(S.ana);FB._lastAnaPush=payload;try{FB.db.ref('analysis_json').set(payload).catch(e=>{console.error('[FB] ana 저장 실패:',e&&e.code,e&&e.message);});}catch(e){console.warn('fbPushAna failed',e);}}
+window.__FB2=FB2;
 
-// ===== GitHub 비공개 저장 연동 =====
-// 하자 원데이터(모든 컬럼, 무손실)를 현장별로 LZ압축해 비공개 저장소에 저장/동기화.
-// 읽기 토큰: Firebase app_config(전 사용자 공유). 쓰기 토큰: 이 기기 localStorage(동기화 안 함).
-// 저장소 주소·읽기토큰도 Firebase에 두어 모든 클라이언트가 같은 저장소를 바라봄.
-const GH={cfg:{owner:'',repo:'',branch:'main',readToken:''},writeToken:'',_lastCfgPush:null,syncing:false};
-function ghLoadLocal(){
-  try{GH.writeToken=localStorage.getItem('gh_write')||'';}catch(e){}
-  // GitHub 설정(주소·읽기토큰)을 로컬에도 캐시 → Firebase(gstatic) 차단 시에도 동기화 가능
-  try{const raw=localStorage.getItem('gh_cfg');if(raw){const c=JSON.parse(raw);if(c){if(c.owner)GH.cfg.owner=c.owner;if(c.repo)GH.cfg.repo=c.repo;if(c.branch)GH.cfg.branch=c.branch;if(c.readToken)GH.cfg.readToken=c.readToken;}}}catch(e){}
+// Firebase 금지문자(. # $ [ ] /) 회피용 키 인코딩 (공종명 등 키에 사용)
+function fbEncKey(k){return encodeURIComponent(String(k==null?'':k)).replace(/\./g,'%2E');}
+function fbDecKey(k){try{return decodeURIComponent(String(k));}catch(e){return String(k);}}
+function fbDomainOk(email){return /@hdec\.co\.kr$/i.test(String(email||'').trim());}
+function fb2Wait(ms){return new Promise(r=>setTimeout(r,ms));}
+function fb2IsEditor(){return FB2.role==='editor';}
+
+// ----- 게이트 메시지/입력 -----
+function fbMsg(t,ok){const e=document.getElementById('cvMsg');if(e){e.textContent=t||'';e.style.color=ok?'#7CFC9A':'#ff8a80';}}
+function fbReadCreds(){return{email:(document.getElementById('fbEmail')||{}).value||'',pw:(document.getElementById('fbPw')||{}).value||''};}
+function showGateForm(){const ld=document.getElementById('cvLoading');if(ld)ld.style.display='none';const bd=document.getElementById('cvBody');if(bd)bd.style.display='';showCover();}
+function fbAuthErr(e){
+  const c=(e&&e.code)||'';
+  const m={
+    'auth/invalid-credential':'이메일 또는 비밀번호가 올바르지 않습니다',
+    'auth/wrong-password':'비밀번호가 올바르지 않습니다',
+    'auth/user-not-found':'가입되지 않은 계정입니다 · [신규 가입]을 눌러주세요',
+    'auth/invalid-email':'이메일 형식이 올바르지 않습니다',
+    'auth/email-already-in-use':'이미 가입된 계정입니다 · 로그인하세요',
+    'auth/too-many-requests':'시도가 많습니다 · 잠시 후 다시 시도하세요',
+    'auth/network-request-failed':'네트워크 오류 · 사내망에서 Firebase 접속이 허용되는지 확인하세요',
+    'auth/weak-password':'비밀번호는 6자 이상이어야 합니다',
+    'auth/operation-not-allowed':'이메일/비밀번호 로그인이 콘솔에서 활성화되지 않았습니다'
+  };
+  return m[c]||('오류: '+((e&&e.message)||c||'알 수 없음'));
 }
-function ghSaveCfg(){try{localStorage.setItem('gh_cfg',JSON.stringify({owner:GH.cfg.owner||'',repo:GH.cfg.repo||'',branch:GH.cfg.branch||'main',readToken:GH.cfg.readToken||''}));}catch(e){}}
-function ghConfigured(needWrite){const c=GH.cfg;return !!(c.owner&&c.repo&&(needWrite?GH.writeToken:c.readToken));}
-function ghHeaders(write){const t=write?GH.writeToken:GH.cfg.readToken;const h={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};if(t)h['Authorization']='Bearer '+t;return h;}
-function ghUrl(p){return `https://api.github.com/repos/${GH.cfg.owner}/${GH.cfg.repo}/${p}`;}
-// UTF-8 안전 base64 (한글 포함). 사이트 데이터(LZ-b64 ASCII)·매니페스트(JSON) 모두 사용.
-function b64enc(str){return btoa(unescape(encodeURIComponent(str)));}
-function b64dec(b64){return decodeURIComponent(escape(atob((b64||'').replace(/\n/g,''))));}
-// 파일 메타(sha) 조회 — 없으면 null
-async function ghMeta(path,write){
-  const r=await fetch(ghUrl(`contents/${path}?ref=${encodeURIComponent(GH.cfg.branch)}`),{headers:ghHeaders(!!write)});
-  if(r.status===404)return null;
-  if(!r.ok)throw new Error('GitHub meta '+r.status);
-  const j=await r.json();return{sha:j.sha,size:j.size};
+
+// ----- 게이트 동작 (로그인/가입/인증재발송) -----
+async function fbDoLogin(){
+  if(!FB2.auth){fbMsg('Firebase 초기화 실패 — 네트워크/CDN 차단 여부를 확인하세요');return;}
+  const c=fbReadCreds(),email=c.email.trim().toLowerCase();
+  if(!fbDomainOk(email)){fbMsg('@hdec.co.kr 계정만 사용할 수 있습니다');return;}
+  if((c.pw||'').length<6){fbMsg('비밀번호는 6자 이상이어야 합니다');return;}
+  fbMsg('로그인 중…',true);
+  try{await FB2.auth.signInWithEmailAndPassword(email,c.pw);}
+  catch(e){fbMsg(fbAuthErr(e));}
 }
-// blob 내용(문자열) — 대용량(>1MB) 지원
-async function ghBlob(sha){
-  const r=await fetch(ghUrl(`git/blobs/${sha}`),{headers:ghHeaders(false)});
-  if(!r.ok)throw new Error('GitHub blob '+r.status);
-  const j=await r.json();return b64dec(j.content||'');
-}
-// 파일 쓰기(생성/갱신) — 반환 sha
-async function ghPut(path,contentStr,message){
-  let sha=null;try{const m=await ghMeta(path,true);sha=m&&m.sha;}catch(e){}
-  const body={message:message||('update '+path),content:b64enc(contentStr),branch:GH.cfg.branch};
-  if(sha)body.sha=sha;
-  const r=await fetch(ghUrl(`contents/${path}`),{method:'PUT',headers:{...ghHeaders(true),'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){let t='';try{t=await r.text();}catch(e){}throw new Error('GitHub put '+r.status+' '+t.slice(0,140));}
-  const j=await r.json();return j.content&&j.content.sha;
-}
-// 매니페스트 로드 → {manifest,sha}
-async function ghLoadManifest(){
-  const m=await ghMeta('index.json',false);
-  if(!m)return{manifest:{sites:{},updatedAt:null},sha:null};
-  try{const txt=await ghBlob(m.sha);return{manifest:JSON.parse(txt)||{sites:{}},sha:m.sha};}
-  catch(e){console.warn('[gh] manifest parse',e);return{manifest:{sites:{},updatedAt:null},sha:null};}
-}
-function sitePath(site){return `${site.teamId}/${site.id}.json`;}
-// 업로드: 현장별 원데이터 압축 저장 + 매니페스트 1회 갱신
-async function ghUploadSites(entries){ // entries: [{site, rawRows}]
-  if(!ghConfigured(true))return{ok:false,reason:'미설정'};
-  progShow('GitHub 저장 중...');await nextFrame();
-  let manifest={sites:{}};
-  try{const lm=await ghLoadManifest();manifest=lm.manifest||{sites:{}};if(!manifest.sites)manifest.sites={};}catch(e){console.warn('[gh] manifest load failed, 새로 생성',e);}
-  let done=0;const total=entries.length;
-  for(const {site,rawRows} of entries){
-    progSet(done/total*100,`${done+1}/${total} · ${site.name}`);await nextFrame();
-    try{
-      const json=JSON.stringify(rawRows||[]);
-      const packed=(typeof LZString!=='undefined')?LZString.compressToBase64(json):json;
-      const sha=await ghPut(sitePath(site),packed,`data: ${site.name} (${(rawRows||[]).length} rows)`);
-      manifest.sites[site.id]={name:site.name,teamId:site.teamId,region:site.region,path:sitePath(site),sha,count:(rawRows||[]).length,enc:(typeof LZString!=='undefined')?'lz-b64':'raw',updatedAt:new Date().toISOString()};
-      // 로컬 def 레코드에 ghSha 기록 → 다음 부팅 때 재다운로드 방지
-      try{const rec=await dbGet('defects',site.id);if(rec){rec.ghSha=sha;await dbPut('defects',rec);}}catch(e){}
-      done++;
-    }catch(e){console.error('[gh] put 실패',site.name,e);progHide();return{ok:false,reason:(e.message||e)};}
-  }
-  manifest.updatedAt=new Date().toISOString();
-  try{await ghPut('index.json',JSON.stringify(manifest),`manifest update (${done} sites)`);}catch(e){console.error('[gh] manifest put 실패',e);progHide();return{ok:false,reason:'매니페스트: '+(e.message||e)};}
-  progHide();
-  return{ok:true,count:done};
-}
-// 부팅 동기화: 매니페스트 기준으로 변경된 현장만 원데이터 받아 정규화 → S.def
-async function ghSyncDown(){
-  if(GH.syncing||!ghConfigured(false))return;
-  GH.syncing=true;
+async function fbDoSignup(){
+  if(!FB2.auth){fbMsg('Firebase 초기화 실패');return;}
+  const c=fbReadCreds(),email=c.email.trim().toLowerCase();
+  if(!fbDomainOk(email)){fbMsg('@hdec.co.kr 계정만 가입할 수 있습니다');return;}
+  if((c.pw||'').length<6){fbMsg('비밀번호는 6자 이상이어야 합니다');return;}
+  fbMsg('가입 처리 중…',true);
   try{
-    const {manifest}=await ghLoadManifest();
-    const sites=manifest&&manifest.sites?manifest.sites:{};
-    const ids=Object.keys(sites);
-    if(!ids.length){GH.syncing=false;return;}
-    let fetched=0;
-    for(const sid of ids){
-      const entry=sites[sid];if(!entry||!entry.sha)continue;
-      let localSha=null;try{const rec=await dbGet('defects',sid);localSha=rec&&rec.ghSha;}catch(e){}
-      if(localSha===entry.sha&&S.def[sid])continue; // 변경 없음
-      try{
-        const packed=await ghBlob(entry.sha);
-        const json=(entry.enc==='raw')?packed:((typeof LZString!=='undefined')?LZString.decompressFromBase64(packed):packed);
-        const rawRows=JSON.parse(json||'[]');
-        const items=rawRows.map(norm);
-        S.def[sid]=items;
-        await defSave(sid,items);
-        try{const rec=await dbGet('defects',sid);if(rec){rec.ghSha=entry.sha;await dbPut('defects',rec);}}catch(e){}
-        fetched++;
-      }catch(e){console.warn('[gh] sync 현장 실패',sid,e);}
+    const cred=await FB2.auth.createUserWithEmailAndPassword(email,c.pw);
+    try{await cred.user.sendEmailVerification();}catch(_){}
+    fbMsg('인증메일을 보냈습니다. 메일의 링크를 클릭한 뒤 [로그인]을 눌러주세요.',true);
+  }catch(e){fbMsg(fbAuthErr(e));}
+}
+async function fbDoResend(){
+  if(!FB2.auth||!FB2.auth.currentUser){fbMsg('먼저 로그인 또는 가입을 진행하세요');return;}
+  try{await FB2.auth.currentUser.sendEmailVerification();fbMsg('인증메일을 다시 보냈습니다. 받은 메일의 링크를 클릭하세요.',true);}
+  catch(e){fbMsg(fbAuthErr(e));}
+}
+window.fbDoLogin=fbDoLogin;window.fbDoSignup=fbDoSignup;window.fbDoResend=fbDoResend;
+
+// ----- 초기화 / 부팅 -----
+function fb2Init(){
+  if(typeof firebase==='undefined'||!firebase.initializeApp)return false;
+  try{
+    FB2.app=firebase.apps&&firebase.apps.length?firebase.app():firebase.initializeApp(FB2.cfg);
+    FB2.auth=firebase.auth();
+    FB2.db=firebase.database();
+    return true;
+  }catch(e){console.error('[FB2] init 실패',e);return false;}
+}
+function fb2Boot(){
+  if(!fb2Init()){
+    showGateForm();
+    fbMsg('Firebase에 연결할 수 없습니다(사내망/CDN 차단 가능). 네트워크를 확인하거나 [로컬 데이터로 둘러보기]로 진입하세요.');
+    return;
+  }
+  FB2.auth.onAuthStateChanged(fb2OnAuth);
+}
+function fb2OnAuth(user){
+  FB2.user=user;
+  if(!user){ if(!FB2._bypassLocal)showGateForm(); return; }
+  if(!fbDomainOk(user.email)){showGateForm();fbMsg('@hdec.co.kr 계정만 접근할 수 있습니다. 로그아웃합니다.');try{FB2.auth.signOut();}catch(_){}return;}
+  if(!user.emailVerified){
+    showGateForm();
+    fbMsg('이메일 인증이 필요합니다. 받은 인증메일의 링크를 클릭한 뒤 [로그인]을 다시 누르세요. (메일이 없으면 [인증메일 재발송])');
+    return;
+  }
+  fb2Enter(user);
+}
+
+// ----- 역할 해석 (users/{uid}) -----
+// 관리자(editor)=모든 권한 / 사용자(viewer)=읽기·쓰기 / 차단(blocked)=전면 차단
+// 최초 편집자는 콘솔에서 users/{uid}/role="editor"로 1회 부트스트랩.
+async function fb2ResolveRole(user){
+  const uid=user.uid, email=String(user.email||'').toLowerCase();
+  const ref=FB2.db.ref('users/'+uid);
+  let rec=null;
+  try{const s=await ref.once('value');rec=s.val();}catch(e){console.warn('[FB2] role read',e);}
+  if(!rec){
+    // 최초 로그인 — 본인을 viewer로 자기 등록(규칙상 role은 viewer로만 생성 가능)
+    rec={email:email,role:'viewer',createdAt:Date.now(),lastSeen:Date.now()};
+    try{await ref.set(rec);}catch(e){console.warn('[FB2] self-register',e);}
+  }else{
+    try{await ref.child('lastSeen').set(Date.now());}catch(e){}
+    if(rec.email!==email){try{await ref.child('email').set(email);}catch(e){}}
+  }
+  const r=rec&&rec.role;
+  return (r==='editor'||r==='viewer'||r==='blocked')?r:'viewer';
+}
+function fb2ShowBlocked(){
+  FB2.ready=false;
+  try{document.body.classList.remove('viewer');}catch(_){}
+  showGateForm();
+  fbMsg('이 계정은 접근이 차단되었습니다. 관리자에게 문의하세요.');
+}
+
+// ----- 계정 관리 (편집자 전용) -----
+function fb2SubUsers(){
+  if(FB2._usersBound)return;FB2._usersBound=true;
+  const ref=FB2.db.ref('users');
+  const h=ref.on('value',function(snap){
+    FB2.users=snap.val()||{};
+    if(S.view==='settings'&&fb2IsEditor())fb2RenderUsers();
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
+}
+function fb2RoleLabel(r){return r==='editor'?'관리자':(r==='blocked'?'차단':'사용자');}
+function fb2RenderUsers(){
+  const box=document.getElementById('fbUserList');if(!box)return;
+  const us=FB2.users||{},uids=Object.keys(us);
+  const myUid=(FB2.user&&FB2.user.uid)||'';
+  const editors=uids.filter(u=>us[u]&&us[u].role==='editor');
+  if(!uids.length){box.innerHTML='<div style="font-size:12px;color:var(--lbl3);padding:6px 0">아직 로그인한 계정이 없습니다.</div>';return;}
+  // 정렬: 관리자 → 사용자 → 차단, 그 안에서 이메일순
+  const order={editor:0,viewer:1,blocked:2};
+  uids.sort(function(a,b){const ra=order[us[a].role]??1,rb=order[us[b].role]??1;if(ra!==rb)return ra-rb;return String(us[a].email||'').localeCompare(String(us[b].email||''));});
+  box.innerHTML=uids.map(function(uid){
+    const u=us[uid]||{},role=u.role||'viewer',isMe=uid===myUid;
+    const lastEditor=role==='editor'&&editors.length<=1; // 마지막 관리자 보호
+    const lockReason=isMe?'본인 계정':(lastEditor?'마지막 관리자':'');
+    const opt=function(v,t){return '<option value="'+v+'"'+(role===v?' selected':'')+'>'+t+'</option>';};
+    const sel=(isMe||lastEditor)
+      ? '<span class="fbu-role fbu-'+role+'">'+fb2RoleLabel(role)+'</span><span style="font-size:11px;color:var(--lbl3);margin-left:6px">'+lockReason+'</span>'
+      : '<select class="inp fbu-sel" onchange="fb2SetRole('+JSON.stringify(uid).replace(/"/g,'&quot;')+',this.value)">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
+    return '<div class="fbu-row"><div class="fbu-mail">'+esc(u.email||uid)+(isMe?' <b style="color:var(--b600)">(나)</b>':'')+'</div><div class="fbu-ctl">'+sel+'</div></div>';
+  }).join('');
+}
+async function fb2SetRole(uid,role){
+  if(!fb2IsEditor()){toast('권한이 없습니다');return;}
+  if(role!=='editor'&&role!=='viewer'&&role!=='blocked')return;
+  if(uid===(FB2.user&&FB2.user.uid)){toast('자기 자신의 권한은 변경할 수 없습니다');fb2RenderUsers();return;}
+  const us=FB2.users||{},editors=Object.keys(us).filter(u=>us[u]&&us[u].role==='editor');
+  if(role!=='editor'&&editors.length<=1&&editors[0]===uid){toast('마지막 관리자는 변경할 수 없습니다');fb2RenderUsers();return;}
+  try{await FB2.db.ref('users/'+uid+'/role').set(role);toast((us[uid]&&us[uid].email||'계정')+' → '+fb2RoleLabel(role));}
+  catch(e){toast('변경 실패: '+((e&&e.message)||e));fb2RenderUsers();}
+}
+window.fb2SetRole=fb2SetRole;
+
+// ----- 진입 (역할 분기: 관리자 / 사용자 / 차단) -----
+async function fb2Enter(user){
+  FB2.user=user;
+  let role='viewer';
+  try{role=await fb2ResolveRole(user);}catch(e){console.warn('[FB2] resolveRole',e);}
+  FB2.role=role;
+  if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단
+  FB2.ready=true;
+  hideCover();
+  fb2BindFocusout();
+  fb2SubPlans();
+  fb2SubAnalysis();
+  if(role==='editor'){
+    document.body.classList.remove('viewer');
+    const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
+    const su=document.getElementById('set-users');if(su)su.style.display='';
+    fb2SubUsers();
+    fb2RefreshMeta();
+    if(S.view==='settings')loadSettings();
+  }else{
+    await fb2EnterViewer();
+  }
+}
+async function fb2EnterViewer(){
+  try{
+    const rep=await fb2LoadReportLatest();
+    if(!rep){fb2ViewerEmpty();return;}
+    fb2ApplyReport(rep.rm,rep.data);
+    fb2SubReport(rep.rm);
+  }catch(e){console.error('[FB2] viewer 진입 실패',e);fb2ViewerEmpty();}
+}
+function fb2ViewerEmpty(){
+  document.body.classList.add('viewer');
+  hideCover();
+  toast('아직 게시된 집계가 없습니다. 관리자의 첫 등록을 기다려 주세요.',6000);
+}
+
+// ----- report/{기준월} 로드 → __SNAP__ 배선 재사용 -----
+async function fb2LoadReportLatest(){
+  const snap=await FB2.db.ref('report').orderByKey().limitToLast(1).once('value');
+  const v=snap.val();if(!v)return null;
+  const rm=Object.keys(v)[0];
+  return{rm:rm,data:v[rm]||{}};
+}
+function fb2ApplyReport(rm,rep){
+  rep=rep||{};
+  const dash=rep._dash||{};
+  S.sites=Array.isArray(dash.sites)?dash.sites:[];
+  S.teams=Array.isArray(dash.teams)?dash.teams:[];
+  if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
+  S.def={}; // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
+  const st={},siteWks={},siteAm={};
+  for(const sid in rep){
+    if(sid==='_dash'||sid==='_meta')continue;
+    const n=rep[sid]||{};
+    st[sid]=n.kpi||{};
+    siteWks[sid]=n.siteWks||[];
+    siteAm[sid]=n.siteAm||{};
+    if(n.vac){ // 공가/상가 상태(미분양·미키불출)는 게시 데이터 — S.cmt에 병합(실시간 plans와 충돌 없음)
+      if(!S.cmt[sid])S.cmt[sid]={};
+      if(n.vac.vacantStatus)S.cmt[sid].vacantStatus=n.vac.vacantStatus;
+      if(n.vac.commercialStatus)S.cmt[sid].commercialStatus=n.vac.commercialStatus;
     }
-    if(fetched){bumpDef();if(S.view==='dashboard')rDash();if(S.view==='site'&&S.sid)rSite(S.sid);console.log('[gh] 동기화',fetched,'개 현장');}
-  }catch(e){console.warn('[gh] syncDown 실패',e);}
-  GH.syncing=false;
+  }
+  window.__SNAP__={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st:st,wks:dash.wks||[],am:dash.am||{},siteWks:siteWks,siteAm:siteAm,insightsHTML:dash.insightsHTML||''};
+  document.body.classList.add('viewer');
+  ensureTeams();
+  const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 사내공유';
+  rTeamSel();rNav();
+  if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);
+  else go('dashboard');
+  progHide();
 }
-// Firebase app_config (저장소 주소·읽기토큰 공유)
-function fbPushGHConfig(){if(!FB.ready||FB.applyingRemote)return;const payload=JSON.stringify({github:{owner:GH.cfg.owner,repo:GH.cfg.repo,branch:GH.cfg.branch,readToken:GH.cfg.readToken},gemini:S.ck||''});GH._lastCfgPush=payload;try{FB.db.ref('app_config').set(payload).catch(e=>{console.error('[FB] config 저장 실패',e&&e.code);});}catch(e){console.warn('fbPushGHConfig failed',e);}}
-function ghRenderStatus(){
-  const el=document.getElementById('ghstatus');if(!el)return;
-  if(!GH.cfg.owner||!GH.cfg.repo){el.textContent='미설정';el.style.color='var(--lbl3)';return;}
-  const read=!!GH.cfg.readToken,write=!!GH.writeToken;
-  el.textContent=`${GH.cfg.owner}/${GH.cfg.repo} · ${read?'읽기 ✓':'읽기 ✗'} · ${write?'쓰기 ✓':'쓰기 —'}`;
-  el.style.color=read?'var(--gn)':'var(--am)';
+
+// ----- 실시간 구독 -----
+function fb2SubReport(rm){
+  const ref=FB2.db.ref('report/'+rm);
+  const h=ref.on('value',function(snap){
+    const data=snap.val();if(!data)return;
+    if(shEditing()){FB2._pendReport=data;FB2._pendReportRm=rm;return;}
+    fb2ApplyReport(rm,data);
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
 }
-async function ghSyncNow(){
-  if(!ghConfigured(false)){toast('저장소 소유자·이름과 읽기 토큰을 입력하세요');return;}
-  if(GH.syncing){toast('이미 동기화 중입니다');return;}
-  toast('GitHub에서 받아오는 중...');
-  await ghSyncDown();
-  ghRenderStatus();
-  toast('동기화 완료');
+function fb2SubPlans(){
+  const ref=FB2.db.ref('plans');
+  const PF=['processingPlan','vacantProcessingPlan','commercialProcessingPlan'];
+  const h=ref.on('value',function(snap){
+    const v=snap.val()||{};
+    for(const sid in v){
+      if(!S.cmt[sid])S.cmt[sid]={};
+      const fields=v[sid]||{};
+      PF.forEach(function(f){
+        const leaf=fields[f];
+        if(leaf&&typeof leaf==='object'){const out={};for(const ek in leaf){out[fbDecKey(ek)]=leaf[ek];}S.cmt[sid][f]=out;}
+      });
+    }
+    lsSave();
+    fb2Rerender();
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
 }
+function fb2SubAnalysis(){
+  const ref=FB2.db.ref('analysis');
+  const h=ref.on('value',function(snap){
+    const v=snap.val()||{};
+    for(const sid in v){if(typeof v[sid]==='string')S.ana[sid]=v[sid];}
+    lsSave();
+    if(S.view==='site'&&S.sid&&typeof v[S.sid]==='string'&&!shEditing()){const el=document.getElementById('ait-'+S.sid);if(el)el.innerHTML=v[S.sid];}
+    fb2Rerender();
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
+}
+function fb2Rerender(){
+  if(shEditing()){FB2._pendRerender=true;return;}
+  FB2._pendRerender=false;
+  try{rTeamSel();rNav();}catch(e){}
+  if(S.view==='dashboard')rDash();
+  else if(S.view==='site'&&S.sid)rSite(S.sid);
+}
+function fb2BindFocusout(){
+  if(FB2._foBound)return;FB2._foBound=true;
+  document.addEventListener('focusout',function(e){
+    const t=e.target;
+    if(t&&t.classList&&t.classList.contains('plan-ta')){try{commitPlanSave(t);}catch(_){}}
+    setTimeout(function(){
+      if(shEditing())return;
+      if(FB2._pendReport){const d=FB2._pendReport,rm=FB2._pendReportRm;FB2._pendReport=null;FB2._pendReportRm=null;fb2ApplyReport(rm,d);}
+      if(FB2._pendRerender){FB2._pendRerender=false;fb2Rerender();}
+    },180);
+  });
+}
+
+// ----- 리프 쓰기 (처리계획 / 분석의견 / meta) -----
+function fb2PlanWrite(sid,field,key,value){
+  if(!FB2.ready||!FB2.db)return;
+  if(field!=='processingPlan'&&field!=='vacantProcessingPlan'&&field!=='commercialProcessingPlan')return;
+  if(key==null||key==='')return;
+  try{
+    const v=String(value==null?'':value).slice(0,5000);
+    FB2.db.ref('plans/'+sid+'/'+field+'/'+fbEncKey(key)).set(v);
+    fb2TouchMeta(sid);
+  }catch(e){console.warn('[FB2] planWrite',e);}
+}
+function fb2AnaWrite(sid,txt){
+  if(!FB2.ready||!FB2.db)return;
+  try{FB2.db.ref('analysis/'+sid).set(String(txt==null?'':txt).slice(0,20000));fb2TouchMeta(sid);}
+  catch(e){console.warn('[FB2] anaWrite',e);}
+}
+function fb2TouchMeta(sid){
+  if(!FB2.ready||!FB2.db)return;
+  try{FB2.db.ref('meta/'+sid).set({updatedAt:Date.now(),updatedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120)});}catch(e){}
+}
+
+// ----- 게시 (편집자 전용): 현재 집계를 report/{기준월}/{현장}에 set -----
+async function fb2Publish(){
+  if(!fb2IsEditor()){toast('등록 권한이 없습니다(편집자 전용)');return;}
+  if(!FB2.ready||!FB2.db){toast('Firebase 미연결');return;}
+  if(!Object.keys(S.def||{}).length){toast('등록할 데이터가 없습니다 · 먼저 리스트를 업로드하세요');return;}
+  const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
+  try{
+    toast('등록 준비 중…');
+    window.__CAPTURE={};
+    rDash();await fb2Wait(120);
+    for(const s2 of dashSites()){rSite(s2.id);await fb2Wait(90);}
+    const cap=window.__CAPTURE||{};window.__CAPTURE=null;
+    const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
+    const rm=S.rm;
+    const upd={};
+    upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
+    dashSites().forEach(function(s2){
+      const r=calc(S.def[s2.id]||[],s2,rm);
+      const kpi=Object.assign({},r,{ul:(r.ul||[]).slice(0,300),lul:[]});
+      const cm=S.cmt[s2.id]||{},vac={};
+      if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
+      if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
+      upd['report/'+rm+'/'+s2.id]={kpi:kpi,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
+    });
+    upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
+    await FB2.db.ref().update(upd);
+    await fb2SeedPlansAnalysis(); // 편집자가 입력해 둔 처리계획·분석의견을 리프로 시드(실시간 협업 시작점)
+    fb2RefreshMeta();
+    toast('등록 완료 · '+rm+' · 현장 '+dashSites().length+'개');
+  }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
+  finally{if(btn)btn.disabled=false;}
+}
+async function fb2SeedPlansAnalysis(){
+  const upd={};
+  const PF=['processingPlan','vacantProcessingPlan','commercialProcessingPlan'];
+  for(const sid in S.cmt){
+    const cm=S.cmt[sid]||{};
+    PF.forEach(function(f){
+      const leaf=cm[f];
+      if(leaf&&typeof leaf==='object'){for(const k in leaf){const v=leaf[k];if(typeof v==='string'&&v.length)upd['plans/'+sid+'/'+f+'/'+fbEncKey(k)]=v.slice(0,5000);}}
+    });
+  }
+  for(const sid in S.ana){const v=S.ana[sid];if(typeof v==='string'&&v.length)upd['analysis/'+sid]=v.slice(0,20000);}
+  if(Object.keys(upd).length)await FB2.db.ref().update(upd);
+}
+function fb2RefreshMeta(){
+  const rmEl=document.getElementById('fbPubRm');if(rmEl)rmEl.textContent=S.rm;
+  const ac=document.getElementById('fbAcct');if(ac&&FB2.user)ac.textContent=(FB2.user.email||'')+' · '+fb2RoleLabel(FB2.role);
+  if(FB2.ready&&FB2.db){
+    FB2.db.ref('report/'+S.rm+'/_meta').once('value').then(function(s){
+      const m=s.val(),el=document.getElementById('fbPubAt');
+      if(el)el.textContent=(m&&m.publishedAt)?(new Date(m.publishedAt).toLocaleString('ko-KR')+(m.publishedBy?(' · '+m.publishedBy):'')):'미등록';
+    }).catch(function(){});
+  }
+}
+window.fb2Publish=fb2Publish;
 
 // 처리계획 textarea — 디바운스 자동저장 + ✓ 인디케이터
 const _planTimers=new WeakMap();
@@ -1812,6 +2008,7 @@ function commitPlanSave(el){
   }
   lsSave();
   fbPushCommentsDebounced();
+  if(type==='cmt'&&key)fb2PlanWrite(sid,field,key,value); // 사내 Firebase 실시간 리프 쓰기
   showSaved(el);
 }
 function showSaved(el){
@@ -1830,10 +2027,11 @@ function showSaved(el){
 const DASH_EXCLUDE_REGIONS=[PERM_REGION];
 function dashSites(){return teamSites().filter(s=>!DASH_EXCLUDE_REGIONS.includes(s.region));}
 function calc(items,site,rm){
-  // 메모이즈: 같은 (현장·기준월·데이터버전·건수·필터서명) 조합이면 캐시 반환.
-  // 필터서명을 포함해, 결과 건수가 같은 서로 다른 부분집합이 캐시를 공유하는 충돌을 방지한다.
-  const _fsig=JSON.stringify(S.flt||{});
-  const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(items?items.length:0)+'|'+_fsig;
+  if(window.__SNAP__){const _e=window.__SNAP__.st&&window.__SNAP__.st[site.id];if(_e)return _e;} // 스냅샷: 임베드 집계 반환
+  // 메모이즈: (현장·기준월·데이터버전·건수) 조합으로 캐시. 건수를 내용 프록시로 사용한다.
+  // ★불변식: S.def 변경 시 반드시 bumpDef()로 defVer를 올려 캐시를 무효화할 것.
+  //   bumpDef() 없이 S.def[sid]를 in-place 수정하면 길이가 같은 다른 데이터가 stale 캐시를 맞는다.
+  const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(items?items.length:0);
   const _hit=_calcCache.get(_ck);if(_hit)return _hit;
   const _res=_calcImpl(items,site,rm);
   _calcCache.set(_ck,_res);
@@ -1893,19 +2091,23 @@ function _calcImpl(items,site,rm){
   const lulPrev=ulPrev.filter(i=>daysBetween(i.receiptDate,pmEnd)>=30);
   const topLtPrev={};lulPrev.forEach(i=>{const k=i.trade||'기타';topLtPrev[k]=(topLtPrev[k]||0)+1;});
 
-  // 공가세대
-  const vac=ref.filter(i=>isVac(i,site));
-  const vacUl=vac.filter(i=>!isDone(i,rmEnd));
-  const vT=vac.length,vRes=vac.length-vacUl.length,vUnr=vacUl.length,vRate=vT>0?vRes/vT*100:0,vTop=topT(vacUl,5);
-  const vLt=vacUl.filter(i=>daysBetween(i.receiptDate,rmEnd)>=30).length;
-  const _vUnitSet=new Set(vac.map(i=>`${i.building||''}-${i.unit||''}`));_vUnitSet.delete('-');const vUnits=_vUnitSet.size;
-  const vacPrev=prev.filter(i=>isVac(i,site));
-  const vUlPrev=vacPrev.filter(i=>!isDone(i,pmEnd));
-  const vTopPrev={};vUlPrev.forEach(i=>{const k=i.trade||'기타';vTopPrev[k]=(vTopPrev[k]||0)+1;});
+  // 공가 — 세대/상가 개별 집계
+  const _buildVac=(set,pset)=>{
+    const ul=set.filter(i=>!isDone(i,rmEnd));
+    const T=set.length,Unr=ul.length,Res=T-Unr,Rate=T>0?Res/T*100:0,Top=topT(ul,5);
+    const Lt=ul.filter(i=>daysBetween(i.receiptDate,rmEnd)>=30).length;
+    const _us=new Set(set.map(i=>`${i.building||''}-${i.unit||''}`));_us.delete('-');const Units=_us.size;
+    const TopPrev={};pset.filter(i=>!isDone(i,pmEnd)).forEach(i=>{const k=i.trade||'기타';TopPrev[k]=(TopPrev[k]||0)+1;});
+    return{T,Res,Unr,Rate,Lt,Units,Top,TopPrev};
+  };
+  const vacU=_buildVac(ref.filter(i=>isVacUnit(i)),prev.filter(i=>isVacUnit(i)));     // 공가세대
+  const vacS=_buildVac(ref.filter(i=>isVacStore(i,site)),prev.filter(i=>isVacStore(i,site))); // 공가상가
+  // 레거시 평면 필드(vT 등)는 세대 기준으로 매핑(AI 프롬프트·기타 호환)
+  const vT=vacU.T,vRes=vacU.Res,vUnr=vacU.Unr,vRate=vacU.Rate,vLt=vacU.Lt,vUnits=vacU.Units,vTop=vacU.Top,vTopPrev=vacU.TopPrev;
 
   const rpb={};ul.forEach(i=>{rpb[i.repairParty||'미지정']=(rpb[i.repairParty||'미지정']||0)+1;});
   const dtb={};ul.forEach(i=>{dtb[i.defectType||'미분류']=(dtb[i.defectType||'미분류']||0)+1;});
-  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,rpb,dtb,rm,pm,rmEnd,pmEnd,ul,lul};
+  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,rm,pm,rmEnd,pmEnd,ul,lul};
 }
 function topT(items,n){
   const m={};
@@ -1920,63 +2122,59 @@ function topT(items,n){
   return top;
 }
 function calcW(items,rmEnd,pmEnd){
-  // items는 금월말까지 접수된 건들(ref). 각 주차 토요일 cutoff 기준으로 역산.
-  // 성능: 주차마다 전체 items를 재순회하던 O(주차×건수)를 정렬+포인터로 줄임.
+  // 각 주차 토요일 cutoff 기준 역산. 지연구간(d0/d30/d60) 분해를 diff-array로 O(N·logW+W)에 계산.
+  // (구버전 O(주차×건수) 재순회 대체 — 동일 입력 BIT-EXACT 일치 검증 완료)
   const DAY=86400000;
-  // 등장하는 cutoff(주차 토요일)들 — 오름차순
   const cutSet={};
   for(const i of items){const k=wk(i.receiptDate);if(k)cutSet[k]=true;}
-  const cuts=Object.keys(cutSet).sort();
-  if(!cuts.length)return[];
-  // 접수일 오름차순으로 한 번만 정렬해 재사용
+  const cuts=Object.keys(cutSet).sort();const W=cuts.length;if(!W)return[];
+  const cutMs=cuts.map(c=>new Date(c).getTime());
   const byReceipt=items.filter(i=>i.receiptDate).slice().sort((a,b)=>a.receiptDate<b.receiptDate?-1:a.receiptDate>b.receiptDate?1:0);
-  // 완료(처리)건만 완료일 오름차순 정렬 — 누적 처리수 계산용
   const doneSorted=byReceipt.filter(i=>i.status==='처리'&&i.completionDate).map(i=>i.completionDate).sort();
-  const cutMs=c=>new Date(c).getTime();
-  let rPtr=0,resPtr=0;
-  const w=[];
-  for(const cutoff of cuts){
-    // 누적 접수 r: 접수일<=cutoff (정렬되어 있으므로 포인터 전진)
-    while(rPtr<byReceipt.length&&byReceipt[rPtr].receiptDate<=cutoff)rPtr++;
-    const r=rPtr;
-    // 누적 처리 res: 완료일<=cutoff
-    while(resPtr<doneSorted.length&&doneSorted[resPtr]<=cutoff)resPtr++;
-    const res=resPtr;
-    const u=r-res;
-    // 미처리 지연구간 분해 — 미처리 후보(접수<=cutoff & (미완료 또는 완료일>cutoff))만 대상.
-    // 경과일 dd = cutoff - 접수일. 경계가 cutoff에 따라 이동하므로 prefix-sum 불가 → 후보만 순회.
-    let d0=0,d30=0,d60=0;
-    const cMs=cutMs(cutoff);
-    for(let k=0;k<r;k++){
-      const it=byReceipt[k];
-      const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;
-      if(done)continue;
-      const dd=Math.max(0,Math.round((cMs-new Date(it.receiptDate).getTime())/DAY));
-      if(dd<30)d0++;else if(dd<60)d30++;else d60++;
-    }
-    w.push({week:cutoff,r,res,u,d0,d30,d60});
+  // 누적 접수 r / 누적 처리 res — 포인터(문자열 비교, 구버전과 동일)
+  const rArr=new Array(W),resArr=new Array(W);
+  {let rPtr=0,resPtr=0;for(let c=0;c<W;c++){const cutoff=cuts[c];
+    while(rPtr<byReceipt.length&&byReceipt[rPtr].receiptDate<=cutoff)rPtr++;rArr[c]=rPtr;
+    while(resPtr<doneSorted.length&&doneSorted[resPtr]<=cutoff)resPtr++;resArr[c]=resPtr;}}
+  // cutMs 오름차순 → lowerBound(첫 c: cutMs[c]>=v)
+  const lb=v=>{let lo=0,hi=W;while(lo<hi){const mid=(lo+hi)>>1;if(cutMs[mid]>=v)hi=mid;else lo=mid+1;}return lo;};
+  const D0=new Float64Array(W+1),D30=new Float64Array(W+1),D60=new Float64Array(W+1);
+  const addRange=(D,a,b)=>{if(a<b){D[a]++;D[b]--;}};
+  for(const it of byReceipt){
+    const rcMs=new Date(it.receiptDate).getTime();
+    const enter=lb(rcMs);                                   // 접수<=cutoff 최초 주차
+    const done=it.status==='처리'&&it.completionDate;
+    const end=Math.min(done?lb(new Date(it.completionDate).getTime()):W,W); // 완료<=cutoff 이후 제외
+    if(enter>=end)continue;
+    const i30=lb(rcMs+30*DAY),i60=lb(rcMs+60*DAY);          // 경과 30·60일 도달 주차
+    addRange(D0,enter,Math.min(i30,end));
+    addRange(D30,Math.max(i30,enter),Math.min(i60,end));
+    addRange(D60,Math.max(i60,enter),end);
   }
-  const arr=w;
-  // M월 Nw주 — 같은 달 내 누적 주 번호 (월 바뀌면 1로 리셋). 대시보드 주차 차트와 동일 규칙.
+  let a0=0,a30=0,a60=0;const arr=[];
+  for(let c=0;c<W;c++){a0+=D0[c];a30+=D30[c];a60+=D60[c];
+    arr.push({week:cuts[c],r:rArr[c],res:resArr[c],u:rArr[c]-resArr[c],d0:a0,d30:a30,d60:a60});}
+  // M월 Nw주 — 같은 달 내 누적 주 번호 (월 바뀌면 1로 리셋).
   let lastM=null,wInM=0;
   arr.forEach(r=>{const m=Number(r.week.slice(5,7));if(m===lastM)wInM++;else{wInM=1;lastM=m;}r.m=m;r.wn=wInM;r.label=`${m}월 ${wInM}주`;});
   return arr;
 }
 function calcMo(items){const m={};items.forEach(i=>{const k=(i.receiptDate||'').slice(0,7);if(!k)return;if(!m[k])m[k]={month:k,r:0,res:0,u:0};m[k].r++;const done=i.status==='처리'&&i.completionDate;if(done)m[k].res++;else m[k].u++;});return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month));}
-function wk(d){if(!d)return null;const dt=new Date(d);if(isNaN(dt))return null;const satOff=(6-dt.getDay()+7)%7;const sat=new Date(dt.getTime()+satOff*86400000);return `${sat.getFullYear()}-${String(sat.getMonth()+1).padStart(2,'0')}-${String(sat.getDate()).padStart(2,'0')}`;}
+function wk(d){if(!d)return null;const m=String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(!m)return null;const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(isNaN(dt))return null;const satOff=(6-dt.getUTCDay()+7)%7;const sat=new Date(dt.getTime()+satOff*86400000);return `${sat.getUTCFullYear()}-${String(sat.getUTCMonth()+1).padStart(2,'0')}-${String(sat.getUTCDate()).padStart(2,'0')}`;}
 // 상가 표기 감지 — 동/호 오타 변형 포함 ([강산살상성싱]+[가거기], 뒤에 숫자 허용)
 function isStoreLabel(s){return /[강산살상성싱][가거기]/.test(String(s||''));}
 // 공가세대/공가상가 하자건 판정 (둘 중 하나라도 해당하면 공가 건)
 // - 공가세대 하자: (모든 현장) 하자구분='세대' AND 입주상태∈{미분양,미납}
 // - 공가상가 하자: (공가상가 포함 현장만) 하자구분='공용' AND (동 또는 호에 상가 표기)
+function isVacUnit(item){return item.defectClass==='세대'&&(item.saleStatus==='미분양'||item.saleStatus==='미납');}
+function isVacStore(item,site){return !!site?.hasCommercial&&item.defectClass==='공용'&&(isStoreLabel(item.building)||isStoreLabel(item.unit));}
 function isVac(item,site){
-  const vacUnit=item.defectClass==='세대'&&(item.saleStatus==='미분양'||item.saleStatus==='미납');
-  const vacStore=site?.hasCommercial&&item.defectClass==='공용'&&(isStoreLabel(item.building)||isStoreLabel(item.unit));
-  return vacUnit||vacStore;
+  return isVacUnit(item)||isVacStore(item,site);
 }
 
 // NAVIGATION
 function go(view,sid){
+  if(document.body.classList.contains('snap')&&view!=='dashboard'&&view!=='site'){view='dashboard';sid=null;} // 정적 스냅샷 파일: 대시보드·현장만 허용(Firebase 뷰어는 현장관리·설정 접근 가능)
   S.view=view;S.sid=sid||null;
   if(window.innerWidth<=768)closeMobileSB();
   document.querySelectorAll('.view').forEach(v=>{v.classList.remove('act');});
@@ -1992,6 +2190,7 @@ function go(view,sid){
   if(view==='site'&&sid)rSite(sid);
   if(view==='manage')rManage();
   if(view==='settings')loadSettings();
+  const _c=document.getElementById('content');if(_c)_c.scrollTop=0;
 }
 function rNav(){
   const c=document.getElementById('rgnav');
@@ -2051,7 +2250,6 @@ function reorderRegion(dragR,targetR,after){
   lsSave();fbPushTeams();rNav();
 }
 function tRg(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('closed',!el.classList.contains('open'));}
-function rSel(){const sel=document.getElementById('ulsite');if(!sel)return;sel.innerHTML='<option value="">현장 선택</option>'+curRegions().flatMap(r=>teamSites().filter(s=>s.region===r).map(s=>`<option value="${s.id}">[${s.region}] ${s.name}</option>`)).join('');}
 function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!teamSites().length){el.innerHTML='<p style="font-size:12px;color:var(--lbl3);padding:22px 0;text-align:center">등록된 현장이 없습니다.<br><b>+ 현장 추가</b> 또는 <b>리스트 업로드</b>로 등록하세요.</p>';return;}
   const sorted=sortSM(teamSites());
   const regs=curRegions();
@@ -2063,7 +2261,7 @@ function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!t
     <th class="cc" style="width:8%" data-sort="units" onclick="sortSMT('units')">세대수 <span class="sortmk"></span></th>
     <th class="cc" style="width:7%" data-sort="buildings" onclick="sortSMT('buildings')">동수 <span class="sortmk"></span></th>
     <th class="cc" style="width:8%" data-sort="commercialUnits" onclick="sortSMT('commercialUnits')">상가수 <span class="sortmk"></span></th>
-    <th class="cc" style="width:12%" data-sort="completionDate" onclick="sortSMT('completionDate')">준공일 <span class="sortmk"></span></th>
+    <th class="cc" style="width:8%" data-sort="completionDate" onclick="sortSMT('completionDate')">준공일 <span class="sortmk"></span></th>
     <th class="cc" style="width:8%">공가세대</th>
     <th class="cc" style="width:8%">공가상가</th>
     <th class="cc" style="width:10%">업데이트일</th>
@@ -2074,7 +2272,7 @@ function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!t
     <td><input class="mg-inp n" type="number" value="${s.units||0}" oninput="updSite('${jss(s.id)}','units',this.value)"></td>
     <td><input class="mg-inp n" type="number" value="${s.buildings||0}" oninput="updSite('${jss(s.id)}','buildings',this.value)"></td>
     <td><input class="mg-inp n" type="number" value="${s.commercialUnits||0}" oninput="updSite('${jss(s.id)}','commercialUnits',this.value)"></td>
-    <td><input class="mg-inp" type="date" max="9999-12-31" value="${esc(s.completionDate||'')}" oninput="clampYear(this)" onchange="updSite('${jss(s.id)}','completionDate',this.value)"></td>
+    <td class="cc"><input class="mg-inp" type="date" max="9999-12-31" style="width:130px;max-width:100%;text-align:center;display:inline-block" value="${esc(s.completionDate||'')}" oninput="clampYear(this)" onchange="updSite('${jss(s.id)}','completionDate',this.value)"></td>
     <td class="cc"><label class="sw"><input type="checkbox" ${s.showVacant!==false?'checked':''} onchange="updSite('${jss(s.id)}','showVacant',this.checked)"><span class="sw-t"></span></label></td>
     <td class="cc"><label class="sw"><input type="checkbox" ${s.hasCommercial?'checked':''} onchange="updSite('${jss(s.id)}','hasCommercial',this.checked)"><span class="sw-t"></span></label></td>
     <td class="cc" style="font-size:11.5px;color:var(--lbl2);white-space:nowrap">${fmtUp(s.lastUploadedAt)}</td>
@@ -2221,6 +2419,7 @@ function rDash(){
 // 카드당 2줄: 1줄=핵심수치(전월대비), 2줄=진단·조치. 제목은 후보별 자동.
 function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
   const el=document.getElementById('d-insight');if(!el)return;
+  if(window.__SNAP__){el.innerHTML=window.__SNAP__.insightsHTML||'';return;} // 스냅샷: 임베드 인사이트
   if(!all.length){el.innerHTML='<div class="ic warn"><div class="ic-t"><div class="ic-ttl">데이터 없음</div><div class="ic-sub">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</div></div></div>';return;}
   const C={gn:'#1A7A3C',rd:'#C0392B'};
   const ICON={up:'M3 17l6-6 4 4 7-7M21 10V4h-6',clock:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2',wrench:'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 11-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z',user:'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',layers:'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',box:'M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z',home:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'};
@@ -2275,7 +2474,8 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
       sub:`30일+ <b>${fmt(tLt)}건</b> (전월대비 <b style="color:${deltaLt<=0?C.gn:C.rd}">${sgn(deltaLt)}</b>) · 미처리 대비 <b>${ltr.toFixed(1)}%</b> · 집중 <b>${sn(z.s)}</b> ${fmt(z.v)}건<br>${deltaLt>0?`<b style="color:${C.rd}">증가 ${fmt(deltaLt)}건</b> — 60일+ 별도 추적, 180일+ 동결건 분리 후 30일대 가속`:`<b style="color:${C.gn}">전월대비 ${fmt(Math.abs(deltaLt))}건 감소</b> — 개선 흐름 유지, <b>${sn(z.s)}</b> 집중 관리`}`});})();
   // 3. 품의(대기) 적체 — 건수·평균지연 + 쏠린 공종/유형/업체
   (()=>{const pi=_unrAll.filter(i=>i.repairParty==='품의(대기)');const n=pi.length;if(n<30)return;
-    const avgDelay=pi.reduce((a,i)=>a+(i.delayDays||0),0)/Math.max(n,1);
+    const _dB=(a,b)=>Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));
+    const avgDelay=pi.reduce((a,i)=>a+(i.receiptDate?_dB(i.receiptDate,_rmEndI):0),0)/Math.max(n,1); // 역산(기준일-접수일)으로 통일 — 대시보드 전체와 동일 기준
     const tT=agg(pi,'trade')[0],dT=agg(pi,'defectType')[0],cT=agg(pi,i=>i.contractor||'미지정')[0];
     // 품의 적체가 쏠린 현장
     const piSites=all.map(({s})=>({s,v:siteUnr[s.id].filter(i=>i.repairParty==='품의(대기)').length})).filter(r=>r.v>=10).sort((a,b)=>b.v-a.v);
@@ -2293,7 +2493,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     cand.push({score,cls:share>=40?'bad':'warn',icon:ICON.wrench,ttl:'특정 하자유형 집중',
       sub:`<b>${top[0]}</b> 미처리 <b>${fmt(top[1])}건</b> (미처리의 <b>${share.toFixed(0)}%</b>) · 주 공종 <b>${tradeOf?.[0]||'-'}</b>${dtSiteLbl}<br>해당 하자유형 표준 보수절차 정비·자재 선조달로 일괄 해소 검토`});})();
   // 5. 공가세대 다수 — 공가 미처리 건수, 현장 z-score
-  (()=>{const isVac=i=>(i.unitType||'').includes('공가')||(i.saleStatus||'').includes('미분양')||(i.saleStatus||'').includes('미입주');
+  (()=>{const isVac=i=>isVacUnit(i); // 공식 공가세대 정의로 일원화 — 카드/탭과 동일(하자구분='세대' AND 입주상태∈{미분양,미납})
     const rows=all.map(({s})=>({s,v:siteUnr[s.id].filter(isVac).length})).filter(r=>r.v>0);if(!rows.length)return;
     const tot=rows.reduce((a,r)=>a+r.v,0);const z=zTop(rows);if(tot<30||!z)return;
     const tradeOf=agg(all.flatMap(({s})=>siteUnr[s.id].filter(isVac)),'trade')[0];
@@ -2457,6 +2657,8 @@ function rChartsImpl(all){
     if(isPartial)break;
     satTS+=7*86400000;prevCutoff=cutoff;
   }
+  if(window.__CAPTURE)window.__CAPTURE.wks=wks.map(x=>({...x}));
+  if(window.__SNAP__&&window.__SNAP__.wks)for(let _i=0;_i<wks.length;_i++){if(window.__SNAP__.wks[_i])wks[_i]=window.__SNAP__.wks[_i];}
   const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
   // y1(누계 접수·처리 라인) 동적 범위 — 데이터 최저~최고에 바짝 맞춰 변화를 극대화
   const _y1vals=[...cumR,...cumRes].filter(v=>v>0);
@@ -2477,8 +2679,8 @@ function rChartsImpl(all){
   const moDs=[
     {type:'bar',label:'장기미처리',data:wks.map(x=>x.lt),backgroundColor:'#E89C9A',hoverBackgroundColor:'#C76F6D',pointStyle:'rectRounded',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#7a3434',font:{size:11,weight:600},formatter:v=>v.toLocaleString()}},
     {type:'bar',label:'일반하자',data:wks.map(x=>x.u-x.lt),backgroundColor:'#B3C7DD',hoverBackgroundColor:'#7E9BBC',pointStyle:'rectRounded',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{labels:{value:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#1F2B4C',font:{size:11,weight:600},formatter:v=>v.toLocaleString()},total:{display:ctx=>{if(window.innerWidth<=768)return false;const t=wks[ctx.dataIndex]?.u||0;return t>0;},opacity:_op,anchor:'end',align:'end',offset:2,clip:false,color:dlInk(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:(v,ctx)=>{const t=wks[ctx.dataIndex].u;return t>0?t.toLocaleString():'';}}}}},
-    {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#3E71D2',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'top',offset:6,clip:false,color:dlBlue(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}},
-    {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#F0B144',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'bottom',offset:6,clip:false,color:dlAmber(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}}
+    {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#3E71D2',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:ctx=>ctx.dataIndex===0?'right':'left',offset:8,clip:false,color:dlBlue(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}},
+    {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,pointHoverBorderWidth:3,pointHoverBackgroundColor:'#F0B144',pointHoverBorderColor:'#fff',hoverBorderWidth:3.5,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:ctx=>ctx.dataIndex===0?'right':'left',offset:8,clip:false,color:dlAmber(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,textShadowColor:'rgba(0,0,0,.2)',textShadowBlur:3,formatter:v=>v.toLocaleString()}}
   ];
   const _atSize=(typeof window!=='undefined'&&window.innerWidth<=768)?10:13;const _tkSize=(typeof window!=='undefined'&&window.innerWidth<=768)?9:12;
   S.charts['mo']=new Chart(document.getElementById('c-mo'),{data:{labels:wks.map(x=>`${x.m}월\n${x.w}주`),datasets:moDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:MO_DUR,easing:'easeOutQuart',onComplete(ac){if(!ac.initial||ac.chart.$dlShown)return;ac.chart.$dlShown=true;const ch=ac.chart,t0=performance.now(),fd=350;const tick=()=>{if(!ch||ch.$destroyed||!ch.ctx)return;try{const p=Math.min(1,(performance.now()-t0)/fd);ch.$la=p*p*(3-2*p);ch.update('none');if(p<1)requestAnimationFrame(tick);}catch(e){console.warn('label fade tick aborted',e);}};requestAnimationFrame(tick);}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,position:'aboveAll',yAlign:'top',caretPadding:6,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{label:ctx=>`${ctx.dataset.label}: ${(ctx.parsed.y??ctx.parsed??0).toLocaleString()}건`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:chartInk(),callback:function(v){return this.getLabelForValue(v).split('\n');}}},y:{beginAtZero:true,position:'left',grace:'25%',grid:{color:chartGrid()},ticks:{font:{size:_tkSize}},title:{display:true,text:'미처리(건)',font:{size:_atSize,weight:600},color:chartAxisTitle()}},y1:{beginAtZero:false,min:_y1min,max:_y1max,position:'right',grid:{display:false},ticks:{font:{size:_tkSize}},title:{display:true,text:'접수·처리(건)',font:{size:_atSize,weight:600},color:chartAxisTitle()}}}}});
@@ -2509,6 +2711,8 @@ function rChartsImpl(all){
   dC('mx');const mxEl=document.getElementById('c-mx');if(mxEl){
     const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
     const am={};dashSites().flatMap(s=>S.def[s.id]||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
+    if(window.__CAPTURE)window.__CAPTURE.am={...am};
+    if(window.__SNAP__&&window.__SNAP__.am)Object.assign(am,window.__SNAP__.am);
     const ownEtc=am['기타']||0;delete am['기타'];
     const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
     const tmData=top11.map(([t,c])=>({t,c}));if(etcTotal>0)tmData.push({t:'기타',c:etcTotal});
@@ -2531,12 +2735,78 @@ function rChartsImpl(all){
 function shortName(name){if(!name)return'-';const stripped=String(name).replace(/힐스테이트/g,'').trim();const core=stripped||String(name).trim();return core.slice(0,2)||name;}
 
 // SITE PANEL
+// 공가 미처리 상위 공종 표 (세대/상가 공용)
+function vacRowsHTML(sid,stat,cm,planField){
+  const unr=stat.Unr,topPrev=stat.TopPrev||{};
+  const rowFn=(t,i)=>{
+    const plan=cm[planField]?.[t.t]||'';
+    const ratio=unr>0?(t.c/unr*100).toFixed(1):'0.0';
+    const pc=topPrev[t.t]||0,dN=t.c-pc;
+    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const coCell=t.co||'-';
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-${t.t}" data-plan-id="cmt|${sid}|${planField}|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
+  };
+  const etcFn=(etc)=>{
+    if(!etc)return'';
+    const pc=(etc.keys||[]).reduce((a,k)=>a+(topPrev[k]||0),0),dN=etc.c-pc;
+    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const ratio=unr>0?(etc.c/unr*100).toFixed(1):'0.0';
+    const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
+    const planE=cm[planField]?.['기타']||'';
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" oninput="autoResize(this);schedulePlanSave(this)">${esc(planE)}</textarea></td></tr>`;
+  };
+  const totFn=(tot,prevTot)=>{
+    if(!tot)return'';
+    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
+    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
+  };
+  const base=(stat.Top||[]).filter(t=>!t.isT&&!t.isO);
+  const etc=(stat.Top||[]).find(t=>t.isO),tot=(stat.Top||[]).find(t=>t.isT);
+  const prevTot=Object.values(topPrev).reduce((a,b)=>a+b,0);
+  return(base.map((t,i)=>rowFn(t,i)).join('')+etcFn(etc)+totFn(tot,prevTot))
+    ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
+}
+// 공가 탭 패널 내용 (kind: 'sedae' | 'sangga')
+function vacPaneHTML(sid,site,cm,stat,kind){
+  const sangga=kind==='sangga';
+  const vl=sangga?'공가상가':'공가세대';
+  const statusField=sangga?'commercialStatus':'vacantStatus';
+  const planField=sangga?'commercialProcessingPlan':'vacantProcessingPlan';
+  const _u=sangga?'호실':'세대';
+  const sv=cm[statusField]||{};
+  const _mbN=parseInt(sv['미분양'],10),_mkN=parseInt(sv['미키불출'],10);
+  const _mb=isNaN(_mbN)?0:_mbN,_mk=isNaN(_mkN)?0:_mkN,_vu=_mb+_mk;
+  const _hasV=(sv['미분양']!=null&&sv['미분양']!=='')||(sv['미키불출']!=null&&sv['미키불출']!=='');
+  const _vrate=stat.Rate.toFixed(1);
+  const _perRecv=stat.Units>0?(stat.T/stat.Units).toFixed(1):'-';
+  const _perUnr=stat.Units>0?(stat.Unr/stat.Units).toFixed(1):'-';
+  const vRows=vacRowsHTML(sid,stat,cm,planField);
+  return`<div class="as">
+    <div class="card"><div class="sh"><div class="st" style="font-size:16px;color:var(--ct)">${vl} 현황</div></div><div class="vrow">
+        <div class="vseg vseg-edit" role="button" tabindex="0" onclick="openVacEdit('${sid}','${vl}','${statusField}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVacEdit('${sid}','${vl}','${statusField}');}">
+          <div class="vseg-l">${vl}</div>
+          <div class="vseg-v">${_hasV?_vu.toLocaleString():'<span class="vph">입력</span>'}<span class="vseg-u">${_u}</span></div>
+          <div class="vseg-m">미분양 ${_mb.toLocaleString()} · 미키불출 ${_mk.toLocaleString()}</div>
+        </div>
+        <div class="vseg"><div class="vseg-l">전체 접수</div><div class="vseg-v">${stat.T.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">${_u}당 ${_perRecv}건</div></div>
+        <div class="vseg"><div class="vseg-l">처리 완료</div><div class="vseg-v">${stat.Res.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">처리율 ${_vrate}%</div></div>
+        <div class="vseg"><div class="vseg-l">미처리</div><div class="vseg-v" style="color:var(--am)">${stat.Unr.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">${_u}당 ${_perUnr}건</div></div>
+        <div class="vseg"><div class="vseg-l">장기미처리</div><div class="vseg-v" style="color:var(--rd)">${stat.Lt.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">미처리의 ${stat.Unr>0?(stat.Lt/stat.Unr*100).toFixed(1):'0.0'}%</div></div>
+      </div></div>
+    <div class="card"><div class="sh"><div class="st" style="font-size:16px;color:var(--ct)">${vl} 미처리 상위 5개 공종 처리 현황</div></div><table class="dt" style="table-layout:fixed" id="vtop-${kind}-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${vRows}</tbody></table></div>
+  </div>`;
+}
 function rSite(sid){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
   const allItems=S.def[sid]||[],filtered=allItems;
-  const st=calc(filtered,site,S.rm),cm=S.cmt[sid]||{processingPlan:{},vacantProcessingPlan:{},teamLeaderComment:''},ai=S.ana[sid]||'',vl=site.hasCommercial?'공가상가':'공가세대';
-  const showVac=site.showVacant!==false;
-  if(!showVac&&S.tab==='vacant')S.tab='overview';
+  const st=calc(filtered,site,S.rm),cm=S.cmt[sid]||{processingPlan:{},vacantProcessingPlan:{},teamLeaderComment:''},ai=S.ana[sid]||'';
+  const showSedae=site.showVacant!==false;         // 공가세대 탭
+  const showSangga=!!site.hasCommercial;           // 공가상가 탭 (독립)
+  if(S.tab==='vacant'&&!showSedae)S.tab='overview';
+  if(S.tab==='commercial'&&!showSangga)S.tab='overview';
   S.lastSt=st;
 
   // 장기미처리 비율 현황 — 전월/금월 가로 누적 바 (탭 상단)
@@ -2605,38 +2875,6 @@ function rSite(sid){
   const trRows=(trBase.map((t,i)=>trRowFn(t,i,cm.processingPlan,'pp')).join('')
     +trEtcFn(trEtc,st.topLtPrev)+trTotFn(trTot,prevTrTot))
     ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">장기미처리 없음</td></tr>';
-  // 공가세대 미처리 상위 — 동일 구조
-  const vRowFn=(t,i)=>{
-    const plan=cm.vacantProcessingPlan?.[t.t]||'';
-    const ratio=st.vUnr>0?(t.c/st.vUnr*100).toFixed(1):'0.0';
-    const pc=st.vTopPrev?.[t.t]||0,dN=t.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    const coCell=t.co||'-';
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-vp-${t.t}" data-plan-id="cmt|${sid}|vacantProcessingPlan|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" oninput="autoResize(this);schedulePlanSave(this)">${esc(plan)}</textarea></td></tr>`;
-  };
-  const vEtcFn=(etc)=>{
-    if(!etc)return'';
-    const pc=(etc.keys||[]).reduce((a,k)=>a+(st.vTopPrev?.[k]||0),0),dN=etc.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    const ratio=st.vUnr>0?(etc.c/st.vUnr*100).toFixed(1):'0.0';
-    const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
-    const planVEtc=cm.vacantProcessingPlan?.['기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-vp-기타" data-plan-id="cmt|${sid}|vacantProcessingPlan|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" oninput="autoResize(this);schedulePlanSave(this)">${esc(planVEtc)}</textarea></td></tr>`;
-  };
-  const vTotFn=(tot,prevTot)=>{
-    if(!tot)return'';
-    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
-  };
-  const vBase=st.vTop.filter(t=>!t.isT&&!t.isO);
-  const vEtc=st.vTop.find(t=>t.isO),vTot=st.vTop.find(t=>t.isT);
-  const prevVTot=Object.values(st.vTopPrev||{}).reduce((a,b)=>a+b,0);
-  const vRows=(vBase.map((t,i)=>vRowFn(t,i)).join('')
-    +vEtcFn(vEtc)+vTotFn(vTot,prevVTot))
-    ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">미처리 없음</td></tr>';
   // ── 상세 현황 (월별/주차별) — 기존 .dt 디자인, 연도 피커로 필터 ──
   const _nf=n=>(n||0).toLocaleString();
   // 증감 셀: +증가(빨강) / −감소(초록) / 0 / 첫행 —
@@ -2722,7 +2960,8 @@ function rSite(sid){
 <div class="tnav">
   <button class="tnav-i ${S.tab==='overview'?'act':''}" data-tab="overview" onclick="setTab('overview')">📊 종합</button>
   <button class="tnav-i ${S.tab==='trade'?'act':''}" data-tab="trade" onclick="setTab('trade')">⚠️ 장기미처리</button>
-  ${showVac?`<button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" onclick="setTab('vacant')">🏢 ${vl}</button>`:''}
+  ${showSedae?`<button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" onclick="setTab('vacant')">🏠 공가세대</button>`:''}
+  ${showSangga?`<button class="tnav-i ${S.tab==='commercial'?'act':''}" data-tab="commercial" onclick="setTab('commercial')">🏢 공가상가</button>`:''}
   <button class="tnav-i ${S.tab==='timeline'?'act':''}" data-tab="timeline" onclick="setTab('timeline')">📈 상세 현황</button>
 </div>
 
@@ -2745,31 +2984,8 @@ function rSite(sid){
   </div>
 </div>
 
-<div class="tpane ${S.tab==='vacant'?'act':''}" data-tab="vacant">
-  <div class="as">
-    <div class="card"><div class="sh"><div class="st" style="font-size:16px;color:var(--ct)">${vl} 현황</div></div>${(()=>{
-      const _mbN=parseInt(cm.vacantStatus?.['미분양'],10),_mkN=parseInt(cm.vacantStatus?.['미키불출'],10);
-      const _mb=isNaN(_mbN)?0:_mbN,_mk=isNaN(_mkN)?0:_mkN,_vu=_mb+_mk;
-      const _hasV=(cm.vacantStatus?.['미분양']!=null&&cm.vacantStatus?.['미분양']!=='')||(cm.vacantStatus?.['미키불출']!=null&&cm.vacantStatus?.['미키불출']!=='');
-      const _vrate=st.vRate.toFixed(1);
-      const _u=site.hasCommercial?'호실':'세대';
-      const _perRecv=st.vUnits>0?(st.vT/st.vUnits).toFixed(1):'-';
-      const _perUnr=st.vUnits>0?(st.vUnr/st.vUnits).toFixed(1):'-';
-      return`<div class="vrow">
-        <div class="vseg vseg-edit" role="button" tabindex="0" onclick="openVacEdit('${sid}','${esc(vl)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVacEdit('${sid}','${esc(vl)}');}">
-          <div class="vseg-l">${vl}</div>
-          <div class="vseg-v">${_hasV?_vu.toLocaleString():'<span class="vph">입력</span>'}<span class="vseg-u">${_u}</span></div>
-          <div class="vseg-m">미분양 ${_mb.toLocaleString()} · 미키불출 ${_mk.toLocaleString()}</div>
-        </div>
-        <div class="vseg"><div class="vseg-l">전체 접수</div><div class="vseg-v">${st.vT.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">${_u}당 ${_perRecv}건</div></div>
-        <div class="vseg"><div class="vseg-l">처리 완료</div><div class="vseg-v">${st.vRes.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">처리율 ${_vrate}%</div></div>
-        <div class="vseg"><div class="vseg-l">미처리</div><div class="vseg-v" style="color:var(--am)">${st.vUnr.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">${_u}당 ${_perUnr}건</div></div>
-        <div class="vseg"><div class="vseg-l">장기미처리</div><div class="vseg-v" style="color:var(--rd)">${st.vLt.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">미처리의 ${st.vUnr>0?(st.vLt/st.vUnr*100).toFixed(1):'0.0'}%</div></div>
-      </div>`;
-    })()}</div>
-    <div class="card"><div class="sh"><div class="st" style="font-size:16px;color:var(--ct)">${vl} 미처리 상위 5개 공종 처리 현황</div></div><table class="dt" style="table-layout:fixed" id="vtop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${vRows}</tbody></table></div>
-  </div>
-</div>
+${showSedae?`<div class="tpane ${S.tab==='vacant'?'act':''}" data-tab="vacant">${vacPaneHTML(sid,site,cm,st.vacU,'sedae')}</div>`:''}
+${showSangga?`<div class="tpane ${S.tab==='commercial'?'act':''}" data-tab="commercial">${vacPaneHTML(sid,site,cm,st.vacS,'sangga')}</div>`:''}
 
 <div class="tpane ${S.tab==='timeline'?'act':''}" data-tab="timeline">
   <div class="as">
@@ -2811,6 +3027,8 @@ function buildSiteTrend(sid,st){
     wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt});
     if(isPartial)break;satTS+=7*86400000;prevCutoff=cutoff;
   }
+  if(window.__CAPTURE){(window.__CAPTURE.siteWks=window.__CAPTURE.siteWks||{})[sid]=wks.map(x=>({...x}));}
+  if(window.__SNAP__&&window.__SNAP__.siteWks&&window.__SNAP__.siteWks[sid]){const _sw=window.__SNAP__.siteWks[sid];for(let _i=0;_i<wks.length;_i++){if(_sw[_i])wks[_i]=_sw[_i];}}
   const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
   const _y1vals=[...cumR,...cumRes].filter(v=>v>0);let _y1min=0,_y1max;
   if(_y1vals.length){const lo=Math.min(..._y1vals),hi=Math.max(..._y1vals),r=niceFitRange(lo,hi);_y1min=r.min;_y1max=r.max;}
@@ -2820,8 +3038,8 @@ function buildSiteTrend(sid,st){
   const moDs=[
     {type:'bar',label:'장기미처리',data:wks.map(x=>x.lt),backgroundColor:'#E89C9A',hoverBackgroundColor:'#C76F6D',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#7a3434',font:{size:11,weight:600},formatter:v=>v.toLocaleString()}},
     {type:'bar',label:'일반하자',data:wks.map(x=>x.u-x.lt),backgroundColor:'#B3C7DD',hoverBackgroundColor:'#7E9BBC',stack:'u',borderRadius:0,borderSkipped:false,yAxisID:'y',order:3,animations:_barAnim,datalabels:{labels:{value:{display:ctx=>window.innerWidth>768&&ctx.dataset.data[ctx.dataIndex]>0,opacity:_op,anchor:'center',align:'center',color:'#1F2B4C',font:{size:11,weight:600},formatter:v=>v.toLocaleString()},total:{display:ctx=>{if(window.innerWidth<=768)return false;const t=wks[ctx.dataIndex]?.u||0;return t>0;},opacity:_op,anchor:'end',align:'end',offset:2,clip:false,color:dlInk(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:(v,ctx)=>{const t=wks[ctx.dataIndex].u;return t>0?t.toLocaleString():'';}}}}},
-    {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'top',offset:6,clip:false,color:dlBlue(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:v=>v.toLocaleString()}},
-    {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:'bottom',offset:6,clip:false,color:dlAmber(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:v=>v.toLocaleString()}}
+    {type:'line',label:'전체 접수',data:cumR,borderColor:'#3E71D2',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#3E71D2',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:1,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:ctx=>ctx.dataIndex===0?'right':'left',offset:8,clip:false,color:dlBlue(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:v=>v.toLocaleString()}},
+    {type:'line',label:'처리 완료',data:cumRes,borderColor:'#F0B144',backgroundColor:'#fff',pointBackgroundColor:'#fff',pointBorderColor:'#F0B144',pointBorderWidth:2,tension:.4,pointRadius:4,pointHoverRadius:8,borderWidth:2.5,fill:false,yAxisID:'y1',order:0,animations:_lineAnim,datalabels:{display:ctx=>window.innerWidth>768&&(ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1),opacity:_op,anchor:'center',align:ctx=>ctx.dataIndex===0?'right':'left',offset:8,clip:false,color:dlAmber(),font:{size:11,weight:700},textStrokeColor:dlStroke(),textStrokeWidth:4,formatter:v=>v.toLocaleString()}}
   ];
   const _atSize=(typeof window!=='undefined'&&window.innerWidth<=768)?10:13;const _tkSize=(typeof window!=='undefined'&&window.innerWidth<=768)?9:12;
   S.charts['mo-'+sid]=new Chart(moEl,{data:{labels:wks.map(x=>`${x.m}월\n${x.w}주`),datasets:moDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:MO_DUR,easing:'easeOutQuart',onComplete(ac){if(!ac.initial||ac.chart.$dlShown)return;ac.chart.$dlShown=true;const ch=ac.chart,t0=performance.now(),fd=350;const tick=()=>{if(!ch||ch.$destroyed||!ch.ctx)return;try{const p=Math.min(1,(performance.now()-t0)/fd);ch.$la=p*p*(3-2*p);ch.update('none');if(p<1)requestAnimationFrame(tick);}catch(e){}};requestAnimationFrame(tick);}},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{label:ctx=>`${ctx.dataset.label}: ${(ctx.parsed.y??ctx.parsed??0).toLocaleString()}건`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:chartInk(),callback:function(v){return this.getLabelForValue(v).split('\n');}}},y:{beginAtZero:true,position:'left',grace:'25%',grid:{color:chartGrid()},ticks:{font:{size:_tkSize}},title:{display:true,text:'미처리(건)',font:{size:_atSize,weight:600},color:chartAxisTitle()}},y1:{beginAtZero:false,min:_y1min,max:_y1max,position:'right',grid:{display:false},ticks:{font:{size:_tkSize}},title:{display:true,text:'접수·처리(건)',font:{size:_atSize,weight:600},color:chartAxisTitle()}}}}});
@@ -2844,6 +3062,8 @@ function buildSiteTradeDonut(sid){
   if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
   const am={};(S.def[sid]||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
+  if(window.__CAPTURE){(window.__CAPTURE.siteAm=window.__CAPTURE.siteAm||{})[sid]={...am};}
+  if(window.__SNAP__&&window.__SNAP__.siteAm&&window.__SNAP__.siteAm[sid]){for(const _k in am)delete am[_k];Object.assign(am,window.__SNAP__.siteAm[sid]);}
   const ownEtc=am['기타']||0;delete am['기타'];
   const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
   const tmData=top11.map(([t,c])=>({t,c}));if(etcTotal>0)tmData.push({t:'기타',c:etcTotal});
@@ -2853,7 +3073,7 @@ function buildSiteTradeDonut(sid){
   const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${d.t}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
 }
 function renderTabCharts(sid,st){
-  if(!st){const site=S.sites.find(s=>s.id===sid);if(!site)return;st=calc(applyFlt(S.def[sid]||[],S.flt),site,S.rm);}
+  if(!st){const site=S.sites.find(s=>s.id===sid);if(!site)return;st=calc(S.def[sid]||[],site,S.rm);}
   // overview charts — 대시보드와 동일한 구성(추이 복합차트 / 전월대비 실적현황 / 공종 미처리 도넛), 데이터는 해당 현장
   dC('mo-'+sid);dC('mx-'+sid);
   buildSiteTrend(sid,st);
@@ -2863,11 +3083,10 @@ function renderTabCharts(sid,st){
 
 // SAVE
 // 호환용 — 이제 textarea는 schedulePlanSave를 통해 자동저장. 외부에서 직접 호출하는 경우만 남김.
-function savePlan(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].processingPlan)S.cmt[sid].processingPlan={};S.cmt[sid].processingPlan[t]=v;lsSave();fbPushComments();}
-function saveVP(sid,t,v){if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].vacantProcessingPlan)S.cmt[sid].vacantProcessingPlan={};S.cmt[sid].vacantProcessingPlan[t]=v;lsSave();fbPushComments();}
-function openVacEdit(sid,vl){
-  const cur=S.cmt[sid]?.vacantStatus||{};
-  const _site=S.sites.find(s=>s.id===sid);const _u=_site?.hasCommercial?'호실':'세대';
+function openVacEdit(sid,vl,statusField){
+  statusField=statusField||'vacantStatus';
+  const cur=S.cmt[sid]?.[statusField]||{};
+  const _u=statusField==='commercialStatus'?'호실':'세대';
   const mb=cur['미분양']??'',mk=cur['미키불출']??'';
   const ov=document.createElement('div');ov.className='vmodal-ov';
   ov.innerHTML=`<div class="vmodal">
@@ -2884,9 +3103,9 @@ function openVacEdit(sid,vl){
   $mb.addEventListener('input',upd);$mk.addEventListener('input',upd);upd();
   const close=()=>{if(ov.parentNode)ov.parentNode.removeChild(ov);};
   const commit=()=>{
-    if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid].vacantStatus)S.cmt[sid].vacantStatus={};
-    S.cmt[sid].vacantStatus['미분양']=$mb.value.trim();
-    S.cmt[sid].vacantStatus['미키불출']=$mk.value.trim();
+    if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid][statusField])S.cmt[sid][statusField]={};
+    S.cmt[sid][statusField]['미분양']=$mb.value.trim();
+    S.cmt[sid][statusField]['미키불출']=$mk.value.trim();
     lsSave();fbPushComments();close();if(S.sid===sid)rSite(sid);
   };
   ov.querySelector('#vm-save').addEventListener('click',commit);
@@ -2928,7 +3147,7 @@ _scored.sort((a,b)=>(b.kw-a.kw)||(b.dd-a.dd));
 const _sample=_scored.slice(0,40).map(x=>`- [${x.t}|${x.dd}일${x.kw?'|★':''}] ${x.c.slice(0,60)}`).join('\n');
 const _contentBlock=_sample?`\n[미처리건 접수내용 샘플 — ★는 누수·민원·품의·자재·피해보상 등 주요 키워드 포함건]\n${_sample}`:`\n[미처리건 접수내용] 제공된 접수내용 데이터 없음 (해당 분석 항목 생략)`;
 const p=`현대건설 ${(curTeam()?curTeam().name:'H서비스센터')} ${site.name} 현장의 하자처리 현황을 분석하여 한국어 개조식으로 작성하세요. 기준월 ${S.rm}, 전월 대비 변화를 중심으로 분석할 것.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건(전월${st.prev.res}), 미처리 ${st.unr}건(전월${st.prev.unr}), 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(전월${st.prev.lt}건, 미처리의 ${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종(미처리)] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[하자유형(미처리)] ${Object.entries(st.dtb).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,c])=>`${t}:${c}건`).join(', ')}\n[공가세대] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건${_contentBlock}\n\n위 데이터를 분석해 시스템 지침의 형식·내용 규칙에 따라 작성하세요. 단순 수치 나열이 아닌 해석·원인·대응을 담되, 데이터가 없거나 특이사항이 없는 항목은 생략하고 중요한 것만 최대 5개 소제목으로 쓸 것.`;
-try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(S.ck)}`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fbPushAna();if(el)el.innerHTML=txt;toast('AI 분석 완료');}
+try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(S.ck)}`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fbPushAna();fb2AnaWrite(sid,txt);if(el)el.innerHTML=txt;toast('AI 분석 완료');}
 catch(e){if(el)el.innerHTML=`<p style="color:var(--rd)">(AI 오류: ${e.message})</p>`;}}
 
 // 대시보드 주요 이슈 — 규칙기반 선정 결과(수치·맥락)를 현장패널과 동일한 작성규칙(개조식·논리적 인과·담당자 권한 내 조치)으로 AI 재작성. 3슬롯·2줄 형식 유지.
@@ -2973,17 +3192,6 @@ async function runDashAI(){
 }
 
 // UPLOAD
-// 한국어 컬럼명 → 내부 필드 매핑 (사용자가 이미 매핑된 엑셀을 그대로 올려도 인식)
-const COL_MAP={
-  '접수번호':'receiptNo','동':'building','호':'unit',
-  '공종':'trade','하자유형':'defectType','접수내용':'defectMemo','하자구분':'defectClass',
-  '접수일':'receiptDate',
-  '처리확인일':'completionDate','처리완료일':'completionDate','업체처리일':'completionDate',
-  '처리상태':'status','지연일':'delayDays','지연일수':'delayDays',
-  '보수주체':'repairParty','시공업체':'contractor','보수업체':'contractor',
-  '입주상태':'saleStatus','분양상태':'saleStatus','세대구분':'unitType','입점여부':'moveIn',
-  '현장':'siteName','현장코드':'siteCode','지역팀':'team','대공종':'majorTrade'
-};
 const COLS_REQ=['접수일','처리상태','공종'];
 // 헤더 행 자동 감지 — 첫 20행 안에서 '접수일' 또는 '공종' 같은 필수 헤더가 있는 행 찾기
 function findHeaderRow(rows){const sniff=['접수일','공종','처리상태','보수주체'];for(let i=0;i<Math.min(rows.length,20);i++){const r=rows[i]||[];const cells=r.map(c=>String(c||'').trim());let hits=0;for(const s of sniff)if(cells.includes(s))hits++;if(hits>=2)return i;}return 0;}
@@ -2991,8 +3199,8 @@ function findHeaderRow(rows){const sniff=['접수일','공종','처리상태','�
 function rowsToObjs(aoa){const hi=findHeaderRow(aoa),hs=(aoa[hi]||[]).map(c=>String(c||'').trim());const objs=[];for(let i=hi+1;i<aoa.length;i++){const row=aoa[i]||[];if(row.every(c=>c===''||c==null))continue;const o={};hs.forEach((h,j)=>{if(h)o[h]=row[j]!=null?row[j]:'';});objs.push(o);}return{rows:objs,headers:hs.filter(Boolean)};}
 function setStep(n){document.querySelectorAll('#upstepper .step').forEach((s,i)=>{const j=i+1;s.classList.toggle('done',j<n);s.classList.toggle('act',j===n);if(j<n)s.querySelector('.step-c').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 8l3 3 7-7"/></svg>';else s.querySelector('.step-c').textContent=String(j);});}
 function onFile(f){
+  if(manageLocked()){toast('보기 전용입니다 · 관리자만 업로드할 수 있습니다');return;}
   if(!f){console.warn('[upload] onFile called without file');return;}
-  console.log('[upload] file selected:',f.name,f.size,'bytes');
   const e=f.name.split('.').pop().toLowerCase();
   if(e==='csv')rCSV(f);
   else if(['xlsx','xls'].includes(e))rXLSX(f);
@@ -3000,19 +3208,39 @@ function onFile(f){
   // 같은 파일 재선택 시 onchange가 안 뜨는 브라우저 동작 대응
   const fi=document.getElementById('fi');if(fi)fi.value='';
 }
+// CSV 인코딩 자동 판별 — UTF-8 우선, 실패 시 CP949(EUC-KR). 한국 엑셀 'CSV로 저장'은 보통 CP949.
+function csvDecode(buf){
+  const u=new Uint8Array(buf);
+  if(u.length>=3&&u[0]===0xEF&&u[1]===0xBB&&u[2]===0xBF)return new TextDecoder('utf-8').decode(u.subarray(3)); // UTF-8 BOM
+  try{return new TextDecoder('utf-8',{fatal:true}).decode(u);}           // 유효 UTF-8이면 그대로
+  catch(_){try{return new TextDecoder('euc-kr').decode(u);}catch(__){return new TextDecoder('utf-8').decode(u);}} // 아니면 CP949
+}
+// RFC4180 CSV 파서 — 따옴표 내부의 쉼표·줄바꿈·이스케이프("") 처리(단순 split의 컬럼 밀림 방지)
+function csvToAoA(text){
+  text=text.replace(/^\uFEFF/,'');
+  const rows=[];let row=[],fld='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){fld+='"';i++;} else q=false; } else fld+=c; continue; }
+    if(c==='"'){q=true;continue;}
+    if(c===','){row.push(fld);fld='';continue;}
+    if(c==='\n'){row.push(fld);rows.push(row);row=[];fld='';continue;}
+    if(c==='\r')continue;
+    fld+=c;
+  }
+  if(fld.length||row.length){row.push(fld);rows.push(row);}
+  return rows.map(r=>r.map(c=>c.trim())).filter(r=>r.some(c=>c!==''));
+}
 function rCSV(f){
   const r=new FileReader();
   r.onerror=err=>{console.error('[upload] CSV read error',err);toast('CSV 읽기 실패');};
   r.onload=e=>{
     try{
-      const ls=e.target.result.split(/\r?\n/).filter(l=>l.trim());
-      const aoa=ls.map(l=>l.split(',').map(c=>c.trim().replace(/^["']|["']$/g,'')));
+      const aoa=csvToAoA(csvDecode(e.target.result));
       const{rows,headers}=rowsToObjs(aoa);
-      console.log('[upload] CSV parsed:',rows.length,'rows,',headers.length,'cols');
       handleParsed(rows,headers);
     }catch(err){console.error('[upload] CSV parse error',err);toast('CSV 파싱 실패: '+err.message);}
   };
-  r.readAsText(f,'utf-8');
+  r.readAsArrayBuffer(f);
 }
 function rXLSX(f){
   if(typeof XLSX==='undefined'){toast('XLSX 라이브러리 로딩 실패. 새로고침 후 다시 시도하세요');return;}
@@ -3024,7 +3252,6 @@ function rXLSX(f){
       const sh=wb.Sheets[wb.SheetNames[0]];
       const aoa=XLSX.utils.sheet_to_json(sh,{header:1,defval:'',raw:false,dateNF:'yyyy-mm-dd'});
       const{rows,headers}=rowsToObjs(aoa);
-      console.log('[upload] XLSX parsed:',rows.length,'rows,',headers.length,'cols');
       handleParsed(rows,headers);
     }catch(err){
       console.error('[upload] XLSX parse error',err);
@@ -3112,11 +3339,12 @@ async function confirmNewSite(name,idx,total){
   S.sites.push(newSite);
   lsSave();
   fbPushSites();
-  rNav();rSel();rSMgr();
+  rNav();rSMgr();
   if(idx+1<total){openNewSiteWizard(w.unknown,idx+1,w.byName,w.allItems);}
   else{closeMo();await doSaveUL(w.byName,w.allItems);S._wiz=null;}
 }
 async function doSaveUL(byName,allItems){
+  S._importing=true;
   progShow('하자 데이터 저장 중...');
   await nextFrame();
   // 기준월 자동 결정: 모든 receiptDate의 최댓값이 속한 월
@@ -3143,27 +3371,18 @@ async function doSaveUL(byName,allItems){
   progSet(100,'완료');
   await nextFrame();
   progHide();
-  // GitHub 비공개 저장소에 하자 원데이터(모든 컬럼) 업로드 — 쓰기 토큰 보유 시에만
-  let ghMsg='';
-  if(ghConfigured(true)){
-    const rawMap=S._uploadRaw||{};
-    const ghEntries=[];
-    for(const[name,its] of entries){const site=teamSites().find(s=>s.name===name);if(site)ghEntries.push({site,rawRows:rawMap[name]||its});}
-    if(ghEntries.length){const res=await ghUploadSites(ghEntries);ghMsg=res.ok?` · GitHub ${res.count}개 저장`:` · GitHub 실패(${(res.reason||'').toString().slice(0,40)})`;}
-  }
   S._uploadRaw=null;
-  fbPushSites();// 기준월(rm) 변경분 Firebase 동기화 (def는 동기화 안 함)
+  fbPushSites();
   const chip=document.getElementById('mchip');if(chip)chip.textContent=`기준월 ${S.rm}`;
-  toast(`${savedCount.toLocaleString()}건 · ${savedSites}개 현장 저장 완료${ghMsg}`);
+  toast(`${savedCount.toLocaleString()}건 · ${savedSites}개 현장 저장 완료`);
   S.ubuf=null;setStep(3);
   setTimeout(()=>{
-    const pvw=document.getElementById('pvwcard');if(pvw)pvw.classList.add('hidden');
-    document.getElementById('pvwplaceholder')?.classList.remove('hidden');
     setStep(1);
+    S._importing=false;
     if(savedSites===1&&firstSid)go('site',firstSid);else go('dashboard');
   },600);
 }
-function cancelUL(){S.ubuf=null;S._uploadRaw=null;}
+function cancelUL(){S.ubuf=null;S._uploadRaw=null;S._importing=false;}
 function norm(r){
   const pick=(...keys)=>{for(const k of keys){const v=r[k];if(v!=null&&String(v).trim()!=='')return v;}return '';};
   // 처리상태: '처리','미처리','처리완료' 등을 정규화. 처리확인일이 있으면 처리로 간주
@@ -3175,6 +3394,8 @@ function norm(r){
   else if(rawStatus==='미처리')status='미처리';
   else if(comp)status='처리';
   return{
+    // 메모리=슬림 원칙: 원본 전 컬럼은 공유폴더 압축 파일(defects/{id}.json)에만 보존하고
+    // 메모리/IndexedDB에는 표시용 필드만 올린다. (70만 건 규모에서 ...r 전개는 메모리 과부하)
     receiptNo:String(pick('접수번호')||''),
     building:String(pick('동')||''),
     unit:String(pick('호')||''),
@@ -3186,7 +3407,8 @@ function norm(r){
     status,
     delayDays:Number(pick('지연일','지연일수'))||0,
     repairParty:String(pick('보수주체')||''),
-    contractor:String(pick('시공업체','보수업체')||''),
+    contractor:String(pick('시공업체')||''),       // 시공업체 — 더 이상 보수업체와 병합하지 않음
+    repairContractor:String(pick('보수업체')||''), // 보수업체 별도 보존
     saleStatus:String(pick('입주상태','분양상태')||'입주완료'),
     unitType:String(pick('세대구분')||'세대'),
     moveIn:String(pick('입점여부')||'Y'),
@@ -3213,33 +3435,30 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
-  const dot=document.getElementById('fbstatusdot'),txt=document.getElementById('fbstatustxt');
-  if(dot&&txt){
-    if(FB.ready){dot.style.background='#34C759';txt.textContent='Firebase 연결됨 · 실시간 동기화 중';txt.style.color='var(--gn)';}
-    else{dot.style.background='#FF9500';txt.textContent='오프라인 · 로컬에만 저장됨';txt.style.color='var(--am)';}
-  }
-  const go_=document.getElementById('gho');if(go_)go_.value=GH.cfg.owner||'';
-  const gr_=document.getElementById('ghr');if(gr_)gr_.value=GH.cfg.repo||'';
-  const gb_=document.getElementById('ghb');if(gb_)gb_.value=GH.cfg.branch||'main';
-  const grt_=document.getElementById('ghrt');if(grt_)grt_.value=GH.cfg.readToken||'';
-  const gwt_=document.getElementById('ghwt');if(gwt_)gwt_.value=GH.writeToken||'';
-  ghRenderStatus();
+  const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
+  try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
+  try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option ${site?.region===r?'selected':''}>${r}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${site?.name||''}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2"><label class="il" for="mcu">상가수</label><input class="inp" id="mcu" type="number" value="${site?.commercialUnits||''}"></div><div class="ig2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" max="9999-12-31" oninput="clampYear(this)" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''}> 공가상가 포함 현장</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px"><input type="checkbox" id="mcv" ${site?.showVacant!==false?'checked':''}> 공가세대 탭 표시</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" onclick="closeMo()">취소</button><button class="btn bp bsm" onclick="confirmSM('${sid||''}')">저장</button>`;openMo();}
-function confirmSM(eid){const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fbPushSites();rNav();rSel();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
-function delS(sid){if(!confirm('현장을 삭제하시겠습니까?\n(업로드된 하자 데이터도 함께 삭제됩니다)'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];bumpDef();defDelete(sid);lsSave();fbPushSites();fbPushComments();fbPushAna();rNav();rSel();if(S.view==='manage')rManage();else rSMgr();if(S.view==='site'&&S.sid===sid)go('dashboard');toast('현장 삭제됨');}
+function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fbPushSites();rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
+function delS(sid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}if(!confirm('현장을 삭제하시겠습니까?\n(업로드된 하자 데이터도 함께 삭제됩니다)'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];bumpDef();defDelete(sid);fbDeleteDefects(sid);lsSave();fbPushSites();fbPushComments();fbPushAna();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='site'&&S.sid===sid)go('dashboard');toast('현장 삭제됨');}
 
 // MONTH PICKER
 function openMP(){document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" onclick="closeMo()">취소</button><button class="btn bp bsm" onclick="applyM()">적용</button>`;openMo();}
 function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();fbPushSites();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
 
 
+// 인쇄 헤더(팀명·제목·기준일)를 현재 상태로 갱신 — 앱 인쇄버튼/브라우저 Ctrl+P 모두에서 호출
+function updatePrintHeader(){
+  const pteam=document.querySelector('#printhdr .ph-team');if(pteam){const tm=curTeam();pteam.textContent=(tm&&tm.name?tm.name:'H서비스센터')+' 하자처리 현황';}
+  const t=document.getElementById('ph-title');if(t){const sid=S.sid,site=sid?S.sites.find(s=>s.id===sid):null;t.textContent=S.view==='site'&&site?`${site.region} · ${site.name}`:'전체 현황 대시보드';}
+  const d=document.getElementById('ph-date');if(d){const ym=S.rm||new Date().toISOString().slice(0,7),[y,m]=ym.split('-'),lastDay=new Date(Number(y),Number(m),0).getDate();d.textContent=`${y}.${m}.${String(lastDay).padStart(2,'0')}`;}
+}
+if(typeof window!=='undefined')window.addEventListener('beforeprint',updatePrintHeader);
+
 // PRINT — 화면을 그대로 A4 세로로 출력
 function doPrint(){
-  const t=document.getElementById('ph-title'),d=document.getElementById('ph-date');
-  const pteam=document.querySelector('#printhdr .ph-team');if(pteam){const tm=curTeam();pteam.textContent=(tm?tm.name:'H서비스센터')+' 하자처리 현황';}
-  if(t){const sid=S.sid,site=sid?S.sites.find(s=>s.id===sid):null;t.textContent=S.view==='site'&&site?`${site.region} · ${site.name}`:'전체 현황 대시보드';}
-  if(d){const ym=S.rm||new Date().toISOString().slice(0,7),[y,m]=ym.split('-'),lastDay=new Date(Number(y),Number(m),0).getDate();d.textContent=`${y}.${m}.${String(lastDay).padStart(2,'0')}`;}
+  updatePrintHeader();
 
   // 현장패널 인쇄: 4페이지 레이아웃 구성
   const viewSite=document.getElementById('view-site');
@@ -3256,6 +3475,7 @@ function doPrint(){
       const pOverview=sc.querySelector('.tpane[data-tab="overview"]');
       const pTrade   =sc.querySelector('.tpane[data-tab="trade"]');
       const pVacant  =sc.querySelector('.tpane[data-tab="vacant"]');
+      const pCommercial=sc.querySelector('.tpane[data-tab="commercial"]');
       const pTimeline=sc.querySelector('.tpane[data-tab="timeline"]');
 
       // ── 고정 4페이지 레이아웃 구성 ──
@@ -3267,6 +3487,7 @@ function doPrint(){
       const ovAs   =pOverview&&pOverview.querySelector('.as');
       const trAs   =pTrade&&pTrade.querySelector('.as');
       const vacAs  =pVacant&&pVacant.querySelector('.as');
+      const comAs  =pCommercial&&pCommercial.querySelector('.as');
       const tlAs   =pTimeline&&pTimeline.querySelector('.as');
 
       const ovCards =ovAs?[...ovAs.children]:[];
@@ -3274,6 +3495,8 @@ function doPrint(){
       const _printSite=S.sites.find(s=>s.id===S.sid);
       const _printShowVac=!_printSite||_printSite.showVacant!==false;
       const vacCards=(_printShowVac&&vacAs)?[...vacAs.children]:[];
+      const _printShowSangga=!!(_printSite&&_printSite.hasCommercial);
+      const comCards=(_printShowSangga&&comAs)?[...comAs.children]:[];
       const tlCards =tlAs?[...tlAs.children]:[];
 
       // overview: [0]추이차트 [1]전월대비+미처리분포(opsr) [2]종합분석의견
@@ -3287,6 +3510,8 @@ function doPrint(){
       // vacant: [0]공가현황 [1]공가미처리상위5
       const vacStatusCard=vacCards[0]||null;
       const vacTop5Card  =vacCards[1]||null;
+      const comStatusCard=comCards[0]||null;
+      const comTop5Card  =comCards[1]||null;
       // timeline: [0]월별현황 [1]주차별현황
       const monthCard=tlCards[0]||null;
       const weekCard =tlCards[1]||null;
@@ -3297,6 +3522,8 @@ function doPrint(){
       if(top5Card)top5Card.classList.add('sp-top5-card');
       if(vacStatusCard)vacStatusCard.classList.add('sp-vac-card');
       if(vacTop5Card)vacTop5Card.classList.add('sp-vactop5-card');
+      if(comStatusCard)comStatusCard.classList.add('sp-vac-card');
+      if(comTop5Card)comTop5Card.classList.add('sp-vactop5-card');
 
       // 복원용: 각 카드의 원래 부모/위치 기록
       const _orig=[];
@@ -3304,36 +3531,53 @@ function doPrint(){
       _track(chartCard,ovAs);_track(opsrCard,ovAs);_track(analysisCard,ovAs);
       _track(ltrRatioCard,trAs);_track(top5Card,trAs);_track(tradeAllCard,trAs);
       _track(vacStatusCard,vacAs);_track(vacTop5Card,vacAs);
+      _track(comStatusCard,comAs);_track(comTop5Card,comAs);
       _track(monthCard,tlAs);_track(weekCard,tlAs);
 
-      // 인쇄 컨테이너 4개 생성
-      const mkPage=(id,brk)=>{const p=document.createElement('div');p.id=id;p.className='sp-print-page'+(brk?' sp-page-break-before':'');p.dataset.spPrint='1';return p;};
-      const p1=mkPage('_sp_p1',false), p2=mkPage('_sp_p2',true), p3=mkPage('_sp_p3',true), p4=mkPage('_sp_p4',true);
-
-      // 각 페이지 상단에 인쇄 헤더(정상 흐름)를 복제 삽입 → 본문과 겹치지 않고 매 페이지 반복
+      // 인쇄 페이지 동적 구성
+      const mkPage=(id,brk,cls)=>{const p=document.createElement('div');p.id=id;p.className='sp-print-page'+(brk?' sp-page-break-before':'')+(cls?' '+cls:'');p.dataset.spPrint='1';return p;};
       const hdrSrc=document.getElementById('printhdr');
       const mkHdr=()=>{const h=hdrSrc.cloneNode(true);h.removeAttribute('id');h.className='sp-page-hdr';return h;};
-      // KPI 헤더를 1페이지로 이동
       const akpi=sc.querySelector('.akpi');
       _orig.push({card:akpi,parent:sc,next:akpi?akpi.nextSibling:null});
+      const _pages=[];
+      const addPage=p=>{_pages.push(p);return p;};
 
       // 1p: [헤더] KPI 추이차트, 전월대비+미처리분포, 월별 현황
+      const p1=addPage(mkPage('_sp_p1',false));
       p1.appendChild(mkHdr());
       if(akpi)p1.appendChild(akpi);
       [chartCard,opsrCard,monthCard].forEach(c=>{if(c)p1.appendChild(c);});
-      // 2p: [헤더] 장기미처리 비율, 장기미처리 상위5, 공가세대 현황, 공가세대 미처리 상위5
-      p2.appendChild(mkHdr());
-      [ltrRatioCard,top5Card,vacStatusCard,vacTop5Card].forEach(c=>{if(c)p2.appendChild(c);});
-      // 3p: [헤더] 공종별 전체 처리 현황
+      // 장기미처리 페이지: 비율 현황 + 상위5
+      if(ltrRatioCard||top5Card){
+        const pp=addPage(mkPage('_sp_ltr',true,'sp-p2'));
+        pp.appendChild(mkHdr());
+        [ltrRatioCard,top5Card].forEach(c=>{if(c)pp.appendChild(c);});
+      }
+      // 공가세대 페이지: 현황 + 상위5
+      if(vacStatusCard||vacTop5Card){
+        const pp=addPage(mkPage('_sp_sedae',true,'sp-p2'));
+        pp.appendChild(mkHdr());
+        [vacStatusCard,vacTop5Card].forEach(c=>{if(c)pp.appendChild(c);});
+      }
+      // 공가상가 페이지: 현황 + 상위5
+      if(comStatusCard||comTop5Card){
+        const pp=addPage(mkPage('_sp_sangga',true,'sp-p2'));
+        pp.appendChild(mkHdr());
+        [comStatusCard,comTop5Card].forEach(c=>{if(c)pp.appendChild(c);});
+      }
+      // 공종별 전체 처리 현황 페이지
+      const p3=addPage(mkPage('_sp_p3',true));
       p3.appendChild(mkHdr());
       if(tradeAllCard)p3.appendChild(tradeAllCard);
-      // 4p: [헤더] 종합 분석 의견
+      // 종합 분석 의견 페이지
+      const p4=addPage(mkPage('_sp_p4',true));
       p4.appendChild(mkHdr());
       if(analysisCard)p4.appendChild(analysisCard);
 
       // 처리계획 textarea는 인쇄 시 숨겨지므로, 값을 인쇄용 텍스트로 복제 삽입
       const _planNodes=[];
-      [top5Card,vacTop5Card].forEach(card=>{
+      [top5Card,vacTop5Card,comTop5Card].forEach(card=>{
         if(!card)return;
         card.querySelectorAll('textarea.plan-ta').forEach(ta=>{
           const div=document.createElement('div');
@@ -3344,8 +3588,8 @@ function doPrint(){
         });
       });
 
-      // tnav, 원본 빈 탭은 숨기고, 인쇄 페이지를 scontent에 순서대로 추가
-      sc.appendChild(p1);sc.appendChild(p2);sc.appendChild(p3);sc.appendChild(p4);
+      // 인쇄 페이지를 scontent에 순서대로 추가
+      _pages.forEach(p=>sc.appendChild(p));
 
       // 공종별 전체처리현황 NO25 이후 행 숨김
       if(tradeAllCard){
@@ -3365,12 +3609,14 @@ function doPrint(){
         if(top5Card)top5Card.classList.remove('sp-top5-card');
         if(vacStatusCard)vacStatusCard.classList.remove('sp-vac-card');
         if(vacTop5Card)vacTop5Card.classList.remove('sp-vactop5-card');
+        if(comStatusCard)comStatusCard.classList.remove('sp-vac-card');
+        if(comTop5Card)comTop5Card.classList.remove('sp-vactop5-card');
         // 카드 원위치 복원
         _orig.forEach(({card,parent,next})=>{if(card)parent.insertBefore(card,next);});
         // 인쇄용 처리계획 텍스트 노드 제거
         _planNodes.forEach(n=>{if(n&&n.parentNode)n.parentNode.removeChild(n);});
         // 인쇄 페이지 컨테이너 제거
-        [p1,p2,p3,p4].forEach(p=>{if(p&&p.parentNode)p.parentNode.removeChild(p);});
+        _pages.forEach(p=>{if(p&&p.parentNode)p.parentNode.removeChild(p);});
         // trade tbody 행 복원
         if(tradeAllCard){const tb=tradeAllCard.querySelector('[id^="trade-"] tbody');if(tb)[...tb.querySelectorAll('tr')].forEach(tr=>tr.classList.remove('sp-hide-print'));}
       };
@@ -3438,8 +3684,50 @@ function donutPalette(){return ['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2
 function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 
 // INIT
+async function exportSnapshot(){
+  try{
+    if(!Object.keys(S.def||{}).length){toast('데이터가 없습니다');return;}
+    toast('스냅샷 생성 중…');
+    window.__CAPTURE={};
+    rDash();                                   // 대시보드 wks/am 캡처 + #d-insight 렌더
+    await new Promise(r=>setTimeout(r,120));
+    for(const s2 of dashSites()){rSite(s2.id);await new Promise(r=>setTimeout(r,90));} // 현장별 차트 캡처
+    go('dashboard');await new Promise(r=>setTimeout(r,40));
+    const cap=window.__CAPTURE||{}; window.__CAPTURE=null;
+    const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
+    const st={};
+    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:(r.ul||[]).slice(0,300),lul:[]});});
+    const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
+    const json=JSON.stringify(payload).replace(/<\//g,'<\\/');   // 종료태그 차단
+    const keep=window.__SNAP__; window.__SNAP__=null;
+    const docHtml='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    window.__SNAP__=keep;
+    const inject='<scr'+'ipt>window.__SNAP__='+json+';</scr'+'ipt>\n';
+    const html=docHtml.replace('</head>',inject+'</head>');
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+S.rm+'.html';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('스냅샷 저장됨 · '+(html.length/1048576).toFixed(2)+'MB');
+  }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
+}
+window.exportSnapshot=exportSnapshot;
 document.addEventListener('DOMContentLoaded',async()=>{
   applyChartTheme();
+  if(window.__SNAP__){try{
+    const P=window.__SNAP__;
+    S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};S.def={};
+    if(P.rm)S.rm=P.rm;
+    document.body.classList.add('snap');
+    ensureTeams();
+    const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 스냅샷';
+    rTeamSel();rNav();
+    go('dashboard');
+    progHide();
+    return;
+  }catch(e){console.error('[snap] boot failed',e);}}
+  // CDN 라이브러리 로드 실패 감지 — 사내망 차단 시 차트·업로드가 조용히 죽는 것을 사용자에게 알림
+  {const miss=[];if(typeof Chart==='undefined')miss.push('차트');if(typeof XLSX==='undefined')miss.push('엑셀 업로드');if(typeof LZString==='undefined')miss.push('데이터 압축');if(miss.length)setTimeout(()=>{try{toast('일부 기능 사용 불가('+miss.join('·')+') · 네트워크/CDN 차단 여부 확인',6000);}catch(_){}}, 500);}
   const ck=localStorage.getItem('ck'),exTk=localStorage.getItem('exTk');
   if(ck)S.ck=ck;
   // 제외 키워드: localStorage 값이 있으면 (빈 문자열 포함) 그것을 사용, 없으면 기본값 'dummy' 유지
@@ -3450,22 +3738,18 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // 창 크기 변경 시 첫 슬롯 현장명 폰트 재적합
   let _fitT;window.addEventListener('resize',()=>{clearTimeout(_fitT);_fitT=setTimeout(()=>{try{fitSiteName();}catch(e){}},150);});
   // 부팅 순서:
-  // (1) IndexedDB에서 메타(팀·현장·처리계획·분석)·def 로드
+  // (1) IndexedDB에서 메타(팀·현장·처리계획·분석)·def 로드 (로컬 캐시 — 로그인 후 즉시 표시)
   // (2) 팀 모델 보정(없으면 기본 팀 생성, 현장에 teamId 부여)
-  // (3) Firebase 자동 연결 → 원격 데이터로 동기화
-  // 어느 단계가 실패해도 멈추지 않고 대시보드까지 도달하도록 전체를 보호.
+  // (3) Microsoft(@hdec.co.kr) 로그인 게이트 → 인증 후 Firebase 동기화
+  // 어느 단계가 실패해도 멈추지 않고 게이트/대시보드까지 도달하도록 전체를 보호.
   try{await metaLoad();}catch(e){console.error('[boot] metaLoad failed',e);}
   try{await defLoadAll();}catch(e){console.error('[boot] defLoadAll failed',e);}
   ensureTeams();
-  ghLoadLocal();
-  // Firebase 항상 자동 연결 (고정 설정). subscribeFB가 원격 데이터를 받아 로컬과 동기화.
-  // (app_config 수신 시 ghSyncDown 자동 실행 → 저장소에서 하자 원데이터 받아옴)
-  try{connectFB();}catch(e){console.warn('[boot] connectFB failed',e);}
-  // Firebase가 막히거나 늦어도, 로컬 캐시된 GitHub 설정이 있으면 즉시 저장소 동기화 (sha 비교로 멱등)
-  if(ghConfigured(false)){ghSyncDown().catch(e=>console.warn('[boot] ghSyncDown failed',e));}
-  // 기준월 chip 표시 + 사이드바 초기 렌더
+  // 사내 Firebase 인증 게이트 (@hdec.co.kr) → 인증 후 편집자=로컬집계, 뷰어=게시 열람·실시간 협업
+  try{fb2Boot();}catch(e){console.error('[boot] fb2Boot failed',e);try{showGateForm();fbMsg('초기화 오류 · [로컬 데이터로 둘러보기]로 진입하세요');}catch(_){}}
+  // 기준월 chip 표시 + 사이드바 초기 렌더 (게이트 뒤에서 미리 그려둠)
   const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;
-  rTeamSel();rNav();rSel();rSMgr();
+  rTeamSel();rNav();rSMgr();
   go('dashboard');
   // 부팅 중 어느 단계에서 로딩창이 켜졌든, 완료 시 반드시 닫음
   progHide();
