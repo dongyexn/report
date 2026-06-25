@@ -1177,7 +1177,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
       <button onclick="fbDoResend()" style="flex:1;height:40px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:transparent;color:#cdd9ee;font-size:13px;font-weight:600;cursor:pointer">인증메일 재발송</button>
     </div>
     <div id="cvMsg" style="margin-top:16px;font-size:12px;color:#ff8a80;min-height:16px;line-height:1.5;"></div>
-    <div style="margin-top:14px"><a href="javascript:void(0)" onclick="coverSkip()" style="font-size:12px;color:#7e8ba3;text-decoration:underline;cursor:pointer;">로컬 데이터로 둘러보기(오프라인)</a></div>
+    <div style="margin-top:14px"></div>
     </div>
   </div>
 </div>
@@ -1588,7 +1588,6 @@ async function defDelete(sid){try{await dbDel('defects',sid);}catch(e){console.w
 // ===== 화면 가림막(커버) — Firebase 인증 게이트가 사용 =====
 function showCover(){const g=document.getElementById('coverGate');if(g)g.style.display='flex';}
 function hideCover(){const g=document.getElementById('coverGate');if(g)g.style.display='none';}
-function coverSkip(){try{FB2._bypassLocal=true;}catch(e){}hideCover();} // Firebase 없이 로컬 캐시로 진입(오프라인/개발용)
 // 입력 중(텍스트영역/인풋) 여부 — 실시간 동기화가 타이핑을 덮어쓰지 않도록 FB2가 사용
 function shEditing(){const a=document.activeElement;return !!(a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.isContentEditable));}
 
@@ -1623,7 +1622,7 @@ const FB2={
   app:null,auth:null,db:null,
   ready:false,role:null,user:null,
   users:{},_usersBound:false,
-  subs:[],_foBound:false,_bypassLocal:false,
+  subs:[],_foBound:false,
   _pendRerender:false,_pendReport:null,_pendReportRm:null
 };
 window.__FB2=FB2;
@@ -1657,7 +1656,7 @@ function fbAuthErr(e){
 
 // ----- 게이트 동작 (로그인/가입/인증재발송) -----
 async function fbDoLogin(){
-  if(!FB2.auth){fbMsg('Firebase 초기화 실패 — 네트워크/CDN 차단 여부를 확인하세요');return;}
+  if(!FB2.auth){fbMsg('네트워크에 연결할 수 없습니다.');return;}
   const c=fbReadCreds(),email=c.email.trim().toLowerCase();
   if(!fbDomainOk(email)){fbMsg('@hdec.co.kr 계정만 사용할 수 있습니다');return;}
   if((c.pw||'').length<6){fbMsg('비밀번호는 6자 이상이어야 합니다');return;}
@@ -1666,7 +1665,7 @@ async function fbDoLogin(){
   catch(e){fbMsg(fbAuthErr(e));}
 }
 async function fbDoSignup(){
-  if(!FB2.auth){fbMsg('Firebase 초기화 실패');return;}
+  if(!FB2.auth){fbMsg('네트워크에 연결할 수 없습니다.');return;}
   const c=fbReadCreds(),email=c.email.trim().toLowerCase();
   if(!fbDomainOk(email)){fbMsg('@hdec.co.kr 계정만 가입할 수 있습니다');return;}
   if((c.pw||'').length<6){fbMsg('비밀번호는 6자 이상이어야 합니다');return;}
@@ -1697,15 +1696,15 @@ function fb2Init(){
 function fb2Boot(){
   if(!fb2Init()){
     showGateForm();
-    fbMsg('Firebase에 연결할 수 없습니다(사내망/CDN 차단 가능). 네트워크를 확인하거나 [로컬 데이터로 둘러보기]로 진입하세요.');
+    fbMsg('네트워크에 연결할 수 없습니다.');
     return;
   }
   FB2.auth.onAuthStateChanged(fb2OnAuth);
 }
 function fb2OnAuth(user){
   FB2.user=user;
-  if(!user){ if(!FB2._bypassLocal)showGateForm(); return; }
-  if(!fbDomainOk(user.email)){showGateForm();fbMsg('@hdec.co.kr 계정만 접근할 수 있습니다. 로그아웃합니다.');try{FB2.auth.signOut();}catch(_){}return;}
+  if(!user){ showGateForm(); return; }
+  if(!fbDomainOk(user.email)){showGateForm();fbMsg('@hdec.co.kr 계정만 접근할 수 있습니다.');try{FB2.auth.signOut();}catch(_){}return;}
   if(!user.emailVerified){
     showGateForm();
     fbMsg('이메일 인증이 필요합니다. 받은 인증메일의 링크를 클릭한 뒤 [로그인]을 다시 누르세요. (메일이 없으면 [인증메일 재발송])');
@@ -1939,7 +1938,7 @@ function fb2TouchMeta(sid){
 // ----- 게시 (편집자 전용): 현재 집계를 report/{기준월}/{현장}에 set -----
 async function fb2Publish(){
   if(!fb2IsEditor()){toast('등록 권한이 없습니다(편집자 전용)');return;}
-  if(!FB2.ready||!FB2.db){toast('Firebase 미연결');return;}
+  if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다.');return;}
   if(!Object.keys(S.def||{}).length){toast('등록할 데이터가 없습니다 · 먼저 리스트를 업로드하세요');return;}
   const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
   try{
@@ -3257,7 +3256,7 @@ function rXLSX(f){
       console.error('[upload] XLSX parse error',err);
       const msg=String(err.message||err);
       if(/Encrypted|EncryptionInfo|ECMA-376/i.test(msg)){
-        toast('암호로 보호된 엑셀입니다. 엑셀에서 열어 암호 해제 후 다시 저장한 파일을 업로드하세요',5000);
+        toast('암호로 보호된 엑셀입니다.',5000);
       }else{
         toast('Excel 파싱 실패: '+msg);
       }
@@ -3746,7 +3745,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   try{await defLoadAll();}catch(e){console.error('[boot] defLoadAll failed',e);}
   ensureTeams();
   // 사내 Firebase 인증 게이트 (@hdec.co.kr) → 인증 후 편집자=로컬집계, 뷰어=게시 열람·실시간 협업
-  try{fb2Boot();}catch(e){console.error('[boot] fb2Boot failed',e);try{showGateForm();fbMsg('초기화 오류 · [로컬 데이터로 둘러보기]로 진입하세요');}catch(_){}}
+  try{fb2Boot();}catch(e){console.error('[boot] fb2Boot failed',e);try{showGateForm();fbMsg('초기화 오류 · 페이지를 새로고침하세요');}catch(_){}}
   // 기준월 chip 표시 + 사이드바 초기 렌더 (게이트 뒤에서 미리 그려둠)
   const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;
   rTeamSel();rNav();rSMgr();
