@@ -159,15 +159,26 @@ svg{display:block;flex-shrink:0;}
 /* SETTINGS 2-column layout — 좌(현장 관리) 더 넓게 */
 .set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
 .set-col{min-width:0;}
-.fbu-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--sep);}
+.fbu-row{display:flex;align-items:center;gap:11px;padding:9px 6px;border-bottom:1px solid var(--sep);border-radius:9px;transition:background .12s;}
 .fbu-row:last-child{border-bottom:none;}
-.fbu-mail{font-size:13px;color:var(--lbl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.fbu-ctl{flex:0 0 auto;display:flex;align-items:center;gap:6px;}
-.fbu-sel{width:auto;min-width:96px;padding:5px 8px;font-size:12.5px;}
-.fbu-role{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;}
-.fbu-editor{color:var(--b600);background:rgba(37,99,235,.10);}
-.fbu-viewer{color:var(--lbl2);background:var(--sep);}
-.fbu-blocked{color:#c0392b;background:rgba(192,57,43,.10);}
+.fbu-row:hover{background:var(--fill);}
+.fbu-av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.fbu-av svg{width:18px;height:18px;display:block;fill:#fff;}
+.fbu-av.r-editor{background:linear-gradient(135deg,var(--b500),var(--b800));}
+.fbu-av.r-viewer{background:rgba(120,120,128,.2);}
+.fbu-av.r-viewer svg{fill:var(--lbl2);}
+.fbu-av.r-blocked{background:rgba(255,59,48,.16);}
+.fbu-av.r-blocked svg{fill:var(--rd);}
+.fbu-main{min-width:0;flex:1;}
+.fbu-mail{font-size:13px;font-weight:600;color:var(--lbl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fbu-me{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:var(--b700);background:rgba(62,113,210,.12);padding:1px 6px;border-radius:5px;vertical-align:middle;}
+.fbu-ctl{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
+.fbu-lock{font-size:11px;color:var(--lbl3);white-space:nowrap;}
+.fbu-role{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:7px;white-space:nowrap;}
+.fbu-role.r-editor{color:var(--b700);background:rgba(62,113,210,.12);}
+.fbu-role.r-viewer{color:var(--lbl2);background:var(--fill);}
+.fbu-role.r-blocked{color:var(--rd);background:rgba(255,59,48,.1);}
+.fbu-sel{width:auto;min-width:108px;height:34px;padding:0 32px 0 12px;font-size:12.5px;border-radius:var(--rmd);cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;}
 .smtbl{table-layout:fixed;}
 .smtbl th{padding:8px 10px;font-size:11px;}
 .smtbl td{padding:9px 10px;font-size:13px;}
@@ -1155,26 +1166,38 @@ body.viewer #view-manage .tm-add,body.viewer #view-manage .tm-del,body.viewer #v
 body.viewer #view-manage .mg-inp,body.viewer #view-manage .mg-grid input,body.viewer #view-manage .mg-grid select,body.viewer #view-manage .mgtbl input,body.viewer #view-manage .mgtbl select,body.viewer #view-manage .tm-nameinp{pointer-events:none;background:transparent!important;border-color:transparent!important;opacity:.85;}
 body.viewer #view-manage .sw{pointer-events:none;opacity:.6;}
 body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fff;background:#3E71D2;padding:3px 9px;border-radius:99px;letter-spacing:.02em;}
-/* 사이드바 계정 카드 */
-.sb-acct{margin:6px 8px 2px;padding:9px 10px;border-radius:10px;display:flex;align-items:center;gap:9px;cursor:pointer;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);transition:background .14s,border-color .14s;}
-.sb-acct:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);}
-.sb-acct-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6FB0FF,#16357C);}
+/* 사이드바 계정 카드 (라이트 테마) */
+.sb-acct{margin:6px 8px 6px;padding:8px 9px;border-radius:11px;display:flex;align-items:center;gap:9px;cursor:pointer;border:1px solid var(--sep);background:rgba(255,255,255,.55);transition:background .14s,border-color .14s;}
+.sb-acct:hover{background:#fff;border-color:var(--sepo);}
+.sb-acct-av{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--b500),var(--b800));}
+.sb-acct-av svg{width:17px;height:17px;display:block;}
 .sb-acct-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;}
-.sb-acct-name{font-size:12.5px;font-weight:600;color:#e8eef7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
-.sb-acct-mail{font-size:10px;color:rgba(232,238,247,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;}
+.sb-acct-name{font-size:12.5px;font-weight:600;color:var(--lbl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;}
+.sb-acct-mail{font-size:10px;color:var(--lbl2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
 .sb-acct-role{flex:0 0 auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.02em;}
-.sb-acct-role.r-editor{background:rgba(111,176,255,.2);color:#a8cdff;}
-.sb-acct-role.r-viewer{background:rgba(255,255,255,.11);color:rgba(232,238,247,.72);}
-/* 계정 모달 */
-.acct-head{display:flex;align-items:center;gap:12px;}
-.acct-av{flex:0 0 auto;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6FB0FF,#16357C);}
-.acct-mail{font-size:14px;font-weight:600;color:var(--ct);word-break:break-all;}
-.acct-rolebadge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;}
-.acct-rolebadge.r-editor{background:rgba(111,176,255,.18);color:#2563a8;}
-.acct-rolebadge.r-viewer{background:rgba(0,0,0,.06);color:var(--lbl2);}
-.acct-sep{height:1px;background:var(--bd);margin:14px 0;}
-.acct-last{font-size:11px;color:var(--lbl3);margin-top:12px;text-align:center;}
-.acct-signout{color:var(--rd)!important;}
+.sb-acct-role.r-editor{background:rgba(62,113,210,.13);color:var(--b700);}
+.sb-acct-role.r-viewer{background:var(--fill);color:var(--lbl2);}
+/* 계정 모달 — 일관된 디자인 */
+.acct-head{display:flex;align-items:center;gap:13px;}
+.acct-av{flex:0 0 auto;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--b500),var(--b800));}
+.acct-av svg{width:24px;height:24px;display:block;}
+.acct-mail{font-size:15px;font-weight:600;color:var(--lbl);word-break:break-all;line-height:1.3;}
+.acct-rolebadge{display:inline-block;margin-top:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;}
+.acct-rolebadge.r-editor{background:rgba(62,113,210,.12);color:var(--b700);}
+.acct-rolebadge.r-viewer{background:var(--fill);color:var(--lbl2);}
+.acct-sep{height:1px;background:var(--sep);margin:16px 0;}
+.acct-row{display:flex;gap:8px;align-items:center;}
+.acct-row .inp{height:42px;}
+.acct-gap{margin-bottom:8px;}
+.acct-btn{height:42px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px;border-radius:var(--rmd);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:filter .15s,background .15s;white-space:nowrap;}
+.acct-btn-primary{background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;}
+.acct-btn-primary:hover{filter:brightness(1.07);}
+.acct-btn-full{width:100%;}
+.acct-btn-ghost{background:var(--fill);color:var(--lbl);}
+.acct-btn-ghost:hover{filter:brightness(.96);}
+.acct-btn-danger{background:transparent;color:var(--rd);border:1.5px solid rgba(255,59,48,.32);}
+.acct-btn-danger:hover{background:rgba(255,59,48,.06);}
+.acct-last{font-size:11px;color:var(--lbl3);margin-top:14px;text-align:center;}
 #cvBtn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.3);}
 </style>
 </head>
@@ -1234,7 +1257,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
       <span class="nil" style="font-size:13px">설정</span>
     </div>
     <div class="sb-acct" id="sbAcct" data-act="acct.open" title="계정 · 이름/비밀번호 변경" style="display:none">
-      <div class="sb-acct-av" id="sbAcctAv">—</div>
+      <div class="sb-acct-av" id="sbAcctAv"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg></div>
       <div class="sb-acct-info"><div class="sb-acct-name" id="sbAcctName">—</div><div class="sb-acct-mail" id="sbAcctMail">—</div></div>
       <span class="sb-acct-role" id="sbAcctRole"></span>
     </div>
@@ -1900,7 +1923,6 @@ function fb2RenderAcct(){
   if(!u||!FB2.ready){card.style.display='none';return;}
   const email=u.email||'', nick=fb2AcctNick()||'사용자', role=FB2.role||'viewer';
   card.style.display='';
-  document.getElementById('sbAcctAv').textContent=(nick[0]||email[0]||'?').toUpperCase();
   const nm=document.getElementById('sbAcctName');nm.textContent=nick;nm.title=nick;
   const ml=document.getElementById('sbAcctMail');ml.textContent=email;ml.title=email;
   const rb=document.getElementById('sbAcctRole');rb.textContent=fb2RoleLabel(role);
@@ -1913,26 +1935,26 @@ function openAcctModal(){
   document.getElementById('mt').textContent='계정';
   document.getElementById('mbody').innerHTML=`
     <div class="acct-head">
-      <div class="acct-av">${esc((nick[0]||email[0]||'?').toUpperCase())}</div>
+      <div class="acct-av"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg></div>
       <div style="min-width:0;flex:1">
         <div class="acct-mail">${esc(email)}</div>
-        <div style="margin-top:4px"><span class="acct-rolebadge ${role==='editor'?'r-editor':'r-viewer'}">${esc(fb2RoleLabel(role))}</span></div>
+        <span class="acct-rolebadge ${role==='editor'?'r-editor':'r-viewer'}">${esc(fb2RoleLabel(role))}</span>
       </div>
     </div>
     <div class="acct-sep"></div>
     <label class="il" for="acctName">이름 (닉네임)</label>
-    <div style="display:flex;gap:8px;margin-top:4px">
+    <div class="acct-row">
       <input class="inp" id="acctName" maxlength="60" value="${esc(nick)}" placeholder="표시할 이름" style="flex:1">
-      <button class="btn bp bsm" data-act="acct.saveName">저장</button>
+      <button class="acct-btn acct-btn-primary" data-act="acct.saveName">저장</button>
     </div>
     <div class="acct-sep"></div>
     <label class="il">비밀번호 변경</label>
-    <input class="inp" id="acctPwCur" type="password" autocomplete="current-password" placeholder="현재 비밀번호" style="margin-top:4px;margin-bottom:7px">
-    <input class="inp" id="acctPwNew" type="password" autocomplete="new-password" placeholder="새 비밀번호 (6자 이상)" style="margin-bottom:7px">
-    <input class="inp" id="acctPwNew2" type="password" autocomplete="new-password" placeholder="새 비밀번호 확인" style="margin-bottom:9px">
-    <button class="btn bo bsm" data-act="acct.changePw" style="width:100%">비밀번호 변경</button>
+    <input class="inp acct-gap" id="acctPwCur" type="password" autocomplete="current-password" placeholder="현재 비밀번호">
+    <input class="inp acct-gap" id="acctPwNew" type="password" autocomplete="new-password" placeholder="새 비밀번호 (6자 이상)">
+    <input class="inp acct-gap" id="acctPwNew2" type="password" autocomplete="new-password" placeholder="새 비밀번호 확인">
+    <button class="acct-btn acct-btn-primary acct-btn-full" data-act="acct.changePw">비밀번호 변경</button>
     ${last?`<div class="acct-last">마지막 로그인 · ${esc(last)}</div>`:''}`;
-  document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm acct-signout" data-act="acct.signout" style="margin-right:auto">로그아웃</button><button class="btn bp bsm" data-act="modal.close">닫기</button>`;
+  document.getElementById('mf').innerHTML=`<button class="acct-btn acct-btn-danger" data-act="acct.signout" style="margin-right:auto">로그아웃</button><button class="acct-btn acct-btn-ghost" data-act="modal.close">닫기</button>`;
   openMo();
 }
 async function acctSaveName(){
@@ -1983,10 +2005,12 @@ function fb2RenderUsers(){
     const lastEditor=role==='editor'&&editors.length<=1; // 마지막 관리자 보호
     const lockReason=isMe?'본인 계정':(lastEditor?'마지막 관리자':'');
     const opt=function(v,t){return '<option value="'+v+'"'+(role===v?' selected':'')+'>'+t+'</option>';};
+    const rc='r-'+role;
+    const PERSON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg>';
     const sel=(isMe||lastEditor)
-      ? '<span class="fbu-role fbu-'+role+'">'+fb2RoleLabel(role)+'</span><span style="font-size:11px;color:var(--lbl3);margin-left:6px">'+lockReason+'</span>'
+      ? (lockReason?'<span class="fbu-lock">'+lockReason+'</span>':'')+'<span class="fbu-role '+rc+'">'+fb2RoleLabel(role)+'</span>'
       : '<select class="inp fbu-sel" data-act="fb2.role" data-uid="'+esc(uid)+'">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
-    return '<div class="fbu-row"><div class="fbu-mail">'+esc(u.email||uid)+(isMe?' <b style="color:var(--b600)">(나)</b>':'')+'</div><div class="fbu-ctl">'+sel+'</div></div>';
+    return '<div class="fbu-row"><div class="fbu-av '+rc+'">'+PERSON+'</div><div class="fbu-main"><div class="fbu-mail">'+esc(u.email||uid)+(isMe?'<span class="fbu-me">나</span>':'')+'</div></div><div class="fbu-ctl">'+sel+'</div></div>';
   }).join('');
 }
 async function fb2SetRole(uid,role){
