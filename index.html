@@ -1155,6 +1155,26 @@ body.viewer #view-manage .tm-add,body.viewer #view-manage .tm-del,body.viewer #v
 body.viewer #view-manage .mg-inp,body.viewer #view-manage .mg-grid input,body.viewer #view-manage .mg-grid select,body.viewer #view-manage .mgtbl input,body.viewer #view-manage .mgtbl select,body.viewer #view-manage .tm-nameinp{pointer-events:none;background:transparent!important;border-color:transparent!important;opacity:.85;}
 body.viewer #view-manage .sw{pointer-events:none;opacity:.6;}
 body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fff;background:#3E71D2;padding:3px 9px;border-radius:99px;letter-spacing:.02em;}
+/* 사이드바 계정 카드 */
+.sb-acct{margin:6px 8px 2px;padding:9px 10px;border-radius:10px;display:flex;align-items:center;gap:9px;cursor:pointer;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);transition:background .14s,border-color .14s;}
+.sb-acct:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);}
+.sb-acct-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6FB0FF,#16357C);}
+.sb-acct-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;}
+.sb-acct-name{font-size:12.5px;font-weight:600;color:#e8eef7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
+.sb-acct-mail{font-size:10px;color:rgba(232,238,247,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;}
+.sb-acct-role{flex:0 0 auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.02em;}
+.sb-acct-role.r-editor{background:rgba(111,176,255,.2);color:#a8cdff;}
+.sb-acct-role.r-viewer{background:rgba(255,255,255,.11);color:rgba(232,238,247,.72);}
+/* 계정 모달 */
+.acct-head{display:flex;align-items:center;gap:12px;}
+.acct-av{flex:0 0 auto;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6FB0FF,#16357C);}
+.acct-mail{font-size:14px;font-weight:600;color:var(--ct);word-break:break-all;}
+.acct-rolebadge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.acct-rolebadge.r-editor{background:rgba(111,176,255,.18);color:#2563a8;}
+.acct-rolebadge.r-viewer{background:rgba(0,0,0,.06);color:var(--lbl2);}
+.acct-sep{height:1px;background:var(--bd);margin:14px 0;}
+.acct-last{font-size:11px;color:var(--lbl3);margin-top:12px;text-align:center;}
+.acct-signout{color:var(--rd)!important;}
 #cvBtn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.3);}
 </style>
 </head>
@@ -1212,6 +1232,11 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
     <div class="nvi act" data-view="settings" data-tip="설정" data-act="nav.go">
       <div class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
       <span class="nil" style="font-size:13px">설정</span>
+    </div>
+    <div class="sb-acct" id="sbAcct" data-act="acct.open" title="계정 · 이름/비밀번호 변경" style="display:none">
+      <div class="sb-acct-av" id="sbAcctAv">—</div>
+      <div class="sb-acct-info"><div class="sb-acct-name" id="sbAcctName">—</div><div class="sb-acct-mail" id="sbAcctMail">—</div></div>
+      <span class="sb-acct-role" id="sbAcctRole"></span>
     </div>
     </div>
   </div>
@@ -1818,7 +1843,7 @@ function fb2Boot(){
 }
 function fb2OnAuth(user){
   FB2.user=user;
-  if(!user){ showGateForm(); return; }
+  if(!user){ FB2.ready=false; try{fb2RenderAcct();}catch(_){} showGateForm(); return; }
   if(!fbDomainOk(user.email)){showGateForm();fbMsg('@hdec.co.kr 계정만 접근할 수 있습니다.');try{FB2.auth.signOut();}catch(_){}return;}
   if(!user.emailVerified){
     showGateForm();
@@ -1844,6 +1869,7 @@ async function fb2ResolveRole(user){
     try{await ref.child('lastSeen').set(Date.now());}catch(e){}
     if(rec.email!==email){try{await ref.child('email').set(email);}catch(e){}}
   }
+  FB2.userRec=rec;
   const r=rec&&rec.role;
   return (r==='editor'||r==='viewer'||r==='blocked')?r:'viewer';
 }
@@ -1865,6 +1891,84 @@ function fb2SubUsers(){
   FB2.subs.push(function(){ref.off('value',h);});
 }
 function fb2RoleLabel(r){return r==='editor'?'관리자':(r==='blocked'?'차단':'사용자');}
+
+// ===== 계정 카드(사이드바 하단) + 계정 모달(이름/비밀번호 변경·로그아웃) =====
+function fb2AcctNick(){const u=FB2.user;if(!u)return'';const email=u.email||'';return String(u.displayName||(FB2.userRec&&FB2.userRec.name)||email.split('@')[0]||'').trim();}
+function fb2RenderAcct(){
+  const card=document.getElementById('sbAcct');if(!card)return;
+  const u=FB2.user;
+  if(!u||!FB2.ready){card.style.display='none';return;}
+  const email=u.email||'', nick=fb2AcctNick()||'사용자', role=FB2.role||'viewer';
+  card.style.display='';
+  document.getElementById('sbAcctAv').textContent=(nick[0]||email[0]||'?').toUpperCase();
+  const nm=document.getElementById('sbAcctName');nm.textContent=nick;nm.title=nick;
+  const ml=document.getElementById('sbAcctMail');ml.textContent=email;ml.title=email;
+  const rb=document.getElementById('sbAcctRole');rb.textContent=fb2RoleLabel(role);
+  rb.className='sb-acct-role '+(role==='editor'?'r-editor':'r-viewer');
+}
+function openAcctModal(){
+  const u=FB2.user;if(!u){toast('로그인이 필요합니다');return;}
+  const email=u.email||'', nick=fb2AcctNick(), role=FB2.role||'viewer';
+  let last='';try{if(u.metadata&&u.metadata.lastSignInTime)last=new Date(u.metadata.lastSignInTime).toLocaleString('ko-KR');}catch(_){}
+  document.getElementById('mt').textContent='계정';
+  document.getElementById('mbody').innerHTML=`
+    <div class="acct-head">
+      <div class="acct-av">${esc((nick[0]||email[0]||'?').toUpperCase())}</div>
+      <div style="min-width:0;flex:1">
+        <div class="acct-mail">${esc(email)}</div>
+        <div style="margin-top:4px"><span class="acct-rolebadge ${role==='editor'?'r-editor':'r-viewer'}">${esc(fb2RoleLabel(role))}</span></div>
+      </div>
+    </div>
+    <div class="acct-sep"></div>
+    <label class="il" for="acctName">이름 (닉네임)</label>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <input class="inp" id="acctName" maxlength="60" value="${esc(nick)}" placeholder="표시할 이름" style="flex:1">
+      <button class="btn bp bsm" data-act="acct.saveName">저장</button>
+    </div>
+    <div class="acct-sep"></div>
+    <label class="il">비밀번호 변경</label>
+    <input class="inp" id="acctPwCur" type="password" autocomplete="current-password" placeholder="현재 비밀번호" style="margin-top:4px;margin-bottom:7px">
+    <input class="inp" id="acctPwNew" type="password" autocomplete="new-password" placeholder="새 비밀번호 (6자 이상)" style="margin-bottom:7px">
+    <input class="inp" id="acctPwNew2" type="password" autocomplete="new-password" placeholder="새 비밀번호 확인" style="margin-bottom:9px">
+    <button class="btn bo bsm" data-act="acct.changePw" style="width:100%">비밀번호 변경</button>
+    ${last?`<div class="acct-last">마지막 로그인 · ${esc(last)}</div>`:''}`;
+  document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm acct-signout" data-act="acct.signout" style="margin-right:auto">로그아웃</button><button class="btn bp bsm" data-act="modal.close">닫기</button>`;
+  openMo();
+}
+async function acctSaveName(){
+  const inp=document.getElementById('acctName');if(!inp)return;
+  const name=inp.value.trim().slice(0,60);
+  const u=FB2.auth&&FB2.auth.currentUser;if(!u){toast('로그인이 필요합니다');return;}
+  try{await u.updateProfile({displayName:name});}catch(e){toast('이름 저장 실패 · '+(e.message||e));return;}
+  try{await FB2.db.ref('users/'+u.uid+'/name').set(name);}catch(_){/* 규칙 미허용 시 조용히 무시 — 닉네임은 Auth displayName에 저장됨 */}
+  FB2.user=u; if(FB2.userRec)FB2.userRec.name=name;
+  fb2RenderAcct();
+  if(typeof fb2RenderUsers==='function'){try{fb2RenderUsers();}catch(_){}}
+  toast('이름이 저장되었습니다');
+}
+async function acctChangePw(){
+  const u=FB2.auth&&FB2.auth.currentUser;if(!u){toast('로그인이 필요합니다');return;}
+  const cur=(document.getElementById('acctPwCur')||{}).value||'';
+  const n1=(document.getElementById('acctPwNew')||{}).value||'';
+  const n2=(document.getElementById('acctPwNew2')||{}).value||'';
+  if(!cur){toast('현재 비밀번호를 입력하세요');return;}
+  if(n1.length<6){toast('새 비밀번호는 6자 이상이어야 합니다');return;}
+  if(n1!==n2){toast('새 비밀번호 확인이 일치하지 않습니다');return;}
+  if(n1===cur){toast('현재와 다른 비밀번호를 사용하세요');return;}
+  try{
+    const cred=firebase.auth.EmailAuthProvider.credential(u.email,cur);
+    await u.reauthenticateWithCredential(cred);
+    await u.updatePassword(n1);
+    ['acctPwCur','acctPwNew','acctPwNew2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    toast('비밀번호가 변경되었습니다');
+  }catch(e){toast(fbAuthErr(e));}
+}
+function acctSignout(){
+  if(!confirm('로그아웃하시겠습니까?'))return;
+  try{closeMo();}catch(_){}
+  try{FB2.auth.signOut();}catch(e){toast('로그아웃 실패');}
+}
+registerActions('click', {'acct.open':()=>openAcctModal(),'acct.saveName':()=>acctSaveName(),'acct.changePw':()=>acctChangePw(),'acct.signout':()=>acctSignout()});
 function fb2RenderUsers(){
   const box=document.getElementById('fbUserList');if(!box)return;
   const us=FB2.users||{},uids=Object.keys(us);
@@ -1905,6 +2009,7 @@ async function fb2Enter(user){
   if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단
   FB2.ready=true;
   hideCover();
+  fb2RenderAcct();
   fb2BindFocusout();
   fb2SubPlans();
   fb2SubAnalysis();
