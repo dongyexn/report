@@ -1187,8 +1187,9 @@ body.viewer #view-manage .mg-inp,body.viewer #view-manage .mg-grid input,body.vi
 body.viewer #view-manage .sw{pointer-events:none;opacity:.6;}
 body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#fff;background:#3E71D2;padding:3px 9px;border-radius:99px;letter-spacing:.02em;}
 /* 사이드바 계정 카드 (라이트 테마) */
-.sb-acct{margin:6px 8px 6px;padding:8px 9px;border-radius:11px;display:flex;align-items:center;gap:9px;cursor:pointer;border:1px solid var(--sep);background:rgba(255,255,255,.55);transition:background .14s,border-color .14s;}
-.sb-acct:hover{background:#fff;border-color:var(--sepo);}
+.sb-acct{position:relative;margin:10px 0 3px;padding:7px 8px;border-radius:var(--rmd);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .14s;}
+.sb-acct::before{content:"";position:absolute;left:8px;right:8px;top:-5px;height:1px;background:var(--sep);}
+.sb-acct:hover{background:var(--fill);}
 .sb-acct-av{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--b500),var(--b800));}
 .sb-acct-av svg{width:17px;height:17px;display:block;}
 .sb-acct-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;}
