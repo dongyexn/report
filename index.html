@@ -159,9 +159,6 @@ svg{display:block;flex-shrink:0;}
 /* SETTINGS 2-column layout — 좌(현장 관리) 더 넓게 */
 .set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
 .set-col{min-width:0;}
-.fbu-row{display:flex;align-items:center;gap:11px;padding:9px 6px;border-bottom:1px solid var(--sep);border-radius:9px;transition:background .12s;}
-.fbu-row:last-child{border-bottom:none;}
-.fbu-row:hover{background:var(--fill);}
 .fbu-av{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
 .fbu-av svg{width:18px;height:18px;display:block;fill:#fff;}
 .fbu-av.r-editor{background:linear-gradient(135deg,var(--b500),var(--b800));}
@@ -169,16 +166,38 @@ svg{display:block;flex-shrink:0;}
 .fbu-av.r-viewer svg{fill:var(--lbl2);}
 .fbu-av.r-blocked{background:rgba(255,59,48,.16);}
 .fbu-av.r-blocked svg{fill:var(--rd);}
-.fbu-main{min-width:0;flex:1;}
-.fbu-mail{font-size:13px;font-weight:600;color:var(--lbl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fbu-me{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:var(--b700);background:rgba(62,113,210,.12);padding:1px 6px;border-radius:5px;vertical-align:middle;}
-.fbu-ctl{flex:0 0 auto;display:flex;align-items:center;gap:8px;}
 .fbu-lock{font-size:11px;color:var(--lbl3);white-space:nowrap;}
 .fbu-role{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:7px;white-space:nowrap;}
 .fbu-role.r-editor{color:var(--b700);background:rgba(62,113,210,.12);}
 .fbu-role.r-viewer{color:var(--lbl2);background:var(--fill);}
 .fbu-role.r-blocked{color:var(--rd);background:rgba(255,59,48,.1);}
-.fbu-sel{width:auto;min-width:108px;height:34px;padding:0 32px 0 12px;font-size:12.5px;border-radius:var(--rmd);cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;}
+.fbu-sel{-webkit-appearance:none;-moz-appearance:none;appearance:none;width:auto;min-width:104px;padding:8px 34px 8px 13px;font-size:12.5px;line-height:1.35;font-weight:500;color:var(--lbl);border:1.5px solid var(--sepo);border-radius:var(--rmd);background-color:var(--bg2);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23636366' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;cursor:pointer;transition:border-color .14s;}
+.fbu-sel:hover{border-color:var(--b500);}
+/* 설정 카드 컴팩트 헤더 */
+.set-h{font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:13px;}
+.set-h-sub{font-size:10px;font-weight:600;color:var(--lbl3);text-transform:none;letter-spacing:0;}
+.set-h-link{font-size:11px;color:var(--b600);font-weight:700;white-space:nowrap;text-transform:none;letter-spacing:0;}
+.set-col-full{grid-column:1/-1;}
+/* 공유 · 배포 카드 */
+.share-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.share-info{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.share-info>b{font-size:13px;color:var(--lbl);font-weight:700;}
+.share-info span{font-size:11.5px;color:var(--lbl2);line-height:1.45;}
+.share-info span b{color:var(--lbl);font-weight:600;}
+.share-sep{height:1px;background:var(--sep);margin:13px 0;}
+/* 계정 관리 테이블 */
+.utbl{width:100%;border-collapse:collapse;}
+.utbl thead th{font-size:10.5px;font-weight:700;color:var(--lbl3);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:0 10px 9px;border-bottom:1px solid var(--sep);white-space:nowrap;}
+.utbl th.utbl-r,.utbl td.utbl-r{text-align:right;}
+.utbl tbody td{padding:8px 10px;border-bottom:1px solid var(--sep);vertical-align:middle;}
+.utbl tbody tr:last-child td{border-bottom:none;}
+.utbl tbody tr:hover{background:var(--fill);}
+.utbl-name{display:flex;align-items:center;gap:9px;min-width:0;}
+.utbl-name .fbu-av{width:30px;height:30px;}
+.utbl-name .fbu-av svg{width:16px;height:16px;}
+.utbl-nick{font-size:13px;font-weight:600;color:var(--lbl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.utbl-mail{font-size:12.5px;color:var(--lbl2);white-space:nowrap;}
 .smtbl{table-layout:fixed;}
 .smtbl th{padding:8px 10px;font-size:11px;}
 .smtbl td{padding:9px 10px;font-size:13px;}
@@ -1330,39 +1349,37 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
     <div id="view-manage" class="view"><div id="mgcontent"></div></div>
     <div id="view-settings" class="view">
       <div class="set-grid">
+        <!-- 계정 관리 (풀폭 · 테이블) — 관리자 전용 -->
+        <div class="set-col set-col-full" id="set-users" style="display:none">
+          <div class="card">
+            <div class="set-h">계정 관리 <span class="set-h-sub">관리자 전용</span></div>
+            <table class="utbl">
+              <thead><tr><th>이름</th><th>이메일</th><th class="utbl-r">권한</th></tr></thead>
+              <tbody id="fbUserList"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- 대시보드 공유 (스냅샷 + 사내게시 통합) -->
         <div class="set-col">
           <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">공유용 스냅샷 (뷰어 배포)</div>
-              <button class="btn bg1 bsm" data-act="set.snapshot">스냅샷 내보내기</button>
+            <div class="set-h">대시보드 공유</div>
+            <div class="share-row">
+              <div class="share-info"><b>스냅샷</b><span>읽기전용 집계 HTML 파일로 내보내기</span></div>
+              <button class="btn bg1 bsm" data-act="set.snapshot">내보내기</button>
             </div>
-            <div style="font-size:12px;color:var(--lbl2);line-height:1.6">현재 대시보드를 <b>읽기전용 집계 스냅샷</b>으로 내보냅니다.</div>
+            <div id="set-fb" style="display:none">
+              <div class="share-sep"></div>
+              <div class="share-row">
+                <div class="share-info"><b>사내 게시</b><span>Firebase 실시간 공유 · 최신 등록 <b id="fbPubAt">—</b></span></div>
+                <button class="btn bp bsm" id="fbPubBtn" data-act="set.publish">등록</button>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="set-col" id="set-fb" style="display:none">
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">사내 게시 (Firebase 실시간 공유)</div>
-              <button class="btn bp bsm" id="fbPubBtn" data-act="set.publish">등록</button>
-            </div>
-            <div class="fg" style="margin-top:2px"><span style="font-size:12px;color:var(--lbl2)">계정</span>&nbsp;<b id="fbAcct" style="font-size:12.5px;color:var(--lbl)">—</b></div>
-            <div class="fg"><span style="font-size:12px;color:var(--lbl2)">최신 등록일</span>&nbsp;<b id="fbPubAt" style="font-size:12.5px;color:var(--lbl)">—</b></div>
-          </div>
-        </div>
-        <div class="set-col" id="set-users" style="display:none">
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:12px">
-              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">계정 관리 (관리자 전용)</div>
-            </div>
-            <div id="fbUserList"></div>
-          </div>
-        </div>
+        <!-- AI 분석 -->
         <div class="set-col">
           <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em">AI 분석 (Google AI Studio API Key)</div>
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="font-size:11.5px;color:var(--b600);font-weight:700;white-space:nowrap">Google AI Studio ↗</a>
-            </div>
+            <div class="set-h">AI 분석 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="set-h-link">Google AI Studio ↗</a></div>
             <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey">
           </div>
         </div>
@@ -1996,21 +2013,25 @@ function fb2RenderUsers(){
   const us=FB2.users||{},uids=Object.keys(us);
   const myUid=(FB2.user&&FB2.user.uid)||'';
   const editors=uids.filter(u=>us[u]&&us[u].role==='editor');
-  if(!uids.length){box.innerHTML='<div style="font-size:12px;color:var(--lbl3);padding:6px 0">아직 로그인한 계정이 없습니다.</div>';return;}
+  if(!uids.length){box.innerHTML='<tr><td colspan="3" style="font-size:12px;color:var(--lbl3);padding:10px">아직 로그인한 계정이 없습니다.</td></tr>';return;}
   // 정렬: 관리자 → 사용자 → 차단, 그 안에서 이메일순
   const order={editor:0,viewer:1,blocked:2};
   uids.sort(function(a,b){const ra=order[us[a].role]??1,rb=order[us[b].role]??1;if(ra!==rb)return ra-rb;return String(us[a].email||'').localeCompare(String(us[b].email||''));});
+  const PERSON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg>';
   box.innerHTML=uids.map(function(uid){
     const u=us[uid]||{},role=u.role||'viewer',isMe=uid===myUid;
     const lastEditor=role==='editor'&&editors.length<=1; // 마지막 관리자 보호
     const lockReason=isMe?'본인 계정':(lastEditor?'마지막 관리자':'');
     const opt=function(v,t){return '<option value="'+v+'"'+(role===v?' selected':'')+'>'+t+'</option>';};
     const rc='r-'+role;
-    const PERSON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg>';
-    const sel=(isMe||lastEditor)
-      ? (lockReason?'<span class="fbu-lock">'+lockReason+'</span>':'')+'<span class="fbu-role '+rc+'">'+fb2RoleLabel(role)+'</span>'
-      : '<select class="inp fbu-sel" data-act="fb2.role" data-uid="'+esc(uid)+'">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
-    return '<div class="fbu-row"><div class="fbu-av '+rc+'">'+PERSON+'</div><div class="fbu-main"><div class="fbu-mail">'+esc(u.email||uid)+(isMe?'<span class="fbu-me">나</span>':'')+'</div></div><div class="fbu-ctl">'+sel+'</div></div>';
+    const email=String(u.email||uid);
+    const nick=esc(u.name||email.split('@')[0]||'—');
+    const ctl=(isMe||lastEditor)
+      ? (lockReason?'<span class="fbu-lock">'+lockReason+'</span> ':'')+'<span class="fbu-role '+rc+'">'+fb2RoleLabel(role)+'</span>'
+      : '<select class="fbu-sel" data-act="fb2.role" data-uid="'+esc(uid)+'">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
+    return '<tr><td><div class="utbl-name"><div class="fbu-av '+rc+'">'+PERSON+'</div><span class="utbl-nick">'+nick+'</span></div></td>'
+      +'<td><span class="utbl-mail">'+esc(email)+'</span>'+(isMe?'<span class="fbu-me">나</span>':'')+'</td>'
+      +'<td class="utbl-r">'+ctl+'</td></tr>';
   }).join('');
 }
 async function fb2SetRole(uid,role){
