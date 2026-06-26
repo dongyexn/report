@@ -178,7 +178,8 @@ svg{display:block;flex-shrink:0;}
 .set-h{font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--sep);margin-bottom:13px;}
 .set-h-sub{font-size:10px;font-weight:600;color:var(--lbl3);text-transform:none;letter-spacing:0;}
 .set-h-link{font-size:11px;color:var(--b600);font-weight:700;white-space:nowrap;text-transform:none;letter-spacing:0;}
-.set-col-full{grid-column:1/-1;}
+.set-col-stack{display:flex;flex-direction:column;gap:16px;}
+body.viewer .set-grid{grid-template-columns:1fr;}
 /* 공유 · 배포 카드 */
 .share-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .share-info{min-width:0;display:flex;flex-direction:column;gap:2px;}
@@ -1349,8 +1350,8 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
     <div id="view-manage" class="view"><div id="mgcontent"></div></div>
     <div id="view-settings" class="view">
       <div class="set-grid">
-        <!-- 계정 관리 (풀폭 · 테이블) — 관리자 전용 -->
-        <div class="set-col set-col-full" id="set-users" style="display:none">
+        <!-- 왼쪽: 계정 관리 (세로) — 관리자 전용 -->
+        <div class="set-col" id="set-users" style="display:none">
           <div class="card">
             <div class="set-h">계정 관리 <span class="set-h-sub">관리자 전용</span></div>
             <table class="utbl">
@@ -1359,13 +1360,13 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
             </table>
           </div>
         </div>
-        <!-- 대시보드 공유 (스냅샷 + 사내게시 통합) -->
-        <div class="set-col">
+        <!-- 오른쪽: 대시보드 공유 + AI 세로 스택 -->
+        <div class="set-col set-col-stack">
           <div class="card">
             <div class="set-h">대시보드 공유</div>
             <div class="share-row">
               <div class="share-info"><b>스냅샷</b><span>읽기전용 집계 HTML 파일로 내보내기</span></div>
-              <button class="btn bg1 bsm" data-act="set.snapshot">내보내기</button>
+              <button class="btn bp bsm" data-act="set.snapshot">내보내기</button>
             </div>
             <div id="set-fb" style="display:none">
               <div class="share-sep"></div>
@@ -1375,9 +1376,6 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
               </div>
             </div>
           </div>
-        </div>
-        <!-- AI 분석 -->
-        <div class="set-col">
           <div class="card">
             <div class="set-h">AI 분석 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="set-h-link">Google AI Studio ↗</a></div>
             <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey">
