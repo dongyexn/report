@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-nl3Q4Ytm3daR5uvE0l9zKBUxUssDJKg24pC4zdngcak=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-zxi/tnqx7orR8ObWScUQ+KOq82ttUxc6IQVGMiSY44w=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -2467,7 +2467,7 @@ function topT(items,n){
   return top;
 }
 function calcW(items,rmEnd,pmEnd){
-  // 각 주차 토요일 cutoff 기준 역산. 지연구간(d0/d30/d60) 분해를 diff-array로 O(N·logW+W)에 계산.
+  // 각 주차 일요일 cutoff 기준 역산. 지연구간(d0/d30/d60) 분해를 diff-array로 O(N·logW+W)에 계산.
   // (구버전 O(주차×건수) 재순회 대체 — 동일 입력 BIT-EXACT 일치 검증 완료)
   const DAY=86400000;
   const cutSet={};
@@ -2505,7 +2505,7 @@ function calcW(items,rmEnd,pmEnd){
   return arr;
 }
 function calcMo(items){const m={};items.forEach(i=>{const k=(i.receiptDate||'').slice(0,7);if(!k)return;if(!m[k])m[k]={month:k,r:0,res:0,u:0};m[k].r++;const done=i.status==='처리'&&i.completionDate;if(done)m[k].res++;else m[k].u++;});return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month));}
-function wk(d){if(!d)return null;const m=String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(!m)return null;const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(isNaN(dt))return null;const satOff=(6-dt.getUTCDay()+7)%7;const sat=new Date(dt.getTime()+satOff*86400000);return `${sat.getUTCFullYear()}-${String(sat.getUTCMonth()+1).padStart(2,'0')}-${String(sat.getUTCDate()).padStart(2,'0')}`;}
+function wk(d){if(!d)return null;const m=String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(!m)return null;const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(isNaN(dt))return null;const sunOff=(7-dt.getUTCDay())%7;const sun=new Date(dt.getTime()+sunOff*86400000);return `${sun.getUTCFullYear()}-${String(sun.getUTCMonth()+1).padStart(2,'0')}-${String(sun.getUTCDate()).padStart(2,'0')}`;}
 // 상가 표기 감지 — 동/호 오타 변형 포함 ([강산살상성싱]+[가거기], 뒤에 숫자 허용)
 function isStoreLabel(s){return /[강산살상성싱][가거기]/.test(String(s||''));}
 // 공가세대/공가상가 하자건 판정 (둘 중 하나라도 해당하면 공가 건)
@@ -2977,7 +2977,7 @@ function niceFitRange(lo,hi){
 }
 function rChartsImpl(all){
   dC('mo');
-  // 메인 차트: 선택연도 1/1부터 (기준월 말일·선택연도 말일 중 이른 시점)까지, 각 주 토요일 기준 누계 스냅샷
+  // 메인 차트: 선택연도 1/1부터 (기준월 말일·선택연도 말일 중 이른 시점)까지, 각 주 일요일 기준 누계 스냅샷
   // 막대 = 그 주 시점의 미처리 누계 (현재 누적 접수 - 누적 처리)
   // 선   = 그 주 시점의 누계 전체접수 / 누계 처리완료
   const allDef=dashSites().flatMap(s=>S.def[s.id]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
@@ -2987,12 +2987,12 @@ function rChartsImpl(all){
   // 종료 시점: 기준월 말일과 선택연도 12/31 중 이른 쪽 (과거연도는 그 해 말까지, 당해연도는 기준월까지)
   const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
   const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
-  // 각 주 토요일 시퀀스 — 선택연도 1/1 직후 첫 토요일부터 종료시점까지
-  const startTS=Date.UTC(_ty,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
-  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff=`${_ty}-01-01`;
+  // 각 주 일요일 시퀀스 — 선택연도 1/1 직후 첫 일요일부터 종료시점까지
+  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
+  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
   while(prevCutoff<=refLimStr){
-    const isPartial=satTS>refLimTS;
-    const cutTS=isPartial?refLimTS:satTS;
+    const isPartial=sunTS>refLimTS;
+    const cutTS=isPartial?refLimTS:sunTS;
     const cutD=new Date(cutTS),cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`;
     const m=cutD.getUTCMonth()+1;
     // 주차 라벨: 같은 달 내 누적 주 번호
@@ -3004,7 +3004,7 @@ function rChartsImpl(all){
     for(const it of allDef){if(it.receiptDate>cutoff)continue;cR++;const done=it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
     wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
     if(isPartial)break;
-    satTS+=7*86400000;prevCutoff=cutoff;
+    sunTS+=7*86400000;prevCutoff=cutoff;
   }
   if(window.__CAPTURE)window.__CAPTURE.wks=wks.map(x=>({...x}));
   if(window.__SNAP__&&window.__SNAP__.wks)for(let _i=0;_i<wks.length;_i++){if(window.__SNAP__.wks[_i])wks[_i]=window.__SNAP__.wks[_i];}
@@ -3369,16 +3369,16 @@ function buildSiteTrend(sid,st){
   const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
   const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
   const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
-  const startTS=Date.UTC(_ty,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
-  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff=`${_ty}-01-01`;
+  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
+  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
   while(prevCutoff<=refLimStr){
-    const isPartial=satTS>refLimTS,cutTS=isPartial?refLimTS:satTS,cutD=new Date(cutTS);
+    const isPartial=sunTS>refLimTS,cutTS=isPartial?refLimTS:sunTS,cutD=new Date(cutTS);
     const cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`,m=cutD.getUTCMonth()+1;
     let weekNum;if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;else weekNum=1;
     let cR=0,cRes=0,curU=0,curLt=0,curLt60=0;
     for(const it of siteDef){if(it.receiptDate>cutoff)continue;cR++;const done=it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
     wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
-    if(isPartial)break;satTS+=7*86400000;prevCutoff=cutoff;
+    if(isPartial)break;sunTS+=7*86400000;prevCutoff=cutoff;
   }
   if(window.__CAPTURE){(window.__CAPTURE.siteWks=window.__CAPTURE.siteWks||{})[sid]=wks.map(x=>({...x}));}
   if(window.__SNAP__&&window.__SNAP__.siteWks&&window.__SNAP__.siteWks[sid]){const _sw=window.__SNAP__.siteWks[sid];for(let _i=0;_i<wks.length;_i++){if(_sw[_i])wks[_i]=_sw[_i];}}
@@ -4170,8 +4170,8 @@ function __runSelfTest(){
     // --- pM(): 직전 월(연 경계 포함) ---
     eq('pM 1월→전년12월',pM('2026-01'),'2025-12');
     eq('pM 3월→2월',pM('2026-03'),'2026-02');
-    // --- wk(): 주차 cutoff는 항상 토요일(불변식) ---
-    ok('wk 결과는 토요일',(()=>{const s=wk('2026-06-09');return !!s&&new Date(s+'T00:00:00Z').getUTCDay()===6;})());
+    // --- wk(): 주차 cutoff는 항상 일요일(불변식) ---
+    ok('wk 결과는 일요일',(()=>{const s=wk('2026-06-09');return !!s&&new Date(s+'T00:00:00Z').getUTCDay()===0;})());
     eq('wk 빈값',wk(''),null);
     // --- _calcImpl(): 역산 집계 (완료일 기준 미처리/처리) ---
     const site={id:'__selftest',name:'테스트',region:'테스트',units:100,buildings:1,hasCommercial:false};
