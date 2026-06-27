@@ -1113,6 +1113,14 @@ input,select,textarea,button{display:none!important;}
 
   /* 도넛 cards-2 fallback */
   .opsr .card{display:flex;flex-direction:column;min-height:280px;}
+
+  /* ===== 가로 오버플로우 안전망 (화면 짤림·뚫림 방지) ===== */
+  html,body{overflow-x:hidden;}
+  #content{overflow-x:hidden;max-width:100vw;}
+  /* flex 자식이 콘텐츠(긴 한글 텍스트 등) 폭에 막혀 부모를 뚫지 않도록 수축 허용 */
+  .card,.ic,.hero,.sh,.dn-side,.mom-row,.cw,.tnav-i,.fgrp{min-width:0;}
+  /* 긴 한글·영문·숫자·URL이 카드 밖으로 넘치지 않게 줄바꿈 */
+  .ic-ttl,.ic-sub,.ct,.st,.hn,.hm,.km,.kl{overflow-wrap:anywhere;word-break:break-word;}
 }
 
 /* ===== SMALL MOBILE (≤480px) — screen only ===== */
@@ -1312,7 +1320,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
     </div>
     <div id="view-dashboard" class="view act">
       <div id="dkpi" class="akpi"></div>
-      <div class="card mb12 main-chart-card"><div class="ct" style="font-size: 16px; color: var(--ct);flex-shrink:0">하자접수 · 처리 주차별 추이</div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+      <div class="card mb12 main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="dtrend-yr" data-act="dash.trendYear"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
       <div class="opsr">
         <div class="card">
           <div class="ct" style="font-size: 16px; color: var(--ct)">전월대비 실적 현황</div>
@@ -1396,7 +1404,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" data-act="modal.close" class=""><div id="mb" data-act="modal.stop"><div class="mt2" id="mt"></div><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>
 <script>
-const S={view:'dashboard',sid:null,sites:[],def:{},cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,defVer:0,teams:[],teamId:null};
+const S={view:'dashboard',sid:null,sites:[],def:{},cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,defVer:0,teams:[],teamId:null};
 // calc() 메모이즈 캐시. 키 = 현장id|기준월|defVer|필터서명.
 // S.def 내용이 바뀌면 bumpDef()가 defVer를 올려 전체 캐시를 무효화한다.
 const _calcCache=new Map();
@@ -1598,6 +1606,7 @@ registerActions('input', {
 // ── [전환 완료] change 액션 (site.upd: 셀렉트도 동일 핸들러로 재사용) ──
 registerActions('change', {
   'dash.monthYear':(el)=>setDashMonthYear(el.value),
+  'dash.trendYear':(el)=>setTrendYear(el.value), 'site.trendYear':(el)=>setSiteTrendYear(el.value),
   'team.switch':(el)=>switchTeam(el.value), 'team.rename':(el)=>updTeamName(el.dataset.tid, el.value),
   'region.rename':(el)=>updRegionName(el.dataset.rgn, el.value), 'fb2.role':(el)=>fb2SetRole(el.dataset.uid, el.value),
   'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
@@ -1640,6 +1649,19 @@ function setTab(t){S.tab=t;document.querySelectorAll('.tnav-i').forEach(b=>b.cla
   autoSizeAll(document.querySelector('.tpane.act'));
   setTimeout(()=>{if(S.sid)renderTabCharts(S.sid,S.lastSt);},30);}
 function setDetailYear(y){S.detailYear=y;if(S.sid)rSite(S.sid);}
+// 추이차트 표시연도 — 데이터에 존재하는 접수연도 + 기준월 연도(+최소 2026). 누계값은 cutoff 시점 전체 기준이라
+// 시작연도만 바꿔도 전년도 이월 미처리가 그대로 반영된다.
+function trendYearInfo(defs,stateKey){
+  const ys=new Set();
+  for(const i of defs){if(i&&i.receiptDate&&/^\d{4}/.test(i.receiptDate))ys.add(i.receiptDate.slice(0,4));}
+  ys.add('2026');const curY=S.rm.slice(0,4);ys.add(curY);
+  const years=[...ys].sort();const sel=S[stateKey];
+  const year=(sel&&years.includes(sel))?sel:(years.includes(curY)?curY:years[years.length-1]);
+  return {year,years};
+}
+function trendYrOptions(info){return info.years.map(y=>`<option value="${y}" ${y===info.year?'selected':''}>${y}년</option>`).join('');}
+function setTrendYear(y){S.trendYear=y;const all=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));try{rCharts(all);}catch(e){console.error('rCharts(year)',e);}}
+function setSiteTrendYear(y){S.siteTrendYear=y;if(S.sid){dC('mo-'+S.sid);buildSiteTrend(S.sid,S.lastSt);}}
 
 // SIDEBAR
 function toggleSB(){S.mini=!S.mini;document.getElementById('sidebar').classList.toggle('mini',S.mini);}
@@ -3000,16 +3022,19 @@ function niceFitRange(lo,hi){
 }
 function rChartsImpl(all){
   dC('mo');
-  // 메인 차트: 2026-01-01부터 기준월 말일까지, 각 주 토요일 기준 누계 스냅샷
+  // 메인 차트: 선택연도 1/1부터 (기준월 말일·선택연도 말일 중 이른 시점)까지, 각 주 토요일 기준 누계 스냅샷
   // 막대 = 그 주 시점의 미처리 누계 (현재 누적 접수 - 누적 처리)
   // 선   = 그 주 시점의 누계 전체접수 / 누계 처리완료
   const allDef=dashSites().flatMap(s=>S.def[s.id]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+  const _tyInfo=trendYearInfo(allDef,'trendYear'),_ty=Number(_tyInfo.year);
+  {const _sel=document.getElementById('dtrend-yr');if(_sel)_sel.innerHTML=trendYrOptions(_tyInfo);}
   const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
-  const refLimStr=`${S.rm}-${String(lastDay).padStart(2,'0')}`;
-  // 각 주 토요일 ISO 문자열 시퀀스 — 2026-01-03(첫 토요일)부터 기준월 말까지
-  const startTS=Date.UTC(2026,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
-  const refLimTS=Date.UTC(ymPart[0],ymPart[1]-1,lastDay);
-  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff='2026-01-01';
+  // 종료 시점: 기준월 말일과 선택연도 12/31 중 이른 쪽 (과거연도는 그 해 말까지, 당해연도는 기준월까지)
+  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
+  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
+  // 각 주 토요일 시퀀스 — 선택연도 1/1 직후 첫 토요일부터 종료시점까지
+  const startTS=Date.UTC(_ty,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
+  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff=`${_ty}-01-01`;
   while(prevCutoff<=refLimStr){
     const isPartial=satTS>refLimTS;
     const cutTS=isPartial?refLimTS:satTS;
@@ -3336,7 +3361,7 @@ function rSite(sid){
 
 <div class="tpane ${S.tab==='overview'?'act':''}" data-tab="overview">
   <div class="as">
-    <div class="card main-chart-card"><div class="ct" style="font-size:16px;color:var(--ct);flex-shrink:0">하자접수 · 처리 주차별 추이</div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo-${sid}"></canvas></div><div id="c-mo-lg-${sid}" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+    <div class="card main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="strend-yr" data-act="site.trendYear"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo-${sid}"></canvas></div><div id="c-mo-lg-${sid}" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
     <div class="opsr" style="margin-bottom:0">
       <div class="card"><div class="ct" style="font-size:16px;color:var(--ct)">전월대비 실적 현황</div><div id="c-mom-${sid}" class="mom-wrap"></div></div>
       <div class="card"><div class="ct" style="font-size:16px;color:var(--ct)">공종별 미처리 분포</div><div class="dn-side"><div class="canv" style="padding:0px"><canvas id="c-mx-${sid}"></canvas></div><div class="lg lg-2col" id="c-mx-lg-${sid}"></div></div></div>
@@ -3382,11 +3407,13 @@ function fitSiteName(){
 function buildSiteTrend(sid,st){
   const moEl=document.getElementById('c-mo-'+sid);if(!moEl)return;
   const siteDef=(S.def[sid]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+  const _tyInfo=trendYearInfo(siteDef,'siteTrendYear'),_ty=Number(_tyInfo.year);
+  {const _sel=document.getElementById('strend-yr');if(_sel)_sel.innerHTML=trendYrOptions(_tyInfo);}
   const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
-  const refLimStr=`${S.rm}-${String(lastDay).padStart(2,'0')}`;
-  const startTS=Date.UTC(2026,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
-  const refLimTS=Date.UTC(ymPart[0],ymPart[1]-1,lastDay);
-  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff='2026-01-01';
+  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
+  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
+  const startTS=Date.UTC(_ty,0,1),firstSatOff=(6-new Date(startTS).getUTCDay()+7)%7;
+  const wks=[];let satTS=startTS+firstSatOff*86400000,prevCutoff=`${_ty}-01-01`;
   while(prevCutoff<=refLimStr){
     const isPartial=satTS>refLimTS,cutTS=isPartial?refLimTS:satTS,cutD=new Date(cutTS);
     const cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`,m=cutD.getUTCMonth()+1;
