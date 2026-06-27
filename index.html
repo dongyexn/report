@@ -3,8 +3,7 @@
 <meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
@@ -26,7 +25,7 @@
 --sw:240px;--swm:60px;--th:52px;--tr:.22s cubic-bezier(.4,0,.2,1);--ct:#5C5C60;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
-body{font-family:'Noto Sans KR',-apple-system,sans-serif;font-size:14px;color:var(--lbl);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;}
+body{font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:14px;color:var(--lbl);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;outline:none;}
 input,textarea,select{font-family:inherit;outline:none;}
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -141,6 +140,8 @@ svg{display:block;flex-shrink:0;}
 .kv{font-size:26px;font-weight:700;line-height:1;margin-bottom:4px;}
 .kv .u{font-size:12px;font-weight:400;opacity:.72;margin-left:2px;}
 .km{font-size:11px;opacity:.68;}
+.kpi-mo{display:none;}
+.kpi-team{font-size:18px;line-height:1.2;}
 .ki{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;}
 .ki svg{width:17px;height:17px;color:rgba(255,255,255,.9);}
 .kc.ms .ki{background:rgba(0,0,0,.06);}
@@ -1046,10 +1047,10 @@ input,select,textarea,button{display:none!important;}
   .dn-side .canv{flex:0 0 auto;height:200px;width:200px;max-width:100%;aspect-ratio:1;}
   .dn-side .lg{margin-left:0;width:100%;font-size:11.5px;}
   .dn-side .lg.lg-2col{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:4px;min-width:0;grid-template-rows:none;grid-auto-flow:row;}
-  .dn-side .lg .it{grid-template-columns:8px minmax(50px,1fr) auto auto;height:20px;}
+  .dn-side .lg .it{grid-template-columns:8px minmax(0,1fr) auto 40px;height:20px;column-gap:4px;}
   .dn-side .lg .nm{font-size:11px;}
-  .dn-side .lg .cnt{font-size:11px;padding:0 8px 0 12px;}
-  .dn-side .lg .pct{font-size:11px;min-width:40px;}
+  .dn-side .lg .cnt{font-size:11px;padding:0;text-align:right;white-space:nowrap;}
+  .dn-side .lg .pct{font-size:11px;text-align:right;white-space:nowrap;padding-left:4px;}
 
   /* 데스크탑 도넛 fallback 레전드 */
   .dn-lg.cols-2{grid-template-columns:1fr 1fr;font-size:10px;}
@@ -1065,9 +1066,12 @@ input,select,textarea,button{display:none!important;}
   /* 표: 가로 스크롤 — 모든 dt는 콘텐츠에 맞춰 자체 가로 스크롤(컬럼 겹침 없음) */
   .card>table.dt,.card>div>table.dt,.card>table.utbl,.card>div>table.utbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
   /* 장기미처리 비율 바·처리계획 칸은 내용이 비어 폭이 0이 되므로 최소폭 보장 */
-  .ltrbar-wrap{min-width:92px;}
-  .ltrbar{min-width:52px;}
-  textarea.plan-ta{min-width:170px;}
+  .kpi-pc{display:none!important;}
+  .kpi-mo{display:inline!important;}
+  .dt th,table.dt-detail th,.utbl thead th,.smtbl th{font-size:12.5px!important;}
+  .ltrbar-wrap{min-width:124px;}
+  .ltrbar{min-width:78px;}
+  textarea.plan-ta{min-width:340px;}
   .dt th,.dt td{padding:8px 8px;font-size:11.5px;}
   .dt th{font-size:9.5px;}
 
@@ -1137,7 +1141,7 @@ input,select,textarea,button{display:none!important;}
   .ltrmom-row .lm-stat{font-size:10.5px;margin-right:4px;}
   .ltrmom-bar .seg .seg-v{font-size:9px;}
   .ltrmom-delta{min-width:0;}
-  .ltrmom-delta .lm-delta{font-size:10.5px;padding:3px 7px;gap:3px;}
+  .ltrmom-delta .lm-delta{font-size:10.5px;font-weight:600;padding:2px 8px;gap:3px;}
   /* 헤더 한 줄 유지: 제목 nowrap + 범례 칩/폰트 축소 */
   .ltrmom-head{gap:8px;}
   .ltrmom-head .lm-ttl{font-size:13px;white-space:nowrap;}
@@ -1155,7 +1159,7 @@ input,select,textarea,button{display:none!important;}
   .vseg-l{font-size:8px!important;margin-bottom:2px!important;gap:2px!important;}
   .vseg-v{font-size:15px!important;}
   .vseg-v .vseg-u{font-size:7.5px!important;margin-left:1px!important;}
-  .vseg-m{font-size:7px!important;margin-top:2px!important;line-height:1.15;}
+  .vseg-m{font-size:6.5px!important;margin-top:2px!important;line-height:1.2;white-space:nowrap;}
   .vseg-edit{margin-left:3px!important;padding-left:4px!important;}
   .vseg+.vseg::before{left:-1.5px;top:4px;bottom:4px;}
   .vseg+.vseg::before{display:none;}
@@ -1519,7 +1523,6 @@ function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 
 // 사용자 정의 권역 순서 반영 (없으면 팀 기본 순서). 목록에 없는/추가된 권역은 뒤에 붙임.
 function orderedRGS(){const t=curTeam();const base=(t&&Array.isArray(t.regions))?t.regions.filter(r=>r!==PERM_REGION):[];const ord=(t&&Array.isArray(t.regionOrder))?t.regionOrder:[];const seen=new Set();const out=[];for(const r of ord){if(base.includes(r)&&!seen.has(r)){out.push(r);seen.add(r);}}for(const r of base){if(!seen.has(r)){out.push(r);seen.add(r);}}out.push(PERM_REGION);return out;}
 // 사이드바 팀 선택기 렌더
-function jss(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function rTeamSel(){
   const el=document.getElementById('teamsel');if(!el)return;
   const opts=S.teams.map(t=>`<option value="${esc(t.id)}" ${t.id===S.teamId?'selected':''}>${esc(t.name)}</option>`).join('');
@@ -1714,9 +1717,10 @@ function setSiteTrendYear(y){S.siteTrendYear=y;if(S.sid){dC('mo-'+S.sid);buildSi
 
 // SIDEBAR
 function toggleSB(){S.mini=!S.mini;document.getElementById('sidebar').classList.toggle('mini',S.mini);}
+let _sbScroll=0;
 function _sbBlockTouch(e){if(!(e.target.closest&&e.target.closest('#sidebar')))e.preventDefault();}
-function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');document.body.classList.add('sb-locked');document.addEventListener('touchmove',_sbBlockTouch,{passive:false});}
-function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');document.body.classList.remove('sb-locked');document.removeEventListener('touchmove',_sbBlockTouch,{passive:false});}
+function openMobileSB(){const c=document.getElementById('content');document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');_sbScroll=c?c.scrollTop:0;if(c){c.style.position='fixed';c.style.top=(-_sbScroll)+'px';c.style.left='0';c.style.right='0';c.style.bottom='0';c.style.overflow='hidden';}document.body.classList.add('sb-locked');document.addEventListener('touchmove',_sbBlockTouch,{passive:false});}
+function closeMobileSB(){const c=document.getElementById('content');document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');if(c){c.style.position='';c.style.top='';c.style.left='';c.style.right='';c.style.bottom='';c.style.overflow='';c.scrollTop=_sbScroll;}document.body.classList.remove('sb-locked');document.removeEventListener('touchmove',_sbBlockTouch,{passive:false});}
 
 // PERSISTENCE — 공유 폴더(File System Access API, OneDrive 등) + localStorage/IndexedDB 백업.
 // 주의: fb* 명칭은 과거 Firebase 시절의 호환 shim. 실제 저장은 전부 폴더(sh*) 경유.
@@ -2830,7 +2834,7 @@ function rDash(){
   const rate=tR>0?tRes/tR*100:0,pRate=pR>0?pRes/pR*100:0;
   const tUnits=dashSites().reduce((a,s)=>a+(s.units||0),0);
   document.getElementById('dkpi').innerHTML=[
-    {cls:'bl',label:'관리대상현장',valHTML:`${tUnits.toLocaleString()}<span class="u">세대</span>`,meta:`${dashSites().length.toLocaleString()}개 현장`,icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'},
+    {cls:'bl',label:'관리대상현장',valHTML:`<span class="kpi-pc">${tUnits.toLocaleString()}<span class="u">세대</span></span><span class="kpi-mo kpi-team">${esc((((S.teams||[]).find(t=>t.id===S.teamId)||(S.teams||[])[0])||{}).name||'전체')}</span>`,meta:`<span class="kpi-pc">${dashSites().length.toLocaleString()}개 현장</span><span class="kpi-mo">${dashSites().length}개 현장 ${tUnits.toLocaleString()}세대</span>`,icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'},
     {cls:'sk',label:'전체 접수',val:tR,unit:'건',meta:`세대당 ${tUnits>0?(tR/tUnits).toFixed(1):'0.0'}건`,icon:'M12 2H4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z'},
     {cls:'ms',label:'처리 완료',val:tRes,unit:'건',meta:`처리율 ${rate.toFixed(1)}%`,icon:'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'},
     {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`,icon:'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'},
@@ -3041,7 +3045,7 @@ function rCharts(all){
   // Globally disable datalabels by default (enabled per-dataset where needed)
   if(window.ChartDataLabels&&!Chart.__dlOff){Chart.register(ChartDataLabels);Chart.defaults.set('plugins.datalabels',{display:false});Chart.__dlOff=true;}
   // Center-text plugin for doughnut total
-  if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
+  if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
   // 모든 차트 통일 외부 툴팁 — ltrbar와 동일 룩 (항목 그레이 / 수치 볼드 흰색 / 간격 구분)
   if(!Chart.__exTip){
     const tipEl=document.getElementById('htooltip');
@@ -3233,7 +3237,7 @@ function vacPaneHTML(sid,site,cm,stat,kind){
         <div class="vseg vseg-edit" role="button" tabindex="0" data-act="vac.edit" data-sid="${esc(sid)}" data-vl="${esc(vl)}" data-sf="${esc(statusField)}">
           <div class="vseg-l">${vl}</div>
           <div class="vseg-v">${_hasV?_vu.toLocaleString():'<span class="vph">입력</span>'}<span class="vseg-u">${_u}</span></div>
-          <div class="vseg-m">미분양 ${_mb.toLocaleString()} · 미키불출 ${_mk.toLocaleString()}</div>
+          <div class="vseg-m">미분양 ${_mb.toLocaleString()}·미키 ${_mk.toLocaleString()}</div>
         </div>
         <div class="vseg"><div class="vseg-l">전체 접수</div><div class="vseg-v">${stat.T.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">${_u}당 ${_perRecv}건</div></div>
         <div class="vseg"><div class="vseg-l">처리 완료</div><div class="vseg-v">${stat.Res.toLocaleString()}<span class="vseg-u">건</span></div><div class="vseg-m">처리율 ${_vrate}%</div></div>
@@ -3505,7 +3509,7 @@ function buildSiteMom(sid,st){
 }
 function buildSiteTradeDonut(sid){
   const mxEl=document.getElementById('c-mx-'+sid);if(!mxEl)return;
-  if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Noto Sans KR',sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
+  if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
   const am={};(S.def[sid]||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
   if(window.__CAPTURE){(window.__CAPTURE.siteAm=window.__CAPTURE.siteAm||{})[sid]={...am};}
