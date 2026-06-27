@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-5oo3PpDqmTtxr9Cm/VtF6o2MH1g0zegs6UCPgFU46jg=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
@@ -128,9 +128,7 @@ svg{display:block;flex-shrink:0;}
 #scontent .ct{font-size:16px;color:var(--ct);}
 
 /* KPI */
-.kg{display:grid;gap:12px;margin-bottom:16px;}
-.kg4{grid-template-columns:repeat(4,1fr);}
-.kg5{grid-template-columns:repeat(5,1fr);}
+
 .kc{border-radius:var(--rxl);padding:16px 18px;position:relative;overflow:hidden;border:1px solid transparent;}
 .kc.bl{background:linear-gradient(135deg,var(--b600),var(--b900));color:#fff;}
 .kc.sk{background:linear-gradient(135deg,var(--b400),var(--b600));color:#fff;}
@@ -202,9 +200,7 @@ body.viewer .set-grid{grid-template-columns:1fr;}
 .utbl-name .fbu-av svg{width:16px;height:16px;}
 .utbl-nick{font-size:13px;font-weight:600;color:var(--lbl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .utbl-mail{font-size:12.5px;color:var(--lbl2);white-space:nowrap;}
-.smtbl{table-layout:fixed;}
-.smtbl th{padding:8px 10px;font-size:11px;}
-.smtbl td{padding:9px 10px;font-size:13px;}
+
 .mc{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--b100),var(--b200));color:var(--b900);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--rp);border:1px solid var(--b200);}
 .saved-mark{position:absolute;top:-9px;right:6px;font-size:10px;font-weight:700;color:#1A7A3C;background:rgba(52,199,89,.14);border:1px solid rgba(52,199,89,.3);padding:1px 6px;border-radius:99px;opacity:0;transform:translateY(2px);transition:opacity .25s ease,transform .25s ease;pointer-events:none;letter-spacing:.02em;}
 .saved-mark.show{opacity:1;transform:translateY(0);}
@@ -262,7 +258,7 @@ table.dt-detail th{text-align:center!important;}
 .bbl{background:var(--b100);color:var(--b800);}
 .bgn{background:rgba(52,199,89,.12);color:#1A7A3C;}
 .brd{background:rgba(255,59,48,.1);color:#C0392B;}
-.bam{background:rgba(255,149,0,.12);color:#A0590A;}
+
 .bgr{background:var(--fill);color:var(--lbl3);}
 
 /* LTR BAR — 장기미처리 비율 stacked bar (테이블 셀) */
@@ -314,24 +310,21 @@ table.dt-detail th{text-align:center!important;}
 #htooltip.show{opacity:1;}
 #htooltip.gl{transition:opacity .15s ease,left .13s cubic-bezier(.22,1,.36,1),top .13s cubic-bezier(.22,1,.36,1);}
 #htooltip.sb-mode{transform:translateY(-50%);}
-#htooltip .ttitle{font-weight:700;font-size:12.5px;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,.18);}
+
 #htooltip .trow{display:flex;align-items:center;gap:8px;}
 #htooltip .tmark{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
 #htooltip .tlabel{flex:1;color:rgba(255,255,255,.78);}
 #htooltip .tval{font-weight:600;font-variant-numeric:tabular-nums;color:#fff;margin-left:8px;}
-#htooltip .tsum{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.14);display:flex;justify-content:space-between;font-weight:700;}
 
 /* PROGRESS */
-.pg{height:5px;background:var(--fill2);border-radius:99px;overflow:hidden;}
-.pgf{height:100%;border-radius:99px;}
+
 .pgf.bl{background:linear-gradient(90deg,var(--b400),var(--b600));}
 .pgf.gn{background:var(--gn);}
 .pgf.am{background:var(--am);}
 .pgf.rd{background:var(--rd);}
 
 /* TABS */
-.tbar{display:flex;gap:3px;background:var(--fill);padding:3px;border-radius:var(--rlg);margin-bottom:16px;width:fit-content;}
-.tbtn{padding:6px 13px;font-size:12px;font-weight:600;color:var(--lbl2);border-radius:var(--rmd);border:none;background:transparent;cursor:pointer;transition:all .15s;white-space:nowrap;}
+
 .tbtn.act{background:var(--bg2);color:var(--lbl);box-shadow:0 1px 4px rgba(0,0,0,.08);}
 
 /* INPUTS */
@@ -366,20 +359,16 @@ table.dt-detail th{text-align:center!important;}
 .vmodal-sum span{font-size:12px;color:var(--lbl3);}
 .vmodal-sum b{font-size:22px;font-weight:700;color:var(--b700);}
 .vmodal-btn{width:100%;background:linear-gradient(135deg,var(--b600),var(--b950));color:#fff;font-size:13px;font-weight:600;padding:10px;border-radius:var(--rmd);border:none;cursor:pointer;}
-.txta{width:100%;padding:10px 14px;min-height:72px;border:1.5px solid var(--sepo);border-radius:var(--rmd);font-size:13px;color:var(--lbl);background:var(--bg2);resize:vertical;line-height:1.6;transition:border-color .15s,box-shadow .15s;}
-.txta:focus{border-color:var(--b400);box-shadow:0 0 0 3px rgba(83,140,222,.14);}
-.txta::placeholder{color:var(--lbl3);}
+
 .sel{width:100%;padding:10px 14px;border:1.5px solid var(--sepo);border-radius:var(--rmd);font-size:14px;color:var(--lbl);background:var(--bg2);cursor:pointer;-webkit-appearance:none;}
 .sel:focus{border-color:var(--b400);}
 
 /* SECTION HDR */
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .st{font-size:13px;font-weight:700;color:var(--lbl);display:flex;align-items:center;gap:8px;}
-.snum{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
 
 /* CHART */
 .cw{position:relative;width:100%;}
-.h160{height:160px;} .h180{height:180px;}
 
 /* Dashboard charts that need to fill their flex card */
 .opsr .card{display:flex;flex-direction:column;}
@@ -388,24 +377,12 @@ table.dt-detail th{text-align:center!important;}
 .dn-side{height:100%;}
 
 /* SITE HERO */
-.hero{background:linear-gradient(135deg,var(--b700),var(--b950));border-radius:var(--rxl);padding:20px 24px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0%,rgba(255,255,255,.13) 0%,transparent 60%);}
-.hn{font-size:20px;font-weight:700;}
-.hrg{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 9px;border-radius:var(--rp);background:rgba(255,255,255,.18);margin-left:10px;}
-.hm{display:flex;gap:20px;margin-top:11px;font-size:12px;color:rgba(255,255,255,.62);}
-.hm b{color:#fff;font-weight:600;}
-.ha{position:absolute;right:24px;top:50%;transform:translateY(-50%);text-align:right;}
-.hal{font-size:10px;color:rgba(255,255,255,.48);}
-.hav{font-size:17px;font-weight:700;color:#fff;}
 
 /* COMPARE */
-.cmprow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.cmpc{background:var(--bg2);border-radius:var(--rlg);padding:12px 14px;border:1px solid var(--sep);}
-.cmpl{font-size:10.5px;color:var(--lbl2);margin-bottom:4px;}
-.cmpv{font-size:18px;font-weight:700;color:var(--lbl);}
+
 .cmpv .u{font-size:11px;font-weight:400;color:var(--lbl2);}
-.cmpd{font-size:11px;margin-top:3px;}
-.cup{color:var(--rd);} .cdn{color:var(--gn);} .csm{color:var(--lbl3);}
+
+ .cdn{color:var(--gn);} 
 
 /* AI / COMMENT */
 .aib{background:linear-gradient(135deg,var(--b50),var(--b100));border:1.5px solid var(--b200);border-radius:var(--rlg);padding:14px 16px;}
@@ -428,26 +405,20 @@ table.dt-detail th{text-align:center!important;}
 .uzi svg{width:21px;height:21px;color:#fff;}
 .uzt{font-size:13.5px;font-weight:600;color:var(--lbl);}
 .uzh{font-size:11px;color:var(--lbl2);margin-top:4px;}
-.pvww{max-height:260px;overflow-y:auto;border-radius:var(--rmd);border:1px solid var(--sep);}
-.upgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+
 @media(max-width:900px){.upgrid{grid-template-columns:1fr;}}
 
 /* GRID HELPERS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
 .ins-grid{display:flex;flex-direction:column;gap:10px;}
 @media(max-width:900px){.ins-grid{gap:8px;}}
 .fb{display:flex;align-items:center;justify-content:space-between;}
-.fg{display:flex;align-items:center;gap:8px;}
-.mb12{margin-bottom:12px;} .mb16{margin-bottom:16px;}
-.cr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-.cr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
-.dn-card{padding:14px 16px;}
+
+.mb12{margin-bottom:12px;} 
+
 .dn-card .ct{font-size:14px;color:var(--ct);margin-bottom:10px;font-weight:600;}
-.dn-wrap{display:flex;gap:10px;align-items:center;}
-.dn-canv{flex:0 0 30%;aspect-ratio:1;max-width:160px;}
-.dn-lg{flex:1 1 70%;display:flex;flex-direction:column;gap:4px;font-size:11px;min-width:0;}
-.dn-lg.cols-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 6px;font-size:10.5px;}
+
 .dn-lg .it{display:flex;align-items:center;gap:5px;min-width:0;}
 .dn-lg.cols-2 .nm{width:50px;flex:none;}
 .dn-lg .dt{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -522,23 +493,17 @@ html,body,#app,#main,#content{display:block!important;height:auto!important;over
 .akpi .ki svg{width:9px!important;height:9px!important;}
 
 /* HERO (사이트 패널 상단) */
-.hero{padding:11px 15px!important;margin-bottom:7px!important;}
-.hn{font-size:14pt!important;} .hm{font-size:8.5pt!important;gap:14px!important;}
-.hav{font-size:12pt!important;}
 
 /* 미니 KPI (사이트 패널) */
-.kg4{grid-template-columns:repeat(4,1fr)!important;}
-.kg5{grid-template-columns:repeat(5,1fr)!important;}
+
 .kv{font-size:14pt!important;}
 .kl{font-size:8pt!important;}
 
 /* 2열 그리드 (전월대비 + 공종별 미처리 등) — 웹과 동일 */
 .opsr,.g2,.cr{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;min-height:0!important;margin-bottom:7px!important;}
 .opsr>.card,.g2>.card,.cr>.card{margin-bottom:0!important;}
-.cr3,.g3{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:6px!important;}
+
 .ins-grid{display:flex!important;flex-direction:column!important;gap:5px!important;}
-.cmprow{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important;}
-.cmpc{padding:7px 9px!important;} .cmpv{font-size:13pt!important;} .cmpl{font-size:7.5pt!important;} .cmpd{font-size:7.5pt!important;}
 
 /* 테이블 — 가독성 확보 */
 .dt{font-size:6.5pt!important;table-layout:fixed!important;}
@@ -782,17 +747,8 @@ input,select,textarea,button{display:none!important;}
 }
 
 /* FILTER BAR */
-.fbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.85);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);padding:12px 16px;border-radius:var(--rlg);border:1px solid var(--sep);margin-bottom:14px;}
-.fbar-l{font-size:11px;font-weight:700;color:var(--lbl2);letter-spacing:.05em;text-transform:uppercase;margin-right:4px;}
-.fchip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:var(--rp);background:var(--fill);color:var(--lbl);font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
-.fchip:hover{background:var(--fill2);}
+
 .fchip.act{background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;}
-.fgrp{display:flex;align-items:center;gap:4px;padding-right:10px;border-right:1px solid var(--sep);}
-.fgrp:last-child{border-right:none;padding-right:0;}
-.fgrp-l{font-size:10.5px;font-weight:600;color:var(--lbl3);margin-right:6px;}
-.fclr{margin-left:auto;font-size:11px;color:var(--b600);background:transparent;border:none;cursor:pointer;font-weight:600;padding:4px 8px;border-radius:6px;}
-.fclr:hover{background:var(--b50);}
-.fbar .fchip svg{width:11px;height:11px;}
 
 /* TAB NAV — sticky for site panel */
 .tnav{display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:6px;border-radius:var(--rxl);border:1px solid var(--sep);margin-bottom:16px;position:sticky;top:0;z-index:50;}
@@ -845,7 +801,7 @@ input,select,textarea,button{display:none!important;}
 .mom-row .delta .dl{font-size:10px;color:var(--lbl3);font-weight:600;}
 
 /* Horizontal bar list (chart 1) */
-.hbl{display:flex;flex-direction:column;gap:9px;}
+
 .hbl .row{display:grid;grid-template-columns:60px 1fr 70px;align-items:center;gap:10px;font-variant-numeric:tabular-nums;padding:2px 0;border-radius:4px;cursor:default;}
 .hbl .row:hover{background:var(--bg);}
 .hbl .row .nm{font-size:11.5px;font-weight:600;color:var(--lbl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -857,33 +813,15 @@ input,select,textarea,button{display:none!important;}
 .hbl .row .vl b{color:var(--lbl);font-weight:700;}
 
 /* Risk gauge (chart 2) */
-.gau-top{display:flex;align-items:flex-end;justify-content:space-between;padding:6px 0 12px;border-bottom:1px solid var(--sep);margin-bottom:12px;}
-.gau-top .gv{font-size:32px;font-weight:800;color:var(--lbl);font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em;}
+
 .gau-top .gv .u{font-size:13px;font-weight:600;color:var(--lbl2);margin-left:3px;}
-.gau-top .glb{font-size:10.5px;color:var(--lbl2);font-weight:600;margin-top:6px;}
-.gau-top .grs{text-align:right;}
-.gau-top .grs .rl{font-size:10px;color:var(--lbl3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;}
-.gau-top .grs .rv{font-size:13px;font-weight:700;color:var(--b800);font-variant-numeric:tabular-nums;}
-.gau-list{display:flex;flex-direction:column;gap:8px;}
-.gau-r{display:grid;grid-template-columns:60px 1fr 42px;gap:9px;align-items:center;font-variant-numeric:tabular-nums;padding:2px 0;border-radius:4px;cursor:default;}
-.gau-r:hover{background:var(--bg);}
+
 .gau-r .nm{font-size:11px;font-weight:600;color:var(--lbl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gau-r .gbar{position:relative;height:6px;background:var(--bg);border-radius:99px;overflow:hidden;}
-.gau-r .gbar .gfl{position:absolute;left:0;top:0;height:100%;border-radius:99px;transition:width .6s ease;}
-.gau-r .gbar .gfl.lv-ok{background:var(--b400);}
-.gau-r .gbar .gfl.lv-warn{background:var(--b700);}
-.gau-r .gbar .gfl.lv-bad{background:var(--b950);}
-.gau-r .gv{font-size:11px;font-weight:700;text-align:right;color:var(--lbl);}
-.gau-zones{display:flex;font-size:9.5px;color:var(--lbl3);margin-top:10px;padding-top:10px;border-top:1px dashed var(--sep);gap:14px;}
-.gau-zones span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle;}
-.gau-zones .z-ok::before{background:var(--b400);}
-.gau-zones .z-warn::before{background:var(--b700);}
-.gau-zones .z-bad::before{background:var(--b950);}
 
 /* Treemap (chart 3) */
-.tm-wrap{position:relative;width:100%;aspect-ratio:1;max-width:200px;margin:0 auto;}
+
 #c-mx{display:block;}
-.tm-lg{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:5px;margin-top:14px;padding-top:12px;border-top:1px solid var(--sep);font-size:12px;}
+
 .tm-lg .it{display:flex;align-items:center;min-width:0;height:18px;font-variant-numeric:tabular-nums;cursor:pointer;border-radius:4px;transition:background .15s;}
 .tm-lg .it:hover{background:var(--bg);}
 .tm-lg .it .l{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
@@ -919,13 +857,13 @@ input,select,textarea,button{display:none!important;}
 .akpi .kc.kc-site .km{font-size:10.5px;margin-top:3px;opacity:.85;line-height:1.45;}
 
 /* UPLOAD STEPPER */
-.stepper{display:flex;align-items:center;gap:0;margin-bottom:18px;padding:14px 18px;background:linear-gradient(135deg,var(--b50),#fff);border:1px solid var(--b200);border-radius:var(--rlg);}
+
 .step{display:flex;align-items:center;gap:9px;flex:1;}
 .step-c{width:26px;height:26px;border-radius:50%;background:var(--bg2);color:var(--lbl3);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid var(--sepo);font-variant-numeric:tabular-nums;}
 .step.act .step-c{background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;border-color:transparent;box-shadow:0 0 0 4px rgba(83,140,222,.18);}
 .step.done .step-c{background:var(--b500);color:#fff;border-color:transparent;}
 .step.done .step-c svg{width:13px;height:13px;}
-.step-l{font-size:12.5px;font-weight:600;color:var(--lbl2);white-space:nowrap;}
+
 .step.act .step-l{color:var(--b800);font-weight:700;}
 .step.done .step-l{color:var(--lbl);}
 
@@ -942,14 +880,9 @@ input,select,textarea,button{display:none!important;}
 .dt th .sortmk{display:inline-block;width:10px;color:var(--lbl3);font-size:10px;margin-left:2px;}
 .dt th.act .sortmk{color:var(--b600);}
 .dt th.act{color:var(--b700);}
-.matrix{font-size:12px;}
-.matrix th,.matrix td{padding:7px 9px;}
-.matrix td.heat{position:relative;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;}
+
 .matrix td.heat.l1{background:#F1F7FD;}
 .matrix td.heat.l2{background:#DFEBFA;}
-.matrix td.heat.l3{background:#A0C8F0;color:var(--b950);}
-.matrix td.heat.l4{background:#538CDE;color:#fff;}
-.matrix td.heat.l5{background:#1F2B4C;color:#fff;}
 
 /* INSIGHT call-outs */
 .ic{display:flex;gap:14px;padding:14px 16px;border-radius:var(--rlg);border:1.5px solid;align-items:flex-start;cursor:default;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;}
@@ -971,17 +904,14 @@ input,select,textarea,button{display:none!important;}
 .ic.bad .ic-t b{color:#C0392B;}
 
 /* SUMMARY STATS */
-.statg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;}
+
 .stat{background:var(--bg2);border:1px solid var(--sep);border-radius:var(--rmd);padding:12px 14px;}
-.stat-l{font-size:10.5px;color:var(--lbl2);font-weight:600;margin-bottom:4px;}
-.stat-v{font-size:20px;font-weight:700;color:var(--lbl);font-variant-numeric:tabular-nums;line-height:1.1;}
+
 .stat-v .u{font-size:11px;font-weight:400;color:var(--lbl2);margin-left:2px;}
-.stat-m{font-size:10.5px;color:var(--lbl3);margin-top:2px;}
 
 /* COLUMN TOGGLE chip group */
-.colchip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--sepo);background:var(--bg2);color:var(--lbl2);user-select:none;}
+
 .colchip.on{background:var(--b50);color:var(--b800);border-color:var(--b300);}
-.colchip svg{width:10px;height:10px;}
 
 /* MAIN CHART CARD (인라인에서 추출 — 모바일 오버라이드 위해) */
 .main-chart-card{aspect-ratio:16/4;min-height:256px;display:flex;flex-direction:column;}
@@ -1022,8 +952,7 @@ input,select,textarea,button{display:none!important;}
   /* 첫 슬롯은 가로 2칸 차지 → 1 / 2 3 / 4 5 형태 */
   .akpi > .kc:first-child,.kg4 > .kc:first-child,.kg5 > .kc:first-child{grid-column:span 2!important;}
   .set-grid{grid-template-columns:minmax(0,1fr)!important;}
-  .smtbl{font-size:11.5px;}
-  .smtbl th,.smtbl td{padding:6px 8px;}
+
   .akpi .kc{padding:11px 13px;min-height:0;}
   .akpi .kl,.kl{font-size:10px!important;}
   .akpi .kv,.kv{font-size:18px!important;}
@@ -1033,14 +962,12 @@ input,select,textarea,button{display:none!important;}
 
   /* 모든 다단 그리드 → 1열 */
   .cr,.cr3,.g2,.g3,.opsr{grid-template-columns:1fr!important;gap:10px;min-height:0!important;}
-  .cmprow{grid-template-columns:repeat(2,1fr);gap:8px;}
 
   /* 메인 차트 카드: aspect-ratio 해제, 고정 높이로 */
   .main-chart-card{aspect-ratio:auto;min-height:208px;}
   .main-chart-card .chart-lg{padding-left:0!important;justify-content:center;}
 
   /* 차트 높이 일관화 */
-  .h160,.h180{height:160px;}
 
   /* 도넛 + 사이드 레전드: 세로로 */
   .dn-side{flex-direction:column;gap:14px;height:auto;padding:8px 4px;align-items:center;}
@@ -1053,8 +980,6 @@ input,select,textarea,button{display:none!important;}
   .dn-side .lg .pct{font-size:11px;text-align:right;white-space:nowrap;padding-left:4px;}
 
   /* 데스크탑 도넛 fallback 레전드 */
-  .dn-lg.cols-2{grid-template-columns:1fr 1fr;font-size:10px;}
-  .dn-canv{flex:0 0 40%;max-width:140px;}
 
   /* MoM 패널: 라벨 폭 축소 */
   .mom-row{grid-template-columns:60px 1fr auto;gap:8px;padding:5px 2px;}
@@ -1076,11 +1001,8 @@ input,select,textarea,button{display:none!important;}
   .dt th{font-size:9.5px;}
 
   /* HERO */
-  .hero{padding:14px 16px;}
-  .hn{font-size:17px;}
-  .hm{gap:10px;font-size:11px;flex-wrap:wrap;}
-  .ha{position:static;transform:none;text-align:left;margin-top:10px;}
-  .hav{font-size:14px;}
+
+  
 
   /* 탭 네비: 가로 스크롤 */
   .tnav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;position:relative;}
@@ -1088,11 +1010,8 @@ input,select,textarea,button{display:none!important;}
   .tnav-i .cnt{font-size:9.5px;}
 
   /* 필터 바: wrap */
-  .fbar{padding:10px 12px;gap:6px;}
-  .fbar-l{display:none;}
-  .fgrp{padding-right:6px;border-right:none;flex-wrap:wrap;gap:4px;}
-  .fgrp-l{font-size:10px;}
-  .fchip{padding:4px 9px;font-size:11px;}
+
+  
 
   /* 카드 패딩 축소 */
   .card{padding:14px 14px;}
@@ -1112,8 +1031,6 @@ input,select,textarea,button{display:none!important;}
   .mt2{font-size:15px;margin-bottom:14px;}
 
   /* 업로드 stepper: 텍스트 숨김 */
-  .step-l{display:none;}
-  .stepper{padding:12px 14px;}
 
   /* 업로드 영역 패딩 축소 */
   .uz{padding:30px 16px;}
@@ -1180,9 +1097,8 @@ input,select,textarea,button{display:none!important;}
 @media screen and (max-width:480px){
   .akpi,.kg4,.kg5{grid-template-columns:1fr 1fr!important;gap:6px;}
   .akpi .kv,.kv{font-size:17px!important;}
-  .hn{font-size:15px;}
-  .hm{font-size:10.5px;gap:8px;}
-  .cmprow{grid-template-columns:1fr 1fr;}
+
+  
   .dn-side .canv{height:170px;width:170px;}
 }
 
@@ -1197,8 +1113,7 @@ input,select,textarea,button{display:none!important;}
 .teamsel .tsel-mgr:hover{background:var(--fill2);color:var(--b600);}
 .teamsel .tsel-mgr svg{width:15px;height:15px;}
 /* 팀·권역 관리 */
-.tm-sec{margin-bottom:16px;}
-.tm-sec:last-child{margin-bottom:0;}
+
 .tm-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:700;color:var(--lbl2);text-transform:uppercase;letter-spacing:.05em;}
 .tm-add{padding:4px 10px;font-size:11px;}
 .tm-list{display:flex;flex-direction:column;gap:4px;}
@@ -1214,7 +1129,7 @@ input,select,textarea,button{display:none!important;}
 .tm-del:hover{color:var(--rd);background:rgba(255,59,48,.1);}
 .tm-locked{background:var(--fill);border-style:dashed;}
 .tm-lockname{flex:1;min-width:0;font-weight:600;font-size:13px;color:var(--lbl2);display:flex;align-items:center;gap:7px;padding:5px 7px;}
-.tm-lockbadge{font-size:9.5px;font-weight:700;letter-spacing:.02em;color:var(--am);background:rgba(255,149,0,.12);border-radius:99px;padding:1px 6px;white-space:nowrap;}
+
 .tm-lockicon{color:var(--lbl3);cursor:default;}
 .ulex-lbl{font-size:11px;text-transform:none;letter-spacing:0;color:var(--lbl3);font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:5px;}
 .ulex-sep{height:1px;background:var(--sep);margin:14px 0;}
@@ -1235,10 +1150,9 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
 .sw .sw-t::before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.25);}
 .sw input:checked + .sw-t{background:var(--gn);}
 .sw input:checked + .sw-t::before{transform:translateX(14px);}
-.set-grid-1{grid-template-columns:minmax(0,560px)!important;}
-.gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;}
+
 @media(max-width:720px){.gh-grid{grid-template-columns:1fr;}}
-.snap-badge{display:none;}
+
 body.snap .nvi[data-view="manage"],body.snap .nvi[data-view="settings"],body.snap .sb-bottom .sbsl{display:none!important;}
 body.snap textarea,body.snap [contenteditable="true"]{pointer-events:none!important;background:transparent!important;}
 /* 사내 뷰어(@hdec.co.kr 로그인) — 업로드/관리/설정만 숨기고 처리계획·분석의견 입력은 허용 */
@@ -1457,11 +1371,13 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" data-act="modal.close" class=""><div id="mb" data-act="modal.stop"><div class="mt2" id="mt"></div><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>
 <script>
-const S={view:'dashboard',sid:null,sites:[],def:{},cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,defVer:0,teams:[],teamId:null};
+const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,defVer:0,teams:[],teamId:null};
 // calc() 메모이즈 캐시. 키 = 현장id|기준월|defVer|필터서명.
-// S.def 내용이 바뀌면 bumpDef()가 defVer를 올려 전체 캐시를 무효화한다.
+// 캐시 무효화는 자동: S.def를 Proxy로 감싸 set/delete 시 bumpDef() 호출 → defVer↑ + 캐시 비움.
+// (S.def는 전부 통째 교체/삭제만 — 깊은 in-place 편집(push/splice/필드수정)은 트랩 미포착이라 금지: 항상 통째 교체)
 const _calcCache=new Map();
 function bumpDef(){S.defVer++;_calcCache.clear();}
+S.def=new Proxy(S.def,{set(t,k,v){t[k]=v;bumpDef();return true;},deleteProperty(t,k){delete t[k];bumpDef();return true;}});
 // ===== 팀 / 권역 모델 =====
 function uid(p){return (p||'id')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function makeDefaultTeam(){return{id:uid('t'),name:'H서비스중부팀',regions:[],regionOrder:[]};}
@@ -1501,9 +1417,9 @@ function addTeam(name){
   name=(name||'').trim();if(!name){toast('팀 이름을 입력하세요');return null;}
   if(S.teams.some(t=>t.name===name)){toast('같은 이름의 팀이 있습니다');return null;}
   const t={id:uid('t'),name,regions:[],regionOrder:[]};
-  S.teams.push(t);lsSave();fbPushTeams();return t;
+  S.teams.push(t);lsSave();return t;
 }
-function renameTeam(id,name){if(manageLocked())return;name=(name||'').trim();if(!name)return;const t=S.teams.find(x=>x.id===id);if(!t)return;t.name=name;lsSave();fbPushTeams();rTeamSel();}
+function renameTeam(id,name){if(manageLocked())return;name=(name||'').trim();if(!name)return;const t=S.teams.find(x=>x.id===id);if(!t)return;t.name=name;lsSave();rTeamSel();}
 function deleteTeam(id){
   if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}
   if(S.teams.length<=1){toast('마지막 팀은 삭제할 수 없습니다');return;}
@@ -1514,12 +1430,12 @@ function deleteTeam(id){
   S.sites=S.sites.filter(s=>s.teamId!==id);
   S.teams=S.teams.filter(x=>x.id!==id);
   if(S.teamId===id)S.teamId=S.teams[0].id;
-  bumpDef();lsSave();fbPushTeams();fbPushSites();fbPushComments();fbPushAna();
+  lsSave();
   rTeamSel();rNav();rSMgr();if(S.view==='dashboard')rDash();toast('팀 삭제됨');
 }
-function addRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();fbPushTeams();rNav();rSMgr();}
-function renameRegion(oldName,name){if(manageLocked())return;const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();fbPushTeams();fbPushSites();rNav();rSMgr();if(S.view==='dashboard')rDash();}
-function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();fbPushTeams();rNav();rSMgr();}
+function addRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();rNav();rSMgr();}
+function renameRegion(oldName,name){if(manageLocked())return;const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();rNav();rSMgr();if(S.view==='dashboard')rDash();}
+function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();rNav();rSMgr();}
 // 사용자 정의 권역 순서 반영 (없으면 팀 기본 순서). 목록에 없는/추가된 권역은 뒤에 붙임.
 function orderedRGS(){const t=curTeam();const base=(t&&Array.isArray(t.regions))?t.regions.filter(r=>r!==PERM_REGION):[];const ord=(t&&Array.isArray(t.regionOrder))?t.regionOrder:[];const seen=new Set();const out=[];for(const r of ord){if(base.includes(r)&&!seen.has(r)){out.push(r);seen.add(r);}}for(const r of base){if(!seen.has(r)){out.push(r);seen.add(r);}}out.push(PERM_REGION);return out;}
 // 사이드바 팀 선택기 렌더
@@ -1563,7 +1479,7 @@ function updSite(id,field,value){
   if(field==='units'||field==='buildings'||field==='commercialUnits')s[field]=Number(value)||0;
   else if(field==='hasCommercial'||field==='showVacant')s[field]=!!value;
   else s[field]=value;
-  lsSave();fbPushSites();
+  lsSave();
   if(field==='hasCommercial'||field==='showVacant')fb2SiteConfigWrite(id);
   rNav();
   if((field==='name'||field==='region')&&S.view==='dashboard')rDash();
@@ -1649,7 +1565,7 @@ registerActions('click', {
 });
 // ── [전환 완료] input 액션 ──
 registerActions('input', {
-  'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);fbPushConfig();},
+  'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
   'set.exToken':(el)=>{S.exTk=el.value;localStorage.setItem('exTk',el.value);},
   'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
   'site.completion':(el)=>clampYear(el), 'util.clampYear':(el)=>clampYear(el),
@@ -1722,9 +1638,7 @@ function _sbBlockTouch(e){if(!(e.target.closest&&e.target.closest('#sidebar')))e
 function openMobileSB(){const c=document.getElementById('content');document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');_sbScroll=c?c.scrollTop:0;if(c){c.style.position='fixed';c.style.top=(-_sbScroll)+'px';c.style.left='0';c.style.right='0';c.style.bottom='0';c.style.overflow='hidden';}document.body.classList.add('sb-locked');document.addEventListener('touchmove',_sbBlockTouch,{passive:false});}
 function closeMobileSB(){const c=document.getElementById('content');document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');if(c){c.style.position='';c.style.top='';c.style.left='';c.style.right='';c.style.bottom='';c.style.overflow='';c.scrollTop=_sbScroll;}document.body.classList.remove('sb-locked');document.removeEventListener('touchmove',_sbBlockTouch,{passive:false});}
 
-// PERSISTENCE — 공유 폴더(File System Access API, OneDrive 등) + localStorage/IndexedDB 백업.
-// 주의: fb* 명칭은 과거 Firebase 시절의 호환 shim. 실제 저장은 전부 폴더(sh*) 경유.
-// FB는 멀티유저 실시간 동기화용, IndexedDB는 영구 로컬 저장소.
+// PERSISTENCE — IndexedDB(영구 로컬 저장: metaLoad/defLoadAll/lsSave) + Firebase(FB2: 멀티유저 실시간 동기화).
 const LS_KEY='hdec_state_v1';// IndexedDB 마이그레이션용
 
 // ===== IndexedDB =====
@@ -1828,7 +1742,6 @@ async function defLoadAll(){
       }catch(e){console.warn('defLoad parse failed for',row.sid,e);}
     }
   }catch(e){console.warn('defLoadAll failed',e);}
-  bumpDef();
 }
 async function defDelete(sid){try{await dbDel('defects',sid);}catch(e){console.warn('defDelete failed',e);}}
 
@@ -1838,17 +1751,6 @@ function showCover(){const g=document.getElementById('coverGate');if(g)g.style.d
 function hideCover(){const g=document.getElementById('coverGate');if(g)g.style.display='none';}
 // 입력 중(텍스트영역/인풋) 여부 — 실시간 동기화가 타이핑을 덮어쓰지 않도록 FB2가 사용
 function shEditing(){const a=document.activeElement;return !!(a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.isContentEditable));}
-
-// ===== 구 OneDrive 공유 폴더 방식 제거됨 — 공유·인증은 Firebase(FB2)가 전담 =====
-// 아래는 앱 곳곳(팀·권역·현장 관리·업로드)에서 호출되는 옛 동기화 훅의 무해한 no-op 스텁.
-// (로컬 저장은 IndexedDB: metaLoad/defLoadAll/lsSave / 공유는 FB2: plans·analysis·report)
-function fbPushSites(){}
-function fbPushComments(){}
-function fbPushCommentsDebounced(){}
-function fbPushTeams(){}
-function fbPushAna(){}
-function fbPushConfig(){}
-function fbDeleteDefects(){}
 
 // ===================================================================
 // ===== 사내 Firebase 공유 (report-c29a1) — 인증 게이트 + 실시간 =====
@@ -2212,7 +2114,7 @@ function fb2ApplyReport(rm,rep){
   S.sites=Array.isArray(dash.sites)?dash.sites:[];
   S.teams=Array.isArray(dash.teams)?dash.teams:[];
   if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
-  S.def={}; // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
+  Object.keys(S.def).forEach(_k=>delete S.def[_k]); // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
   const st={},siteWks={},siteAm={};
   for(const sid in rep){
     if(sid==='_dash'||sid==='_meta')continue;
@@ -2375,7 +2277,7 @@ async function fb2Publish(){
     upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
     dashSites().forEach(function(s2){
       const r=calc(S.def[s2.id]||[],s2,rm);
-      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:[]});
+      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:[],critUl:redactUL(r.critUl)});
       const cm=S.cmt[s2.id]||{},vac={};
       if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
       if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
@@ -2428,7 +2330,7 @@ function commitPlanSave(el){
     else{S.cmt[sid][field]=value;}
   }
   lsSave();
-  fbPushCommentsDebounced();
+  
   if(type==='cmt'&&key)fb2PlanWrite(sid,field,key,value); // 사내 Firebase 실시간 리프 쓰기
   showSaved(el);
 }
@@ -2450,8 +2352,7 @@ function dashSites(){return teamSites().filter(s=>!DASH_EXCLUDE_REGIONS.includes
 function calc(items,site,rm){
   if(window.__SNAP__){const _e=window.__SNAP__.st&&window.__SNAP__.st[site.id];if(_e)return _e;} // 스냅샷: 임베드 집계 반환
   // 메모이즈: (현장·기준월·데이터버전·건수) 조합으로 캐시. 건수를 내용 프록시로 사용한다.
-  // ★불변식: S.def 변경 시 반드시 bumpDef()로 defVer를 올려 캐시를 무효화할 것.
-  //   bumpDef() 없이 S.def[sid]를 in-place 수정하면 길이가 같은 다른 데이터가 stale 캐시를 맞는다.
+  // 캐시 무효화는 S.def Proxy가 자동 처리(set/delete). defVer·length는 키의 보조 식별자.
   const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(site.lastUploadedAt||'')+'|'+(items?items.length:0);
   const _hit=_calcCache.get(_ck);if(_hit)return _hit;
   const _res=_calcImpl(items,site,rm);
@@ -2681,7 +2582,7 @@ function reorderSite(dragId,targetId,after){
   let insertAt=arr.findIndex(s=>s.id===targetId);
   insertAt=after?insertAt+1:insertAt;
   arr.splice(insertAt,0,moved);
-  lsSave();fbPushSites();rNav();
+  lsSave();rNav();
 }
 function reorderRegion(dragR,targetR,after){
   if(dragR===targetR)return;
@@ -2692,7 +2593,7 @@ function reorderRegion(dragR,targetR,after){
   insertAt=after?insertAt+1:insertAt;
   ord.splice(insertAt,0,dragR);
   t.regionOrder=ord;
-  lsSave();fbPushTeams();rNav();
+  lsSave();rNav();
 }
 function tRg(el){el.classList.toggle('open');el.nextElementSibling.classList.toggle('closed',!el.classList.contains('open'));}
 function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!teamSites().length){el.innerHTML='<p style="font-size:12px;color:var(--lbl3);padding:22px 0;text-align:center">등록된 현장이 없습니다.<br><b>+ 현장 추가</b> 또는 <b>리스트 업로드</b>로 등록하세요.</p>';return;}
@@ -2750,16 +2651,15 @@ function sortPanel(tableId,th){
   if(st.col!==null){
     // 월별/주차별 테이블(월 셀 mcell 포함): 월 그룹 단위로 정렬 후 그룹 내 행 순서 유지
     const isMoWkTable=(tableId.startsWith('mo-')||tableId.startsWith('wk-'));
+    const getVal=(r)=>{const cell=r.children[st.col];if(!cell)return type==='str'?'':-Infinity;let txt=(cell.textContent||'').trim();if(type==='str')return txt;txt=txt.replace(/\u2212/g,'-').replace(/[▲▼]/g,'');const num=parseFloat(txt.replace(/[^0-9.\-]/g,''));return isNaN(num)?-Infinity:num;};
     if(isMoWkTable){
       // 행을 월 그룹으로 묶기 (mcell이 있는 행이 그룹 첫 행)
       const groups=[];let cur=null;
       rows.forEach(r=>{if(r.querySelector('td.mcell')){cur={rep:r,rows:[r]};groups.push(cur);}else if(cur){cur.rows.push(r);}else{const g={rep:r,rows:[r]};groups.push(g);cur=g;}});
-      const getVal=(r)=>{const cell=r.children[st.col];if(!cell)return type==='str'?'':-Infinity;let txt=(cell.textContent||'').trim();if(type==='str')return txt;txt=txt.replace(/\u2212/g,'-').replace(/[▲▼]/g,'');const num=parseFloat(txt.replace(/[^0-9.\-]/g,''));return isNaN(num)?-Infinity:num;};
       // 대표값: 그룹 내 mcell 행(첫 행) 기준
       groups.sort((a,b)=>{const va=getVal(a.rep),vb=getVal(b.rep);let cmp;if(type==='str')cmp=String(va).localeCompare(String(vb),'ko');else cmp=va-vb;return cmp*st.dir;});
       rows=groups.flatMap(g=>g.rows);
     }else{
-      const getVal=(r)=>{const cell=r.children[st.col];if(!cell)return type==='str'?'':-Infinity;let txt=(cell.textContent||'').trim();if(type==='str')return txt;txt=txt.replace(/\u2212/g,'-').replace(/[▲▼]/g,'');const num=parseFloat(txt.replace(/[^0-9.\-]/g,''));return isNaN(num)?-Infinity:num;};
       rows.sort((a,b)=>{const va=getVal(a),vb=getVal(b);let cmp;if(type==='str')cmp=String(va).localeCompare(String(vb),'ko');else cmp=va-vb;return cmp*st.dir;});
     }
   }
@@ -3051,7 +2951,7 @@ function rCharts(all){
     const tipEl=document.getElementById('htooltip');
     const colOf=(it)=>{const ds=it.dataset,ct=it.chart?.config?.type,dt=ds.type||ct;const bg=Array.isArray(ds.backgroundColor)?ds.backgroundColor[it.dataIndex]:ds.backgroundColor;if(dt==='line'&&typeof ds.borderColor==='string')return ds.borderColor;return bg||'#999';};
     Chart.defaults.plugins.tooltip.enabled=false;
-    Chart.defaults.plugins.tooltip.external=(ctx)=>{const tt=ctx.tooltip;if(!tipEl)return;if(tt.opacity===0){tipEl.classList.remove('show');tipEl.classList.remove('gl');return;}const items=tt.dataPoints||[];const ct=ctx.chart.config.type,isPie=ct==='doughnut'||ct==='pie';const html=items.map(it=>{const lbl=it.dataset.label||it.label||'';const raw=typeof it.parsed==='object'?(it.parsed.y??it.parsed.x??it.raw):it.parsed;const num=typeof raw==='number'?raw:Number(raw)||0;let valTxt=num.toLocaleString()+'건';if(isPie){const tot=(it.dataset.data||[]).reduce((a,b)=>a+(Number(b)||0),0);if(tot>0)valTxt+=` (${(num/tot*100).toFixed(1)}%)`;}return `<div class="trow"><span class="tmark" style="background:${colOf(it)}"></span><span class="tlabel">${lbl}</span><span class="tval">${valTxt}</span></div>`;}).join('');tipEl.innerHTML=html;const canvas=ctx.chart.canvas,r=canvas.getBoundingClientRect();const wasShown=tipEl.classList.contains('show');tipEl.classList.remove('sb-mode');tipEl.style.left=(r.left+tt.caretX)+'px';tipEl.style.top=(r.top+tt.caretY)+'px';if(wasShown){tipEl.classList.add('gl');}else{tipEl.classList.remove('gl');requestAnimationFrame(()=>{if(tipEl.classList.contains('show'))tipEl.classList.add('gl');});}tipEl.classList.add('show');};
+    Chart.defaults.plugins.tooltip.external=(ctx)=>{const tt=ctx.tooltip;if(!tipEl)return;if(tt.opacity===0){tipEl.classList.remove('show');tipEl.classList.remove('gl');return;}const items=tt.dataPoints||[];const ct=ctx.chart.config.type,isPie=ct==='doughnut'||ct==='pie';const html=items.map(it=>{const lbl=it.dataset.label||it.label||'';const raw=typeof it.parsed==='object'?(it.parsed.y??it.parsed.x??it.raw):it.parsed;const num=typeof raw==='number'?raw:Number(raw)||0;let valTxt=num.toLocaleString()+'건';if(isPie){const tot=(it.dataset.data||[]).reduce((a,b)=>a+(Number(b)||0),0);if(tot>0)valTxt+=` (${(num/tot*100).toFixed(1)}%)`;}return `<div class="trow"><span class="tmark" style="background:${colOf(it)}"></span><span class="tlabel">${esc(lbl)}</span><span class="tval">${valTxt}</span></div>`;}).join('');tipEl.innerHTML=html;const canvas=ctx.chart.canvas,r=canvas.getBoundingClientRect();const wasShown=tipEl.classList.contains('show');tipEl.classList.remove('sb-mode');tipEl.style.left=(r.left+tt.caretX)+'px';tipEl.style.top=(r.top+tt.caretY)+'px';if(wasShown){tipEl.classList.add('gl');}else{tipEl.classList.remove('gl');requestAnimationFrame(()=>{if(tipEl.classList.contains('show'))tipEl.classList.add('gl');});}tipEl.classList.add('show');};
     Chart.__exTip=true;
   }
   // Defer chart creation one frame so flex layout settles canvas dimensions — otherwise Chart.js initial render at 0px skips animation
@@ -3167,7 +3067,7 @@ function rChartsImpl(all){
     const tot=tmData.reduce((a,x)=>a+x.c,0);
     const tmColors=donutPalette();
     S.charts['mx']=new Chart(mxEl,{type:'doughnut',data:{labels:tmData.map(d=>d.t),datasets:[{data:tmData.map(d=>d.c),backgroundColor:tmColors,borderWidth:3,borderColor:chartSegBorder(),pointStyle:'circle',hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:tot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{caretPadding:32,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${tot>0?(ctx.parsed/tot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-    const mxLg=document.getElementById('c-mx-lg');if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${d.t}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+    const mxLg=document.getElementById('c-mx-lg');if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
   }
   // 4) 현장별 미처리 분포 도넛 — 미처리 건수 기준 12현장 분포
   dC('sx');const sxEl=document.getElementById('c-sx');if(sxEl){
@@ -3175,7 +3075,7 @@ function rChartsImpl(all){
     const sxTot=sxData.reduce((a,x)=>a+x.c,0);
     const sxColors=donutPalette();
     S.charts['sx']=new Chart(sxEl,{type:'doughnut',data:{labels:sxData.map(d=>d.t),datasets:[{data:sxData.map(d=>d.c),backgroundColor:sxColors,borderWidth:3,borderColor:chartSegBorder(),pointStyle:'circle',hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:sxTot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{caretPadding:32,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${sxTot>0?(ctx.parsed/sxTot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-    const sxLg=document.getElementById('c-sx-lg');if(sxLg){sxLg.innerHTML=sxData.map((d,i)=>`<div class="it" data-idx="${i}" title="${d.full}"><span class="l"><span class="dt" style="background:${sxColors[i%sxColors.length]}"></span><span class="nm">${d.t}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${sxTot>0?(d.c/sxTot*100).toFixed(1):0}%</span></div>`).join('');sxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['sx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['sx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+    const sxLg=document.getElementById('c-sx-lg');if(sxLg){sxLg.innerHTML=sxData.map((d,i)=>`<div class="it" data-idx="${i}" title="${d.full}"><span class="l"><span class="dt" style="background:${sxColors[i%sxColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${sxTot>0?(d.c/sxTot*100).toFixed(1):0}%</span></div>`).join('');sxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['sx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['sx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
   }
 }
 // 현장명 줄임말 — 범례 가독성. "힐스테이트"를 (앞/뒤 위치 무관) 제거한 뒤 앞 2글자만 사용.
@@ -3192,8 +3092,8 @@ function vacRowsHTML(sid,stat,cm,planField){
     const pc=topPrev[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    const coCell=t.co||'-';
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-${t.t}" data-plan-id="cmt|${sid}|${planField}|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    const coCell=esc(t.co||'-');
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   const etcFn=(etc)=>{
     if(!etc)return'';
@@ -3296,8 +3196,8 @@ function rSite(sid){
     const pc=st.topLtPrev?.[t.t]||0,dN=t.c-pc;
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    const coCell=t.co||'-';
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${t.t}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planKey}-${t.t}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${t.t}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    const coCell=esc(t.co||'-');
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   // 기타 행 — 순위 없음, 시공업체는 외 N개 업체, 전월=기타 묶음 공종들의 전월 합
   const trEtcFn=(etc,prevMap)=>{
@@ -3520,7 +3420,7 @@ function buildSiteTradeDonut(sid){
   const tot=tmData.reduce((a,x)=>a+x.c,0);
   const tmColors=donutPalette();
   S.charts['mx-'+sid]=new Chart(mxEl,{type:'doughnut',data:{labels:tmData.map(d=>d.t),datasets:[{data:tmData.map(d=>d.c),backgroundColor:tmColors,borderWidth:3,borderColor:chartSegBorder(),hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:tot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${tot>0?(ctx.parsed/tot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-  const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${d.t}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+  const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
 }
 function renderTabCharts(sid,st){
   if(!st){const site=S.sites.find(s=>s.id===sid);if(!site)return;st=calc(S.def[sid]||[],site,S.rm);}
@@ -3556,7 +3456,7 @@ function openVacEdit(sid,vl,statusField){
     if(!S.cmt[sid])S.cmt[sid]={};if(!S.cmt[sid][statusField])S.cmt[sid][statusField]={};
     S.cmt[sid][statusField]['미분양']=$mb.value.trim();
     S.cmt[sid][statusField]['미키불출']=$mk.value.trim();
-    lsSave();fbPushComments();close();if(S.sid===sid)rSite(sid);
+    lsSave();close();if(S.sid===sid)rSite(sid);
   };
   ov.querySelector('#vm-save').addEventListener('click',commit);
   ov.addEventListener('click',e=>{if(e.target===ov)commit();});
@@ -3602,7 +3502,7 @@ const _contentBlock=_sample?`\n[미처리건 접수내용 샘플 — ★는 누�
 const _critList=(st.critUl||[]).slice(0,12).map(i=>{const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const rs=critReason(i).join('/');return `- ${i.building||'?'}동 ${i.unit||'?'}호 [${i.trade||'-'}|${i.defectType||'-'}|${dd}일|의심:${rs}] ${c.slice(0,70)}`;}).join('\n');
 const _critBlock=(st.critUnr>0)?`\n[중대하자 의심 후보 — 규칙 추출, AI가 사내 매뉴얼 기준으로 최종 판정할 것] 미처리 의심 ${st.critUnr}건(전월 의심 ${st.critPrevUnr}건)\n${_critList}`:`\n[중대하자 의심 후보] 규칙상 의심 0건`;
 const p=`현대건설 ${(curTeam()?curTeam().name:'H서비스센터')} ${site.name} 현장의 하자처리 현황을 분석하여 한국어 개조식으로 작성하세요. 기준월 ${S.rm}, 전월 대비 변화를 중심으로 분석할 것.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건(전월${st.prev.res}), 미처리 ${st.unr}건(전월${st.prev.unr}), 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(전월${st.prev.lt}건, 미처리의 ${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종(미처리)] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[하자유형(미처리)] ${Object.entries(st.dtb).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,c])=>`${t}:${c}건`).join(', ')}\n[공가세대] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건${_critBlock}${_contentBlock}\n\n위 데이터를 분석해 시스템 지침의 형식·내용 규칙에 따라 작성하세요. 단순 수치 나열이 아닌 해석·원인·대응을 담되, 데이터가 없거나 특이사항이 없는 항목은 생략하고 중요한 것만 최대 6개 소제목으로 쓸 것. (단 중대하자는 시스템 지침 G에 따라 처리)`;
-try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ck},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fbPushAna();fb2AnaWrite(sid,txt);if(el)el.innerHTML=safeHTML(txt);toast('AI 분석 완료');}
+try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ck},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fb2AnaWrite(sid,txt);if(el)el.innerHTML=safeHTML(txt);toast('AI 분석 완료');}
 catch(e){if(el)el.innerHTML=`<p style="color:var(--rd)">(AI 오류: ${esc(e.message)})</p>`;}}
 
 // 대시보드 주요 이슈 — 규칙기반 선정 결과(수치·맥락)를 현장패널과 동일한 작성규칙(개조식·논리적 인과·담당자 권한 내 조치)으로 AI 재작성. 3슬롯·2줄 형식 유지.
@@ -3804,7 +3704,7 @@ async function confirmNewSite(name,idx,total){
   const newSite={id,name,region,units,buildings,commercialUnits,completionDate,hasCommercial,teamId:S.teamId};
   S.sites.push(newSite);
   lsSave();
-  fbPushSites();
+  
   rNav();rSMgr();
   if(idx+1<total){openNewSiteWizard(w.unknown,idx+1,w.byName,w.allItems);}
   else{closeMo();await doSaveUL(w.byName,w.allItems);S._wiz=null;}
@@ -3829,7 +3729,6 @@ async function doSaveUL(byName,allItems){
     await nextFrame();
     S.def[site.id]=its;
     site.lastUploadedAt=new Date().toISOString();
-    bumpDef();
     await defSave(site.id,its);// 현장 단위로 압축+IndexedDB 쓰기
     savedCount+=its.length;savedSites++;
     if(!firstSid)firstSid=site.id;
@@ -3838,7 +3737,7 @@ async function doSaveUL(byName,allItems){
   await nextFrame();
   progHide();
   S._uploadRaw=null;
-  fbPushSites();
+  
   const chip=document.getElementById('mchip');if(chip)chip.textContent=`기준월 ${S.rm}`;
   toast(`${savedCount.toLocaleString()}건 · ${savedSites}개 현장 저장 완료`);
   S.ubuf=null;setStep(3);
@@ -3907,12 +3806,12 @@ function loadSettings(){
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option ${site?.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${esc(site?.name||'')}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2"><label class="il" for="mcu">상가수</label><input class="inp" id="mcu" type="number" value="${site?.commercialUnits||''}"></div><div class="ig2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" max="9999-12-31" data-act="util.clampYear" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''}> 공가상가 포함 현장</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px"><input type="checkbox" id="mcv" ${site?.showVacant!==false?'checked':''}> 공가세대 탭 표시</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.confirmSM" data-sid="${esc(sid||'')}">저장</button>`;openMo();}
-function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fbPushSites();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
-function delS(sid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}if(!confirm('현장을 삭제하시겠습니까?\n(업로드된 하자 데이터도 함께 삭제됩니다)'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];bumpDef();defDelete(sid);fbDeleteDefects(sid);lsSave();fbPushSites();fbPushComments();fbPushAna();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='site'&&S.sid===sid)go('dashboard');toast('현장 삭제됨');}
+function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
+function delS(sid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}if(!confirm('현장을 삭제하시겠습니까?\n(업로드된 하자 데이터도 함께 삭제됩니다)'))return;S.sites=S.sites.filter(s=>s.id!==sid);delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];defDelete(sid);lsSave();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='site'&&S.sid===sid)go('dashboard');toast('현장 삭제됨');}
 
 // MONTH PICKER
 function openMP(){document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
-function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();fbPushSites();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
+function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
 
 
 // 인쇄 헤더(팀명·제목·기준일)를 현재 상태로 갱신 — 앱 인쇄버튼/브라우저 Ctrl+P 모두에서 호출
@@ -4198,13 +4097,21 @@ async function exportSnapshot(){
     const cap=window.__CAPTURE||{}; window.__CAPTURE=null;
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
-    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:[]});});
+    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:[],critUl:redactUL(r.critUl)});});
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
     const json=JSON.stringify(payload).replace(/<\//g,'<\\/').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');   // 종료태그·줄종료자(U+2028/9) 차단
     const keep=window.__SNAP__; window.__SNAP__=null;
-    const docHtml='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    let docHtml='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
     window.__SNAP__=keep;
-    const inject='<scr'+'ipt>window.__SNAP__='+json+';</scr'+'ipt>\n';
+    const injectBody='window.__SNAP__='+json+';';   // 주입 스크립트 해시 대상(태그 사이 내용)
+    // 해시 기반 CSP: 동적 주입분은 미리 해시 불가 → 내보낼 때 SHA-256 계산해 스냅샷 CSP의 script-src에 추가.
+    //   (없으면 스냅샷 CSP가 주입을 차단 → __SNAP__ 미설정 → 스냅샷이 로그인 게이트로 빠짐)
+    try{
+      const _dig=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(injectBody));
+      const _h=btoa(String.fromCharCode.apply(null,new Uint8Array(_dig)));
+      docHtml=docHtml.replace("script-src 'self' ","script-src 'self' 'sha256-"+_h+"' ");
+    }catch(e){console.warn('[snap] 주입 해시 실패 — 스냅샷 CSP 미보정(브라우저에서 차단될 수 있음)',e);}
+    const inject='<scr'+'ipt>'+injectBody+'</scr'+'ipt>\n';
     const html=docHtml.replace('</head>',inject+'</head>');
     const blob=new Blob([html],{type:'text/html;charset=utf-8'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+S.rm+'.html';
@@ -4292,7 +4199,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(/[?&]selftest=1(?:&|$)/.test(location.search)){__runSelfTest();return;} // 셀프테스트 모드 — 일반 부팅 생략
   if(window.__SNAP__){try{
     const P=window.__SNAP__;
-    S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};S.def={};
+    S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};Object.keys(S.def).forEach(_k=>delete S.def[_k]);
     if(P.rm)S.rm=P.rm;
     document.body.classList.add('snap');
     ensureTeams();
