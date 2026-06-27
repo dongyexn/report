@@ -1020,7 +1020,7 @@ input,select,textarea,button{display:none!important;}
   .akpi,.kg4,.kg5{grid-template-columns:repeat(2,1fr)!important;gap:8px;}
   /* 첫 슬롯은 가로 2칸 차지 → 1 / 2 3 / 4 5 형태 */
   .akpi > .kc:first-child,.kg4 > .kc:first-child,.kg5 > .kc:first-child{grid-column:span 2!important;}
-  .set-grid{grid-template-columns:1fr!important;}
+  .set-grid{grid-template-columns:minmax(0,1fr)!important;}
   .smtbl{font-size:11.5px;}
   .smtbl th,.smtbl td{padding:6px 8px;}
   .akpi .kc{padding:11px 13px;min-height:0;}
@@ -1062,13 +1062,12 @@ input,select,textarea,button{display:none!important;}
   .mom-row .delta{min-width:54px;}
   .mom-row .delta .d{font-size:10px;padding:1px 6px;}
 
-  /* 표: 가로 스크롤 */
-  /* 비-fixed 표(자동 레이아웃)는 자체 가로 스크롤 */
-  .card>table.dt:not([style*="table-layout"]),.card>div>table.dt:not([style*="table-layout"]){display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
-  /* fixed 표는 컬럼 비율(colgroup/th %)을 지켜야 하므로 table 유지 + min-width로 가로 확보 */
-  .card>div>table.dt[style*="table-layout"],.card>table.dt[style*="table-layout"]{display:table!important;width:100%;min-width:560px;white-space:nowrap;}
-  /* wrapper 없이 card 직계인 fixed 표는 부모 card가 가로 스크롤을 담당 */
-  .card:has(>table.dt[style*="table-layout"]){overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* 표: 가로 스크롤 — 모든 dt는 콘텐츠에 맞춰 자체 가로 스크롤(컬럼 겹침 없음) */
+  .card>table.dt,.card>div>table.dt,.card>table.utbl,.card>div>table.utbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+  /* 장기미처리 비율 바·처리계획 칸은 내용이 비어 폭이 0이 되므로 최소폭 보장 */
+  .ltrbar-wrap{min-width:92px;}
+  .ltrbar{min-width:52px;}
+  textarea.plan-ta{min-width:170px;}
   .dt th,.dt td{padding:8px 8px;font-size:11.5px;}
   .dt th{font-size:9.5px;}
 
@@ -1139,14 +1138,26 @@ input,select,textarea,button{display:none!important;}
   .ltrmom-bar .seg .seg-v{font-size:9px;}
   .ltrmom-delta{min-width:0;}
   .ltrmom-delta .lm-delta{font-size:10.5px;padding:3px 7px;gap:3px;}
+  /* 헤더 한 줄 유지: 제목 nowrap + 범례 칩/폰트 축소 */
+  .ltrmom-head{gap:8px;}
+  .ltrmom-head .lm-ttl{font-size:13px;white-space:nowrap;}
+  .ltrmom-lg{gap:6px;flex-wrap:nowrap;}
+  .ltrmom-lg .li{font-size:8.5px;gap:3px;white-space:nowrap;}
+  .ltrmom-lg .mk{width:8px;height:8px;}
 
   /* [이슈8] 처리계획 textarea 셀 — 모바일 좌패딩 축소(인라인 padding-left:20px override) */
   .dt td[style*="padding-left:20px"]{padding-left:6px!important;padding-right:4px!important;}
 
   /* [이슈9] 공가세대 현황(vrow) — 5칸→3칸, 음수마진 제거, 구분선 숨김, 폰트 축소 */
-  .vrow{grid-template-columns:repeat(3,1fr)!important;margin:0!important;gap:8px;row-gap:14px;}
-  .vseg{padding:4px 6px!important;}
-  .vseg:first-child{padding-left:6px!important;}
+  .vrow{grid-template-columns:repeat(5,1fr)!important;margin:0!important;gap:3px;}
+  .vseg{padding:2px 3px!important;}
+  .vseg:first-child{padding-left:3px!important;}
+  .vseg-l{font-size:8px!important;margin-bottom:2px!important;gap:2px!important;}
+  .vseg-v{font-size:15px!important;}
+  .vseg-v .vseg-u{font-size:7.5px!important;margin-left:1px!important;}
+  .vseg-m{font-size:7px!important;margin-top:2px!important;line-height:1.15;}
+  .vseg-edit{margin-left:3px!important;padding-left:4px!important;}
+  .vseg+.vseg::before{left:-1.5px;top:4px;bottom:4px;}
   .vseg+.vseg::before{display:none;}
   .vseg-l{font-size:11px;gap:3px;}
   .vseg-v{font-size:19px;}
@@ -1205,7 +1216,7 @@ input,select,textarea,button{display:none!important;}
 .ulex-sep{height:1px;background:var(--sep);margin:14px 0;}
 /* 현장 관리 페이지 */
 .mg-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start;}
-@media(max-width:980px){.mg-grid{grid-template-columns:1fr;}}
+@media(max-width:980px){.mg-grid{grid-template-columns:minmax(0,1fr);}}
 .mg-inp{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;font-size:12.5px;font-family:inherit;color:var(--lbl);background:transparent;transition:border-color .15s,background .15s;}
 .mg-inp:hover{border-color:var(--sep);}
 .mg-inp:focus{border-color:var(--b400);background:var(--bg2);}
@@ -1703,8 +1714,9 @@ function setSiteTrendYear(y){S.siteTrendYear=y;if(S.sid){dC('mo-'+S.sid);buildSi
 
 // SIDEBAR
 function toggleSB(){S.mini=!S.mini;document.getElementById('sidebar').classList.toggle('mini',S.mini);}
-function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');document.body.classList.add('sb-locked');}
-function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');document.body.classList.remove('sb-locked');}
+function _sbBlockTouch(e){if(!(e.target.closest&&e.target.closest('#sidebar')))e.preventDefault();}
+function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');document.body.classList.add('sb-locked');document.addEventListener('touchmove',_sbBlockTouch,{passive:false});}
+function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');document.body.classList.remove('sb-locked');document.removeEventListener('touchmove',_sbBlockTouch,{passive:false});}
 
 // PERSISTENCE — 공유 폴더(File System Access API, OneDrive 등) + localStorage/IndexedDB 백업.
 // 주의: fb* 명칭은 과거 Firebase 시절의 호환 shim. 실제 저장은 전부 폴더(sh*) 경유.
