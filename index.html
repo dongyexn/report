@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2382,6 +2382,23 @@ function calc(items,site,rm){
   _calcCache.set(_ck,_res);
   return _res;
 }
+// 중대하자 "의심" 후보 추출(규칙) — 매니저가 잘 안 채우는 중대하자유형 컬럼에 의존하지 않고,
+//   하자유형·접수내용에서 사내 매뉴얼 신호(누수/침수, 엘리베이터 갇힘·멈춤, 퇴거·거주불가, 언론리스크)와
+//   피해보상·법적 분쟁, 장문(강성민원)을 넓게 포착한다. 최종 중대하자 판정은 AI가 매뉴얼 기준으로 거른다.
+function critReason(i){
+  const c=((i.receiptContent||'')+' '+(i.complaint||''));
+  const t=((i.defectType||'')+' '+(i.trade||''));
+  const tags=[];
+  if(i.criticalType&&String(i.criticalType).trim())tags.push('유형기재');
+  if(/누수|침수|누유|역류/.test(t+' '+c))tags.push('누수침수');
+  if(/엘리베이터|엘베|승강기|EV/i.test(c)&&/갇힘|갇혔|멈춤|정지|고장|추락/.test(c))tags.push('엘리베이터');
+  if(/퇴거|이주|이사|숙박|호텔|거주\s*불가|입주\s*불가/.test(c))tags.push('퇴거거주불가');
+  if(/언론|기자|방송|뉴스|제보|보도/.test(c))tags.push('언론리스크');
+  if(/피해|보상|배상|변상|손해|소송|법무|내용증명|고소|고발/.test(c))tags.push('피해보상법적');
+  if((i.receiptContent||'').replace(/\s+/g,'').length>=80)tags.push('장문민원');
+  return tags;
+}
+function isCritCandidate(i){return critReason(i).length>0;}
 function _calcImpl(items,site,rm){
   const pm=pM(rm),all=items.filter(i=>i.receiptDate);
   // 전월 말일 문자열 (ex. "2026-04-30") — 역산 기준일
@@ -2452,7 +2469,13 @@ function _calcImpl(items,site,rm){
 
   const rpb={};ul.forEach(i=>{rpb[i.repairParty||'미지정']=(rpb[i.repairParty||'미지정']||0)+1;});
   const dtb={};ul.forEach(i=>{dtb[i.defectType||'미분류']=(dtb[i.defectType||'미분류']||0)+1;});
-  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,rm,pm,rmEnd,pmEnd,ul,lul};
+  // 중대하자 "의심" 후보 — isCritCandidate(규칙: 매뉴얼 키워드+피해보상+장문)로 추출. 최종 판정은 AI가 함.
+  const _critAll=ref.filter(isCritCandidate);
+  const critT=_critAll.length;
+  const critUl=_critAll.filter(i=>!isDone(i,rmEnd));
+  const critUnr=critUl.length;
+  const critPrevUnr=prev.filter(i=>isCritCandidate(i)&&!isDone(i,pmEnd)).length;
+  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul};
 }
 function topT(items,n){
   const m={};
@@ -3472,15 +3495,17 @@ const systemInstruction =
   "6. FORMAT NUMBERS: Always apply thousands separators (e.g., 1,234).\n" +
   "7. TEXT HIGHLIGHTING: Emphasize key metrics with bold + color inline styles (e.g., <strong style='color: #d9534f;'>text</strong> for negative/critical/delay issues, <strong style='color: #0275d8;'>text</strong> for achievements/positive metrics).\n\n" +
     "**[CONTENT RULES — IMPORTANT]**\n" +
-  "A. Write a MAXIMUM of 5 subtitled sections. Do NOT force all topics. Select only meaningful sections and order them by importance.\n" +
+  "A. Write a MAXIMUM of 6 subtitled sections. Do NOT force all topics. Select only meaningful sections and order them by importance.\n" +
   "B. OMIT any section with no data or nothing noteworthy. If vacant-unit (\uacf5\uac00\uc138\ub300) count is 0 or negligible, skip it. If the outstanding-case contents reveal no special issue, skip that section.\n" +
   "C. ANALYTICAL & LOGICAL REASONING (MOST IMPORTANT): Never write a sentence that only reports a current number or status. The dashboard already shows the figures. EVERY bullet must contain reasoning: (1) briefly state the fact, (2) explain WHY it happened by inferring the cause from the trade/type/delay/content data given, (3) project the expected outcome IF a specific concrete action is taken (e.g., '~\uc5d0 \uc6b0\uc120 \uc7ac\ubc29\ubb38\uc744 \uc9d1\uc911\ud558\uba74 60\uc77c+ \uc7a5\uae30\ubbf8\ucc98\ub9ac\uac00 \ub2e4\uc74c \ub2ec X\uac74 \uc218\uc900\uc73c\ub85c \uac10\uc18c\ud560 \uac83\uc73c\ub85c \ud310\ub2e8\ub428'). A bullet without cause OR projection is unacceptable.\n" +
   "D. Lead with the two most important things first: notable month-over-month achievements, and worsened/risk points (each with reasoning). Then structural analysis, then concrete improvements.\n" +
   "E. SCOPE OF IMPROVEMENTS — STRICT: Every suggested action must be executable by a single field maintenance manager (\ub2f4\ub2f9\uc790) at the site level. ABSOLUTELY NEVER mention or propose company-level or organizational changes: dedicated team / task force operation (\uc804\ub2f4\ud300 \uc6b4\uc601), executive or management decisions (\uacbd\uc601\uc9c4), supply-chain / procurement-system reform (\uacf5\uae09\ub9dd, \uad6c\ub9e4 \uc2dc\uc2a4\ud15c \uac1c\uc120), hiring more staff (\uc778\ub825 \ucda9\uc6d0), or introducing new IT/approval systems (\uc2dc\uc2a4\ud15c \ub3c4\uc785). These are impossible at the manager level and must not appear at all. Limit advice strictly to: prioritizing specific units/trades, scheduling re-visits (\uc7ac\ubc29\ubb38), coordinating with specific subcontractors already contracted, following up on pending \ud488\uc758/\uc790\uc7ac \uc9c0\uc5f0, managing \uacf5\uac00\uc138\ub300 access, etc.\n" +
-  "F. SYMBOL SAFETY (CRITICAL): For emphasis use ONLY <strong> tags. NEVER wrap any word in single or double quotation marks (e.g., do NOT write '\ubbfc\uc6d0', '\ud488\uc758'). Stray quotes collide with the HTML inline-style quotes and break the layout, causing symbols to overlap with text. Always refer to keywords plainly inside tags, e.g., <strong style='color: #d9534f;'>\ub204\uc218</strong>. Do not place bullet characters or markdown dashes inside the text; the <li> element already provides the bullet.\n\n" +
+  "F. SYMBOL SAFETY (CRITICAL): For emphasis use ONLY <strong> tags. NEVER wrap any word in single or double quotation marks (e.g., do NOT write '\ubbfc\uc6d0', '\ud488\uc758'). Stray quotes collide with the HTML inline-style quotes and break the layout, causing symbols to overlap with text. Always refer to keywords plainly inside tags, e.g., <strong style='color: #d9534f;'>\ub204\uc218</strong>. Do not place bullet characters or markdown dashes inside the text; the <li> element already provides the bullet.\n" +
+  "G. CRITICAL DEFECTS (중대하자) — HIGH PRIORITY + JUDGMENT REQUIRED: The [중대하자 의심 후보] block lists items rule-extracted from receipt content/type (keywords, 피해보상, long complaints) each with a 의심 reason tag. These are CANDIDATES, NOT confirmed. Apply the COMPANY MANUAL and CONFIRM only those that genuinely qualify, EXCLUDING keyword false-positives (e.g., a passing mention of 보상 with no real damage, or a long but trivial complaint). Manual 중대하자 = 누수, a defect forcing residents to vacate the unit for 2+ weeks, 엘리베이터 갇힘·멈춤, 침수, or 언론보도 리스크; also confirm severe 피해보상/강성민원 when the content shows real severity. If 1 or more candidates genuinely qualify, you MUST add a dedicated subtitled section near the TOP: state how many qualify and of what kind, cite the specific 동/호 of the most serious ones, infer the cause, and give manager-level priority actions ONLY (prioritized re-visit to that 동/호, calling the already-contracted subcontractor first, accelerating the pending 품의) — NEVER executives (경영진), task forces (전담팀), hiring, or new systems. If NONE genuinely qualify (or the block shows 의심 0건), include ONE brief line: 중대하자 의심 해당 없음. This is an EXCEPTION to rule B's omit policy.\n\n" +
   "**[CANDIDATE TOPICS — pick the most relevant, up to 5]**\n" +
   "- \ud604\ud669 \ubd84\uc11d \ubc0f \uc804\uc6d4\ub300\ube44 \ucd94\uc774 (analytical interpretation with cause and projection)\n" +
   "- \uacf5\uc885\ubcc4/\uc720\ud615\ubcc4 \ud2b9\uc774\uc0ac\ud56d \ubc0f \uc7a5\uae30\ubbf8\ucc98\ub9ac \ub9ac\uc2a4\ud06c (infer delay causes, project effect of targeted follow-up)\n" +
+  "- \uc911\ub300\ud558\uc790 \ud604\ud669 \ubc0f \uc548\uc804\u00b7\ubc95\uc801 \ub9ac\uc2a4\ud06c (critical defects: types/counts/MoM, cause + manager-level priority action; if 0, one brief line per rule G)\n" +
   "- \ubbf8\ucc98\ub9ac\uac74 \uc811\uc218\ub0b4\uc6a9 \ud2b9\uc774\uc0ac\ud56d (only if the provided outstanding-case text reveals critical keywords: \ub204\uc218, \ubbfc\uc6d0, \ud488\uc758, \uc790\uc7ac, \ud53c\ud574\ubcf4\uc0c1 \ub4f1)\n" +
   "- \uacf5\uac00\uc138\ub300 \ud558\uc790\ucc98\ub9ac \ud604\ud669 (only if vacant-unit data is meaningful)\n" +
   "- \ucc98\ub9ac \uc2e0\uc18d\ub3c4 \uac1c\uc120 \ubc29\uc548 / \uad04\ubaa9\ud560\ub9cc\ud55c \uc131\uacfc (manager-level concrete actions only)";
@@ -3492,7 +3517,10 @@ const _scored=_ul.map(i=>{const c=(i.receiptContent||'').replace(/\s+/g,' ').tri
 _scored.sort((a,b)=>(b.kw-a.kw)||(b.dd-a.dd));
 const _sample=_scored.slice(0,40).map(x=>`- [${x.t}|${x.dd}일${x.kw?'|★':''}] ${x.c.slice(0,60)}`).join('\n');
 const _contentBlock=_sample?`\n[미처리건 접수내용 샘플 — ★는 누수·민원·품의·자재·피해보상 등 주요 키워드 포함건]\n${_sample}`:`\n[미처리건 접수내용] 제공된 접수내용 데이터 없음 (해당 분석 항목 생략)`;
-const p=`현대건설 ${(curTeam()?curTeam().name:'H서비스센터')} ${site.name} 현장의 하자처리 현황을 분석하여 한국어 개조식으로 작성하세요. 기준월 ${S.rm}, 전월 대비 변화를 중심으로 분석할 것.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건(전월${st.prev.res}), 미처리 ${st.unr}건(전월${st.prev.unr}), 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(전월${st.prev.lt}건, 미처리의 ${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종(미처리)] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[하자유형(미처리)] ${Object.entries(st.dtb).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,c])=>`${t}:${c}건`).join(', ')}\n[공가세대] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건${_contentBlock}\n\n위 데이터를 분석해 시스템 지침의 형식·내용 규칙에 따라 작성하세요. 단순 수치 나열이 아닌 해석·원인·대응을 담되, 데이터가 없거나 특이사항이 없는 항목은 생략하고 중요한 것만 최대 5개 소제목으로 쓸 것.`;
+// 중대하자 의심 후보 블록 — 규칙(isCritCandidate)으로 넓게 추출한 후보 + 의심사유 태그. AI가 매뉴얼 기준으로 최종 판정.
+const _critList=(st.critUl||[]).slice(0,12).map(i=>{const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const rs=critReason(i).join('/');return `- ${i.building||'?'}동 ${i.unit||'?'}호 [${i.trade||'-'}|${i.defectType||'-'}|${dd}일|의심:${rs}] ${c.slice(0,70)}`;}).join('\n');
+const _critBlock=(st.critUnr>0)?`\n[중대하자 의심 후보 — 규칙 추출, AI가 사내 매뉴얼 기준으로 최종 판정할 것] 미처리 의심 ${st.critUnr}건(전월 의심 ${st.critPrevUnr}건)\n${_critList}`:`\n[중대하자 의심 후보] 규칙상 의심 0건`;
+const p=`현대건설 ${(curTeam()?curTeam().name:'H서비스센터')} ${site.name} 현장의 하자처리 현황을 분석하여 한국어 개조식으로 작성하세요. 기준월 ${S.rm}, 전월 대비 변화를 중심으로 분석할 것.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건(전월${st.prev.res}), 미처리 ${st.unr}건(전월${st.prev.unr}), 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(전월${st.prev.lt}건, 미처리의 ${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종(미처리)] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[하자유형(미처리)] ${Object.entries(st.dtb).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,c])=>`${t}:${c}건`).join(', ')}\n[공가세대] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건${_critBlock}${_contentBlock}\n\n위 데이터를 분석해 시스템 지침의 형식·내용 규칙에 따라 작성하세요. 단순 수치 나열이 아닌 해석·원인·대응을 담되, 데이터가 없거나 특이사항이 없는 항목은 생략하고 중요한 것만 최대 6개 소제목으로 쓸 것. (단 중대하자는 시스템 지침 G에 따라 처리)`;
 try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ck},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fbPushAna();fb2AnaWrite(sid,txt);if(el)el.innerHTML=safeHTML(txt);toast('AI 분석 완료');}
 catch(e){if(el)el.innerHTML=`<p style="color:var(--rd)">(AI 오류: ${esc(e.message)})</p>`;}}
 
@@ -3758,6 +3786,7 @@ function norm(r){
     unit:String(pick('호')||''),
     trade:String(pick('공종')||''),
     defectType:String(pick('하자유형')||''),
+    criticalType:String(pick('중대하자유형','중대하자')||'').trim(), // 중대하자유형 — AI 분석용(비어있지 않으면 중대하자)
     defectClass:String(pick('하자구분')||'').trim(),
     receiptDate:nd(pick('접수일')),
     completionDate:comp,
@@ -4140,6 +4169,20 @@ function __runSelfTest(){
     const w=a.weekly||[];
     ok('calcW 누적접수 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].r<w[i-1].r)return false;return true;})());
     ok('calcW 누적처리 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].res<w[i-1].res)return false;return true;})());
+    // --- 중대하자 의심 후보 추출(규칙) + _calcImpl ---
+    eq('isCrit 누수내용',isCritCandidate(norm({'접수내용':'안방 천장 누수 발생','접수일':'2026-05-01','처리상태':'미처리'})),true);
+    eq('isCrit 하자유형 누수',isCritCandidate(norm({'하자유형':'누수','접수일':'2026-05-01','처리상태':'미처리'})),true);
+    eq('isCrit 일반 도배',isCritCandidate(norm({'하자유형':'도배','접수내용':'벽지 들뜸','접수일':'2026-05-02','처리상태':'미처리'})),false);
+    const cItems=[
+      norm({'접수내용':'거실 바닥 침수, 가구 피해 보상 요구','공종':'방수','접수일':'2026-05-01','처리상태':'미처리','동':'101','호':'1502'}),
+      norm({'하자유형':'누수','공종':'방수','접수일':'2026-04-10','처리상태':'미처리','동':'103','호':'808'}),
+      norm({'접수내용':'엘리베이터 갇힘 사고','접수일':'2026-05-02','처리상태':'처리','처리확인일':'2026-05-05'}),
+      norm({'하자유형':'도배','접수내용':'벽지 들뜸','접수일':'2026-05-03','처리상태':'미처리'})
+    ];
+    const cA=_calcImpl(cItems,site,'2026-05');
+    eq('calc 중대후보 전체',cA.critT,3);
+    eq('calc 중대후보 미처리',cA.critUnr,2);
+    eq('calc 중대후보 전월미처리',cA.critPrevUnr,1);
   }catch(e){R.push({name:'실행 중 예외: '+((e&&e.message)||e),ok:false,got:String(e&&e.stack||e),exp:'정상 실행'});}
   const pass=R.filter(r=>r.ok).length,fail=R.length-pass;
   try{console.log('%c[셀프테스트] '+pass+'/'+R.length+' 통과'+(fail?(' · 실패 '+fail):''),'font-weight:bold;font-size:13px;color:'+(fail?'#c0392b':'#1a7a3c'));
