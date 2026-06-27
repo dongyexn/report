@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-5oo3PpDqmTtxr9Cm/VtF6o2MH1g0zegs6UCPgFU46jg=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-qYi/zZUSGQy+o2MRr23L0mTCzjQENQE0UGXqro/fxNA=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -38,7 +38,7 @@ svg{display:block;flex-shrink:0;}
 #app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
 
 /* SIDEBAR */
-#sidebar{width:var(--sw);min-width:var(--sw);height:100%;display:flex;flex-direction:column;background:rgba(255,255,255,.88);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-right:1px solid var(--sep);transition:width var(--tr),min-width var(--tr);overflow:hidden;z-index:200;}
+#sidebar{width:var(--sw);min-width:var(--sw);height:100%;display:flex;flex-direction:column;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border-right:1px solid var(--sep);transition:width var(--tr),min-width var(--tr);overflow:hidden;z-index:200;}
 #sidebar.mini{width:var(--swm);min-width:var(--swm);}
 .sbh{height:var(--th);display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--sep);flex-shrink:0;overflow:hidden;}
 .sbb{display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;transition:opacity var(--tr);}
@@ -110,7 +110,7 @@ svg{display:block;flex-shrink:0;}
 
 /* MAIN */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-#topbar{height:var(--th);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(255,255,255,.75);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--sep);z-index:100;}
+#topbar{height:var(--th);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--sep);z-index:100;}
 .tbl{display:flex;align-items:center;gap:10px;}
 .tbt{font-size:16px;font-weight:700;color:var(--lbl);}
 .tbsu{font-size:12px;color:var(--lbl2);}
@@ -250,7 +250,7 @@ body.viewer .set-grid{grid-template-columns:1fr;}
 table.dt-detail td{text-align:center!important;}
 table.dt-detail td.n{text-align:center!important;}
 table.dt-detail th{text-align:center!important;}
-.yr-sel{appearance:none;-webkit-appearance:none;background:var(--bg2);border:1px solid var(--sepo);border-radius:var(--rsm);padding:5px 28px 5px 11px;font-size:12.5px;font-weight:600;color:var(--lbl);cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233E71D2' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .15s;}
+.yr-sel{-webkit-appearance:none;appearance:none;background:var(--bg2);border:1px solid var(--sepo);border-radius:var(--rsm);padding:5px 28px 5px 11px;font-size:12.5px;font-weight:600;color:var(--lbl);cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233E71D2' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .15s;}
 .yr-sel:hover{border-color:var(--b400);}
 
 /* BADGES */
@@ -429,9 +429,9 @@ table.dt-detail th{text-align:center!important;}
 .as{display:flex;flex-direction:column;gap:12px;}
 
 /* TOAST */
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(28,28,30,.92);color:#fff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 20px;border-radius:var(--rp);font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:rgba(28,28,30,.92);color:#fff;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);padding:10px 20px;border-radius:var(--rp);font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.uprog{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(20,22,28,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
+.uprog{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(20,22,28,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
 .uprog.show{display:flex;}
 .uprog-box{background:#fff;border-radius:16px;padding:28px 32px;width:340px;max-width:86vw;box-shadow:0 18px 50px rgba(0,0,0,.25);text-align:center;}
 .uprog-spin{width:34px;height:34px;margin:0 auto 16px;border:3px solid var(--b100);border-top-color:var(--b600);border-radius:50%;animation:uprogspin .8s linear infinite;}
@@ -442,7 +442,7 @@ table.dt-detail th{text-align:center!important;}
 .uprog-sub{font-size:11.5px;color:var(--lbl2);margin-top:9px;font-variant-numeric:tabular-nums;min-height:14px;}
 
 /* MODAL */
-#mo{position:fixed;inset:0;background:rgba(0,0,0,.34);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+#mo{position:fixed;inset:0;background:rgba(0,0,0,.34);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
 #mo.open{opacity:1;pointer-events:all;}
 #mb{background:rgba(255,255,255,.96);border-radius:var(--rxl);padding:28px;max-width:500px;width:92%;border:1px solid var(--sep);transform:scale(.96) translateY(12px);transition:transform .22s,opacity .2s;opacity:0;}
 #mo.open #mb{transform:scale(1) translateY(0);opacity:1;}
@@ -566,7 +566,7 @@ canvas{max-width:100%!important;height:auto!important;}
 
 /* 주요 이슈 / 인사이트 */
 .ic{padding:8px 10px!important;gap:10px!important;}
-.ic-ttl{font-size:8.5pt!important;} .ic-sub{font-size:8pt!important;line-height:1.5!important;display:block!important;-webkit-line-clamp:none!important;overflow:visible!important;}
+.ic-ttl{font-size:8.5pt!important;} .ic-sub{font-size:8pt!important;line-height:1.5!important;display:block!important;overflow:visible!important;}
 .ic-i{width:20px!important;height:20px!important;} .ic-i svg{width:11px!important;height:11px!important;}
 
 /* mom-row, aib */
@@ -751,7 +751,7 @@ input,select,textarea,button{display:none!important;}
 .fchip.act{background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;}
 
 /* TAB NAV — sticky for site panel */
-.tnav{display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:6px;border-radius:var(--rxl);border:1px solid var(--sep);margin-bottom:16px;position:sticky;top:0;z-index:50;}
+.tnav{display:flex;gap:6px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);padding:6px;border-radius:var(--rxl);border:1px solid var(--sep);margin-bottom:16px;position:sticky;top:0;z-index:50;}
 .tnav-i{flex:1;padding:9px 14px;font-size:13px;font-weight:600;color:var(--lbl2);border-radius:var(--rmd);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;border:none;background:transparent;}
 .tnav-i:hover{background:var(--fill);color:var(--lbl);}
 .tnav-i.act{background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;box-shadow:0 2px 8px rgba(50,89,182,.24);}
@@ -869,13 +869,13 @@ input,select,textarea,button{display:none!important;}
 
 /* MATRIX TABLE */
 #dtable th{font-size:12.5px;}
-#dtable th[data-sort]{cursor:pointer;user-select:none;transition:color .15s;}
+#dtable th[data-sort]{cursor:pointer;-webkit-user-select:none;user-select:none;transition:color .15s;}
 #dtable th[data-sort]:hover{color:var(--b700);}
 #dtable th .sortmk{display:inline-block;width:10px;color:var(--lbl3);font-size:10px;margin-left:2px;}
 #dtable th.act .sortmk{color:var(--b600);}
 #dtable th.act{color:var(--b700);}
 /* 범용 정렬 헤더 (현장패널 테이블 등) */
-.dt th[data-sort]{cursor:pointer;user-select:none;transition:color .15s;}
+.dt th[data-sort]{cursor:pointer;-webkit-user-select:none;user-select:none;transition:color .15s;}
 .dt th[data-sort]:hover{color:var(--b700);}
 .dt th .sortmk{display:inline-block;width:10px;color:var(--lbl3);font-size:10px;margin-left:2px;}
 .dt th.act .sortmk{color:var(--b600);}
@@ -1106,7 +1106,7 @@ input,select,textarea,button{display:none!important;}
 .teamsel{display:flex;align-items:center;gap:6px;padding:8px 4px 10px;margin-bottom:2px;border-bottom:1px solid var(--sep);}
 #sidebar.mini .teamsel{display:none;}
 .teamsel .tsel-wrap{position:relative;flex:1;min-width:0;}
-.teamsel select{width:100%;appearance:none;-webkit-appearance:none;background:var(--fill);border:1px solid var(--sep);border-radius:var(--rsm);padding:7px 26px 7px 10px;font-size:12.5px;font-weight:600;color:var(--lbl);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.teamsel select{width:100%;-webkit-appearance:none;appearance:none;background:var(--fill);border:1px solid var(--sep);border-radius:var(--rsm);padding:7px 26px 7px 10px;font-size:12.5px;font-weight:600;color:var(--lbl);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .teamsel select:hover{background:var(--fill2);}
 .teamsel .tsel-ch{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--lbl2);}
 .teamsel .tsel-mgr{flex-shrink:0;width:32px;height:32px;border-radius:var(--rsm);background:var(--fill);display:flex;align-items:center;justify-content:center;color:var(--lbl2);transition:background var(--tr),color var(--tr);}
@@ -1200,7 +1200,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 </head>
 <body>
 <div id="coverGate" style="position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 120% at 50% 0%,#1c2b46 0%,#0f1626 55%,#0a0f1a 100%);font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;">
-  <div style="width:min(380px,90vw);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:38px 32px;backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.45);text-align:center;">
+  <div style="width:min(380px,90vw);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:38px 32px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.45);text-align:center;">
     <div style="margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">
       <svg viewBox="0 0 87 66" xmlns="http://www.w3.org/2000/svg" class="cvlogo" style="height:50px;width:auto;display:block;"><path d="M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z" fill="#fff"/><path d="M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z" fill="#fff"/></svg>
     </div>
@@ -1287,7 +1287,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
     </div>
     <div id="view-dashboard" class="view act">
       <div id="dkpi" class="akpi"></div>
-      <div class="card mb12 main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="dtrend-yr" data-act="dash.trendYear"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+      <div class="card mb12 main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="dtrend-yr" data-act="dash.trendYear" aria-label="추이 연도 선택"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
       <div class="opsr">
         <div class="card">
           <div class="ct" style="font-size: 16px; color: var(--ct)">전월대비 실적 현황</div>
@@ -1305,7 +1305,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
           <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-mx"></canvas></div><div class="lg lg-2col" id="c-mx-lg"></div></div>
         </div>
       </div>
-      <div class="card mb12"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
+      <div class="card mb12"><div class="sh"><div class="ct" style="font-size: 16px; color: var(--ct)">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
       <div class="card mb12"><div class="ct" style="font-size: 16px; color: var(--ct)">현장별 하자처리 현황</div>
         <table class="dt" id="dtable"><thead><tr>
           <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
@@ -1455,14 +1455,14 @@ function rManage(){
   const teamRows=S.teams.map(tm=>{
     const cnt=S.sites.filter(s=>s.teamId===tm.id).length;
     const active=tm.id===S.teamId;
-    return `<div class="tm-row${active?' act':''}"><button class="tm-pick" data-act="team.pick" data-tid="${esc(tm.id)}" title="이 팀 선택">${active?ICON_RADIO_ON:ICON_RADIO_OFF}</button><input class="mg-inp tm-nameinp" value="${esc(tm.name)}" data-act="team.rename" data-tid="${esc(tm.id)}"><span class="tm-cnt">${cnt}</span><button class="tm-x tm-del" data-act="team.del" data-tid="${esc(tm.id)}" title="삭제">${ICON_TRASH}</button></div>`;
+    return `<div class="tm-row${active?' act':''}"><button class="tm-pick" data-act="team.pick" data-tid="${esc(tm.id)}" title="이 팀 선택">${active?ICON_RADIO_ON:ICON_RADIO_OFF}</button><input class="mg-inp tm-nameinp" value="${esc(tm.name)}" data-act="team.rename" data-tid="${esc(tm.id)}" aria-label="팀 이름"><span class="tm-cnt">${cnt}</span><button class="tm-x tm-del" data-act="team.del" data-tid="${esc(tm.id)}" title="삭제">${ICON_TRASH}</button></div>`;
   }).join('');
   const regRows=curRegions().map(r=>{
     const used=S.sites.filter(s=>s.teamId===t.id&&s.region===r).length;
     if(r===PERM_REGION)return `<div class="tm-row tm-locked"><span class="tm-nameinp tm-lockname">${esc(r)}</span><span class="tm-cnt">${used}</span><span class="tm-x tm-lockicon" title="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외">${ICON_LOCK}</span></div>`;
-    return `<div class="tm-row"><input class="mg-inp tm-nameinp" value="${esc(r)}" data-act="region.rename" data-rgn="${esc(r)}"><span class="tm-cnt">${used}</span><button class="tm-x tm-del" data-act="region.del" data-rgn="${esc(r)}" title="삭제">${ICON_TRASH}</button></div>`;
+    return `<div class="tm-row"><input class="mg-inp tm-nameinp" value="${esc(r)}" data-act="region.rename" data-rgn="${esc(r)}" aria-label="권역 이름"><span class="tm-cnt">${used}</span><button class="tm-x tm-del" data-act="region.del" data-rgn="${esc(r)}" title="삭제">${ICON_TRASH}</button></div>`;
   }).join('');
-  el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" data-act="team.addTeam">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="team.addRegion">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card tm-upcard"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" data-act="uz"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" data-act="uz.file"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" data-act="set.exToken"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="site.addModal">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
+  el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" data-act="team.addTeam">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="team.addRegion">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card tm-upcard"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" data-act="uz"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" data-act="uz.file" aria-label="데이터 파일 선택"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" data-act="set.exToken"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="site.addModal">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
   rSMgr();
 }
 function uniqName(base,existing){let n=base,i=2;const set=new Set(existing);while(set.has(n)){n=base+' '+i;i++;}return n;}
@@ -2034,7 +2034,7 @@ function fb2RenderUsers(){
     const nick=esc(u.name||email.split('@')[0]||'—');
     const ctl=(isMe||lastEditor)
       ? (lockReason?'<span class="fbu-lock">'+lockReason+'</span> ':'')+'<span class="fbu-role '+rc+'">'+fb2RoleLabel(role)+'</span>'
-      : '<select class="fbu-sel" data-act="fb2.role" data-uid="'+esc(uid)+'">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
+      : '<select class="fbu-sel" data-act="fb2.role" data-uid="'+esc(uid)+'" aria-label="사용자 권한 선택">'+opt('editor','관리자')+opt('viewer','사용자')+opt('blocked','차단')+'</select>';
     return '<tr><td><div class="utbl-name"><div class="fbu-av '+rc+'">'+PERSON+'</div><span class="utbl-nick">'+nick+'</span></div></td>'
       +'<td><span class="utbl-mail">'+esc(email)+'</span>'+(isMe?'<span class="fbu-me">나</span>':'')+'</td>'
       +'<td class="utbl-r">'+ctl+'</td></tr>';
@@ -2613,14 +2613,14 @@ function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!t
     <th class="cc" style="width:10%">업데이트일</th>
     <th class="cc" style="width:5%"></th>
   </tr></thead><tbody>${sorted.map(s=>`<tr>
-    <td><select class="mg-inp" data-act="site.upd" data-sid="${esc(s.id)}" data-field="region">${regOpts(s)}</select></td>
-    <td><input class="mg-inp" value="${esc(s.name)}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="name"></td>
-    <td><input class="mg-inp n" type="number" value="${s.units||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="units"></td>
-    <td><input class="mg-inp n" type="number" value="${s.buildings||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="buildings"></td>
-    <td><input class="mg-inp n" type="number" value="${s.commercialUnits||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="commercialUnits"></td>
-    <td class="cc"><input class="mg-inp" type="date" max="9999-12-31" style="width:130px;max-width:100%;text-align:center;display:inline-block" value="${esc(s.completionDate||'')}" data-act="site.completion" data-sid="${esc(s.id)}"></td>
-    <td class="cc"><label class="sw"><input type="checkbox" ${s.showVacant!==false?'checked':''} data-act="site.updc" data-sid="${esc(s.id)}" data-field="showVacant"><span class="sw-t"></span></label></td>
-    <td class="cc"><label class="sw"><input type="checkbox" ${s.hasCommercial?'checked':''} data-act="site.updc" data-sid="${esc(s.id)}" data-field="hasCommercial"><span class="sw-t"></span></label></td>
+    <td><select class="mg-inp" data-act="site.upd" data-sid="${esc(s.id)}" data-field="region" aria-label="권역 선택">${regOpts(s)}</select></td>
+    <td><input class="mg-inp" value="${esc(s.name)}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="name" aria-label="현장명"></td>
+    <td><input class="mg-inp n" type="number" value="${s.units||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="units" aria-label="세대수"></td>
+    <td><input class="mg-inp n" type="number" value="${s.buildings||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="buildings" aria-label="동수"></td>
+    <td><input class="mg-inp n" type="number" value="${s.commercialUnits||0}" data-act="site.upd" data-sid="${esc(s.id)}" data-field="commercialUnits" aria-label="상가세대수"></td>
+    <td class="cc"><input class="mg-inp" type="date" max="9999-12-31" style="width:130px;max-width:100%;text-align:center;display:inline-block" value="${esc(s.completionDate||'')}" data-act="site.completion" data-sid="${esc(s.id)}" aria-label="준공일"></td>
+    <td class="cc"><label class="sw"><input type="checkbox" ${s.showVacant!==false?'checked':''} data-act="site.updc" data-sid="${esc(s.id)}" data-field="showVacant" aria-label="공가세대 표시"><span class="sw-t"></span></label></td>
+    <td class="cc"><label class="sw"><input type="checkbox" ${s.hasCommercial?'checked':''} data-act="site.updc" data-sid="${esc(s.id)}" data-field="hasCommercial" aria-label="상가 포함"><span class="sw-t"></span></label></td>
     <td class="cc" style="font-size:11.5px;color:var(--lbl2);white-space:nowrap">${fmtUp(s.lastUploadedAt)}</td>
     <td class="cc"><button class="tm-x tm-del" data-act="site.del" data-sid="${esc(s.id)}" title="삭제">${ICON_TRASH}</button></td>
   </tr>`).join('')}</tbody></table></div>`;
@@ -3093,7 +3093,7 @@ function vacRowsHTML(sid,stat,cm,planField){
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
     const coCell=esc(t.co||'-');
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" aria-label="처리계획" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   const etcFn=(etc)=>{
     if(!etc)return'';
@@ -3103,7 +3103,7 @@ function vacRowsHTML(sid,stat,cm,planField){
     const ratio=unr>0?(etc.c/unr*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planE=cm[planField]?.['기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" aria-label="처리계획" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></td></tr>`;
   };
   const totFn=(tot,prevTot)=>{
     if(!tot)return'';
@@ -3197,7 +3197,7 @@ function rSite(sid){
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
     const coCell=esc(t.co||'-');
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   // 기타 행 — 순위 없음, 시공업체는 외 N개 업체, 전월=기타 묶음 공종들의 전월 합
   const trEtcFn=(etc,prevMap)=>{
@@ -3208,7 +3208,7 @@ function rSite(sid){
     const ratio=st.lt>0?(etc.c/st.lt*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planEtc=cm.processingPlan?.['기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" aria-label="처리계획" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|기타" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
   };
   // 합계 행
   const trTotFn=(tot,prevTot)=>{
@@ -3245,7 +3245,7 @@ function rSite(sid){
   const _years=[...new Set(_wkAll.map(w=>w.week.slice(0,4)))].sort();
   const _curYear=(_years.includes(S.detailYear)?S.detailYear:(_years.includes(S.rm.slice(0,4))?S.rm.slice(0,4):_years[_years.length-1]))||S.rm.slice(0,4);
   const _yrOpts=_years.length?_years.map(y=>`<option value="${y}" ${y===_curYear?'selected':''}>${y}년</option>`).join(''):`<option value="${_curYear}" selected>${_curYear}년</option>`;
-  const _yrPicker=`<select class="yr-sel no-print" data-act="panel.detailYear">${_yrOpts}</select>`;
+  const _yrPicker=`<select class="yr-sel no-print" data-act="panel.detailYear" aria-label="상세 연도 선택">${_yrOpts}</select>`;
   // colgroup: % 기반 비율 열 너비 (모바일·인쇄 대응)
   // 장기미처리비율 제외 모든 열 균일(6.5%) + 장기비율(16%) = 100%
   // 월별(12열): 월(9%) + 균일열×10(6.5%×10=65%) + 장기비율(16%) + 전월대비(10%) = 100%
@@ -3315,7 +3315,7 @@ function rSite(sid){
 
 <div class="tpane ${S.tab==='overview'?'act':''}" data-tab="overview">
   <div class="as">
-    <div class="card main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="strend-yr" data-act="site.trendYear"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo-${sid}"></canvas></div><div id="c-mo-lg-${sid}" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+    <div class="card main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct" style="font-size:16px;color:var(--ct)">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="strend-yr" data-act="site.trendYear" aria-label="현장 추이 연도 선택"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo-${sid}"></canvas></div><div id="c-mo-lg-${sid}" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>장기미처리</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>일반하자</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
     <div class="opsr" style="margin-bottom:0">
       <div class="card"><div class="ct" style="font-size:16px;color:var(--ct)">전월대비 실적 현황</div><div id="c-mom-${sid}" class="mom-wrap"></div></div>
       <div class="card"><div class="ct" style="font-size:16px;color:var(--ct)">공종별 미처리 분포</div><div class="dn-side"><div class="canv" style="padding:0px"><canvas id="c-mx-${sid}"></canvas></div><div class="lg lg-2col" id="c-mx-lg-${sid}"></div></div></div>
