@@ -1791,7 +1791,7 @@ const FB2={
     measurementId:"G-YT6MVSE221"
   },
   app:null,auth:null,db:null,
-  ready:false,role:null,user:null,
+  ready:false,role:null,user:null,_entering:false,_loginWatch:null,
   users:{},_usersBound:false,
   subs:[],_foBound:false,
   _siteCfg:{},_siteCfgBound:false,
@@ -1800,7 +1800,7 @@ const FB2={
 window.__FB2=FB2;
 // App Check (선택) — Firebase 콘솔에서 reCAPTCHA Enterprise/v3 등록 후 사이트키를 넣으면 활성.
 // 비워두면 비활성(현재 배포 유지). 활성 순서: ①사이트키 입력 → ②배포 → ③콘솔 앱 등록 → ④마지막에 '적용(enforcement)'.
-const FB_APPCHECK_SITE_KEY="";
+const FB_APPCHECK_SITE_KEY="6Lf43jctAAAAAIMJ0FBk7mEwQJy6MQzEJcn6C-XN";
 
 // Firebase 금지문자(. # $ [ ] /) 회피용 키 인코딩 (공종명 등 키에 사용)
 function fbEncKey(k){return encodeURIComponent(String(k==null?'':k)).replace(/\./g,'%2E');}
@@ -1836,8 +1836,20 @@ async function fbDoLogin(){
   if(!fbDomainOk(email)){fbMsg('@hdec.co.kr 계정만 사용할 수 있습니다');return;}
   if((c.pw||'').length<6){fbMsg('비밀번호는 6자 이상이어야 합니다');return;}
   fbMsg('로그인 중…',true);
-  try{await FB2.auth.signInWithEmailAndPassword(email,c.pw);}
-  catch(e){fbMsg(fbAuthErr(e));}
+  // 안전망: 일정 시간 안에 진입(또는 인증 안내)에 도달하지 못하면 새로고침을 안내.
+  //   signIn이 네트워크에서 멈추는 등 예기치 못한 경우까지 커버한다. (정상 진입 시 fb2OnAuth가 해제)
+  clearTimeout(FB2._loginWatch);
+  FB2._loginWatch=setTimeout(function(){if(!FB2.ready)fbMsg('로그인 처리가 지연되고 있습니다 · 페이지를 새로고침(F5)한 뒤 다시 시도해 주세요.');},9000);
+  try{
+    await FB2.auth.signInWithEmailAndPassword(email,c.pw);
+    // ★가입 직후엔 이미 그 계정으로 자동 로그인된 상태라, 같은 계정으로 다시 [로그인]을 눌러도
+    //   onAuthStateChanged가 재발화하지 않아 진입 로직이 돌지 않는다(→ 새로고침 전까지 무한 대기).
+    //   사용자 상태를 reload()로 최신화(emailVerified 반영)한 뒤 진입 핸들러를 직접 호출한다.
+    //   (일반 로그인에서 onAuthStateChanged가 함께 돌더라도 fb2Enter의 중복 진입 가드가 막아준다.)
+    const u=FB2.auth.currentUser;
+    if(u){try{await u.reload();}catch(_){}fb2OnAuth(FB2.auth.currentUser);}
+  }
+  catch(e){clearTimeout(FB2._loginWatch);fbMsg(fbAuthErr(e));}
 }
 async function fbDoSignup(){
   if(!FB2.auth){fbMsg('네트워크에 연결할 수 없습니다.');return;}
@@ -1864,7 +1876,12 @@ function fb2Init(){
   try{
     FB2.app=firebase.apps&&firebase.apps.length?firebase.app():firebase.initializeApp(FB2.cfg);
     if(FB_APPCHECK_SITE_KEY&&firebase.appCheck){
-      try{firebase.appCheck().activate(FB_APPCHECK_SITE_KEY,true);}
+      try{
+        // reCAPTCHA Enterprise 키 → Enterprise 제공자로 활성화.
+        //   (문자열로 넘기면 v3(클래식)으로 취급돼 Enterprise 키와 불일치 → 토큰 발급 실패)
+        var _EP=firebase.appCheck.ReCaptchaEnterpriseProvider;
+        firebase.appCheck().activate(_EP?new _EP(FB_APPCHECK_SITE_KEY):FB_APPCHECK_SITE_KEY,true);
+      }
       catch(e){console.warn('[FB2] appCheck activate 실패',e);}
     }
     FB2.auth=firebase.auth();
@@ -1881,8 +1898,9 @@ function fb2Boot(){
   FB2.auth.onAuthStateChanged(fb2OnAuth);
 }
 function fb2OnAuth(user){
+  clearTimeout(FB2._loginWatch); // 인증 상태가 결정됨 — 로그인 지연 워치독 해제(인증 대기·진입·차단 등 모든 분기 공통)
   FB2.user=user;
-  if(!user){ FB2.ready=false; try{fb2RenderAcct();}catch(_){} showGateForm(); return; }
+  if(!user){ FB2.ready=false; FB2.role=null; try{fb2Cleanup();}catch(_){} try{fb2RenderAcct();}catch(_){} showGateForm(); return; }
   if(!fbDomainOk(user.email)){showGateForm();fbMsg('@hdec.co.kr 계정만 접근할 수 있습니다.');try{FB2.auth.signOut();}catch(_){}return;}
   if(!user.emailVerified){
     showGateForm();
@@ -1917,6 +1935,16 @@ function fb2ShowBlocked(){
   try{document.body.classList.remove('viewer');}catch(_){}
   showGateForm();
   fbMsg('이 계정은 접근이 차단되었습니다. 관리자에게 문의하세요.');
+}
+// 로그아웃 시 실시간 구독 해제 — 로그아웃→재로그인 반복 시 리스너가 누적되는 것을 방지.
+//   subs 에 등록된 off() 들을 모두 실행하고, 그 리스너에 대응하는 재구독 가드(_usersBound·_siteCfgBound)를 리셋.
+//   (focusout 리스너는 영구 등록이라 해제 대상이 아니며 _foBound 는 그대로 둬 중복 바인딩을 막는다.)
+function fb2Cleanup(){
+  try{(FB2.subs||[]).forEach(function(off){try{off();}catch(_){}});}catch(_){}
+  FB2.subs=[];
+  FB2._usersBound=false;
+  FB2._siteCfgBound=false;
+  FB2.users={};FB2._siteCfg={};
 }
 
 // ----- 계정 관리 (편집자 전용) -----
@@ -2046,27 +2074,38 @@ window.fb2SetRole=fb2SetRole;
 
 // ----- 진입 (역할 분기: 관리자 / 사용자 / 차단) -----
 async function fb2Enter(user){
-  FB2.user=user;
-  let role='viewer';
-  try{role=await fb2ResolveRole(user);}catch(e){console.warn('[FB2] resolveRole',e);}
-  FB2.role=role;
-  if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단
-  FB2.ready=true;
-  hideCover();
-  fb2RenderAcct();
-  fb2BindFocusout();
-  fb2SubPlans();
-  fb2SubAnalysis();
-  fb2SubSiteConfig();
-  if(role==='editor'){
-    document.body.classList.remove('viewer');
-    const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
-    const su=document.getElementById('set-users');if(su)su.style.display='';
-    fb2SubUsers();
-    fb2RefreshMeta();
-    if(S.view==='settings')loadSettings();
-  }else{
-    await fb2EnterViewer();
+  // 중복 진입 가드: ① 진입 처리 중 재호출 차단, ② 이미 같은 계정으로 진입 완료면 무시.
+  //   (가입 직후 자동 로그인 등으로 onAuthStateChanged가 재발화하지 않을 때 fbDoLogin이 진입을
+  //    직접 구동하는데, 일반 로그인에서는 onAuthStateChanged도 함께 돌 수 있어 가드가 필요하다.)
+  if(FB2._entering)return;
+  if(FB2.ready&&FB2.user&&user&&FB2.user.uid===user.uid)return;
+  FB2._entering=true;
+  try{
+    FB2.user=user;
+    let role='viewer';
+    try{role=await fb2ResolveRole(user);}catch(e){console.warn('[FB2] resolveRole',e);}
+    FB2.role=role;
+    if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단 (finally에서 _entering 해제)
+    FB2.ready=true;
+    clearTimeout(FB2._loginWatch); // 진입 성공 — 워치독 해제
+    hideCover();
+    fb2RenderAcct();
+    fb2BindFocusout();
+    fb2SubPlans();
+    fb2SubAnalysis();
+    fb2SubSiteConfig();
+    if(role==='editor'){
+      document.body.classList.remove('viewer');
+      const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
+      const su=document.getElementById('set-users');if(su)su.style.display='';
+      fb2SubUsers();
+      fb2RefreshMeta();
+      if(S.view==='settings')loadSettings();
+    }else{
+      await fb2EnterViewer();
+    }
+  }finally{
+    FB2._entering=false;
   }
 }
 async function fb2EnterViewer(){
@@ -2336,7 +2375,7 @@ function calc(items,site,rm){
   // 메모이즈: (현장·기준월·데이터버전·건수) 조합으로 캐시. 건수를 내용 프록시로 사용한다.
   // ★불변식: S.def 변경 시 반드시 bumpDef()로 defVer를 올려 캐시를 무효화할 것.
   //   bumpDef() 없이 S.def[sid]를 in-place 수정하면 길이가 같은 다른 데이터가 stale 캐시를 맞는다.
-  const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(items?items.length:0);
+  const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(site.lastUploadedAt||'')+'|'+(items?items.length:0);
   const _hit=_calcCache.get(_ck);if(_hit)return _hit;
   const _res=_calcImpl(items,site,rm);
   _calcCache.set(_ck,_res);
@@ -2588,7 +2627,7 @@ function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!t
 }
 function sortSM(arr){if(!S.smsort?.col)return arr;const{col,dir}=S.smsort,num=['units','buildings','commercialUnits'].includes(col);return arr.slice().sort((a,b)=>{const va=a[col]??(num?0:''),vb=b[col]??(num?0:'');if(num)return dir*((Number(va)||0)-(Number(vb)||0));return dir*String(va).localeCompare(String(vb),'ko');});}
 function sortSMT(col){if(!S.smsort)S.smsort={col:null,dir:-1};if(S.smsort.col===col){if(S.smsort.dir===-1)S.smsort.dir=1;else{S.smsort.col=null;S.smsort.dir=-1;}}else{S.smsort.col=col;S.smsort.dir=-1;}rSMgr();}
-function rSMMark(){document.querySelectorAll('#smtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');th.classList.toggle('act',S.smsort?.col===c);if(mk)mk.textContent=S.smsort?.col===c?(S.smsort.dir===1?'▲':'▼'):'↕';});}
+function rSMMark(){document.querySelectorAll('#smtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');const act=S.smsort?.col===c;th.classList.toggle('act',act);if(mk)mk.textContent=act?(S.smsort.dir===1?'▲':'▼'):'↕';th.setAttribute('aria-sort',act?(S.smsort.dir===1?'ascending':'descending'):'none');});}
 
 // 범용 패널 테이블 정렬 (DOM 기반). 기타/합계(data-fixed 또는 tr.tot)는 맨 아래 고정.
 window._panelSort={};
@@ -2603,7 +2642,7 @@ function sortPanel(tableId,th){
   else{st.col=colIdx;st.dir=-1;}
   window._panelSort[tableId]=st;
   // 헤더 마크 갱신 — 전체 th 인덱스 기준으로 비교
-  tbl.querySelectorAll('thead th').forEach((h,idx)=>{const mk=h.querySelector('.sortmk');if(!mk)return;h.classList.toggle('act',st.col===idx&&!!h.dataset.sort);if(mk)mk.textContent=(st.col===idx&&!!h.dataset.sort)?(st.dir===1?'▲':'▼'):'↕';});
+  tbl.querySelectorAll('thead th').forEach((h,idx)=>{const mk=h.querySelector('.sortmk');const hasSort=!!h.dataset.sort;const act=st.col===idx&&hasSort;h.classList.toggle('act',act);if(mk)mk.textContent=act?(st.dir===1?'▲':'▼'):'↕';if(hasSort)h.setAttribute('aria-sort',act?(st.dir===1?'ascending':'descending'):'none');});
   const tb=tbl.querySelector('tbody');if(!tb)return;
   const allRows=Array.prototype.slice.call(tb.querySelectorAll(':scope > tr'));
   const fixed=allRows.filter(r=>r.classList.contains('tot')||r.dataset.fixed==='1');
@@ -2632,7 +2671,7 @@ const BP=['#538CDE','#3E71D2','#3259B6','#304D9D','#2C437C','#1F2B4C','#74ABE6',
 // SORTING dashboard table
 function sortDR(all){if(!S.dsort?.col)return all;const{col,dir}=S.dsort,getV=({s,st})=>({region:s.region,name:s.name,units:s.units||0,tR:st.tR,res:st.res,rate:st.rate,unr:st.unr,deltaUnr:st.unr-st.prev.unr,lt:st.lt,ltr:st.ltr,delta:st.ltr-st.prev.ltr}[col]);return all.slice().sort((a,b)=>{const va=getV(a),vb=getV(b);if(typeof va==='string')return dir*va.localeCompare(vb,'ko');return dir*(va-vb);});}
 function sortDT(col){if(!S.dsort)S.dsort={col:null,dir:-1};if(S.dsort.col===col){if(S.dsort.dir===1){S.dsort.col=null;S.dsort.dir=-1;}else S.dsort.dir=1;}else{S.dsort={col,dir:-1};}if(S.view==='dashboard')rDash();}
-function rDTMark(){document.querySelectorAll('#dtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');th.classList.toggle('act',S.dsort?.col===c);if(mk)mk.textContent=S.dsort?.col===c?(S.dsort.dir===1?'▲':'▼'):'↕';});}
+function rDTMark(){document.querySelectorAll('#dtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');const act=S.dsort?.col===c;th.classList.toggle('act',act);if(mk)mk.textContent=act?(S.dsort.dir===1?'▲':'▼'):'↕';th.setAttribute('aria-sort',act?(S.dsort.dir===1?'ascending':'descending'):'none');});}
 function attachLtrTip(){if(window._ltrTipAttached)return;window._ltrTipAttached=true;const tip=document.getElementById('htooltip');if(!tip)return;const show=(e,bar)=>{const[nm,unrS,d60S,d30S,d0S]=bar.dataset.tip.split('|'),unr=Number(unrS)||0,d60=Number(d60S)||0,d30=Number(d30S)||0,d0=Number(d0S)||0,pct=n=>unr>0?(n/unr*100).toFixed(1)+'%':'0%';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:var(--rd)"></span><span class="tlabel">60일 이상</span><span class="tval">${d60.toLocaleString()}건 (${pct(d60)})</span></div><div class="trow"><span class="tmark" style="background:#E89C9A"></span><span class="tlabel">30~59일</span><span class="tval">${d30.toLocaleString()}건 (${pct(d30)})</span></div><div class="trow"><span class="tmark" style="background:#B3C7DD"></span><span class="tlabel">30일 미만</span><span class="tval">${d0.toLocaleString()}건 (${pct(d0)})</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};const hide=()=>tip.classList.remove('show');// document 전체 위임 — 대시보드 + 현장 패널 모든 ltrbar 커버
 document.addEventListener('mouseover',e=>{const bar=e.target.closest('.ltrbar');if(bar&&bar.dataset.tip)show(e,bar);});document.addEventListener('mousemove',e=>{if(tip.classList.contains('show')){tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';}});document.addEventListener('mouseout',e=>{const bar=e.target.closest('.ltrbar');if(bar&&!e.relatedTarget?.closest('.ltrbar'))hide();});
   // 장기미처리 비율 현황 바 — 세그먼트별 개별 툴팁
@@ -3977,8 +4016,33 @@ function doPrint(){
 }
 
 // MODAL / TOAST
-function openMo(){document.getElementById('mo').classList.add('open');}
-function closeMo(){document.getElementById('mo').classList.remove('open');}
+// 모달 접근성: Esc 닫기 · Tab 포커스 순환(트랩) · role/aria · 열기 시 첫 포커스 이동, 닫을 때 이전 포커스 복귀
+let _moPrevFocus=null,_moKeyBound=false;
+function _moFocusables(){const mb=document.getElementById('mb');if(!mb)return [];return Array.prototype.slice.call(mb.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(el=>(el.offsetWidth>0||el.offsetHeight>0||el===document.activeElement));}
+function _moKeydown(e){
+  const mo=document.getElementById('mo');
+  if(!mo||!mo.classList.contains('open'))return;
+  if(e.key==='Escape'){e.preventDefault();closeMo();return;}
+  if(e.key==='Tab'){
+    const f=_moFocusables();if(!f.length)return;
+    const first=f[0],last=f[f.length-1],a=document.activeElement,inside=mo.contains(a);
+    if(e.shiftKey&&(a===first||!inside)){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&(a===last||!inside)){e.preventDefault();first.focus();}
+  }
+}
+function openMo(){
+  const mo=document.getElementById('mo'),mb=document.getElementById('mb');
+  _moPrevFocus=document.activeElement;
+  if(mb){mb.setAttribute('role','dialog');mb.setAttribute('aria-modal','true');mb.setAttribute('aria-labelledby','mt');if(!mb.hasAttribute('tabindex'))mb.setAttribute('tabindex','-1');}
+  mo.classList.add('open');
+  if(!_moKeyBound){_moKeyBound=true;document.addEventListener('keydown',_moKeydown,true);}
+  setTimeout(()=>{const f=_moFocusables(),t=f[0]||mb;try{if(t&&t.focus)t.focus();}catch(_){}},30);
+}
+function closeMo(){
+  const mo=document.getElementById('mo');if(mo)mo.classList.remove('open');
+  try{if(_moPrevFocus&&_moPrevFocus.focus)_moPrevFocus.focus();}catch(_){}
+  _moPrevFocus=null;
+}
 let _tt;
 function toast(msg,dur){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),dur||2400);}
 // 진행률 오버레이
@@ -4029,9 +4093,68 @@ async function exportSnapshot(){
   }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
 }
 window.exportSnapshot=exportSnapshot;
+// ====================================================================
+// ===== 자체 점검(셀프테스트) — index.html?selftest=1 로 실행 =========
+// 빌드/모듈 없이도 핵심 순수 로직(날짜 정규화·직전월·주차·역산 집계)의 "현재 동작"을 고정한다.
+// 실제 함수를 그대로 호출하므로 사본 불일치(drift)가 없다. 일반 부팅에는 영향 없음.
+// 향후 리팩터링·최적화 시 회귀를 즉시 잡는 1차 안전망. 케이스는 자유롭게 추가할 것.
+// ====================================================================
+function __runSelfTest(){
+  const R=[];
+  const eq=(name,got,exp)=>R.push({name,ok:JSON.stringify(got)===JSON.stringify(exp),got,exp});
+  const ok=(name,cond)=>R.push({name,ok:!!cond,got:!!cond,exp:true});
+  try{
+    // --- nd(): 날짜 정규화 (다양한 입력 → YYYY-MM-DD) ---
+    eq('nd 하이픈',nd('2026-05-01'),'2026-05-01');
+    eq('nd 점구분',nd('2026.5.1'),'2026-05-01');
+    eq('nd 슬래시',nd('2026/5/1'),'2026-05-01');
+    eq('nd 8자리',nd('20260501'),'2026-05-01');
+    eq('nd 한국식시각',nd('2026-05-01 오전 12:00:00'),'2026-05-01');
+    eq('nd 빈문자열',nd(''),'');
+    eq('nd null',nd(null),'');
+    eq('nd Date객체',nd(new Date(2026,4,1)),'2026-05-01');
+    // --- pM(): 직전 월(연 경계 포함) ---
+    eq('pM 1월→전년12월',pM('2026-01'),'2025-12');
+    eq('pM 3월→2월',pM('2026-03'),'2026-02');
+    // --- wk(): 주차 cutoff는 항상 토요일(불변식) ---
+    ok('wk 결과는 토요일',(()=>{const s=wk('2026-06-09');return !!s&&new Date(s+'T00:00:00Z').getUTCDay()===6;})());
+    eq('wk 빈값',wk(''),null);
+    // --- _calcImpl(): 역산 집계 (완료일 기준 미처리/처리) ---
+    const site={id:'__selftest',name:'테스트',region:'테스트',units:100,buildings:1,hasCommercial:false};
+    const items=[
+      {receiptDate:'2026-05-01',status:'처리',completionDate:'2026-05-10',trade:'타일'}, // 5월말 이전 완료
+      {receiptDate:'2026-05-02',status:'미처리',trade:'도배'},                              // 미처리
+      {receiptDate:'2026-05-03',status:'처리',completionDate:'2026-06-15',trade:'설비'}     // 완료가 5월말 이후 → 5월 기준 미처리
+    ];
+    const a=_calcImpl(items,site,'2026-05');
+    eq('calc 전체접수',a.tR,3);
+    eq('calc 처리(5월기준)',a.res,1);
+    eq('calc 미처리(5월기준)',a.unr,2);
+    ok('calc 처리+미처리=전체',a.res+a.unr===a.tR);
+    // 역산 검증: 6월 기준이면 3번 완료가 잡혀 처리=2 (완료일 기준 역산이 핵심 불변식)
+    const b=_calcImpl(items,site,'2026-06');
+    eq('calc 역산 처리(6월기준)',b.res,2);
+    eq('calc 역산 미처리(6월기준)',b.unr,1);
+    // --- calcW(): 주차 누적은 단조증가(접수·처리 모두 감소 없음) ---
+    const w=a.weekly||[];
+    ok('calcW 누적접수 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].r<w[i-1].r)return false;return true;})());
+    ok('calcW 누적처리 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].res<w[i-1].res)return false;return true;})());
+  }catch(e){R.push({name:'실행 중 예외: '+((e&&e.message)||e),ok:false,got:String(e&&e.stack||e),exp:'정상 실행'});}
+  const pass=R.filter(r=>r.ok).length,fail=R.length-pass;
+  try{console.log('%c[셀프테스트] '+pass+'/'+R.length+' 통과'+(fail?(' · 실패 '+fail):''),'font-weight:bold;font-size:13px;color:'+(fail?'#c0392b':'#1a7a3c'));
+    console.table(R.map(r=>({테스트:r.name,결과:r.ok?'PASS':'FAIL',got:JSON.stringify(r.got),exp:JSON.stringify(r.exp)})));}catch(_){}
+  const rows=R.map(r=>'<div style="display:flex;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;line-height:1.5"><span style="width:48px;flex-shrink:0;font-weight:700;color:'+(r.ok?'#7CFC9A':'#ff8a80')+'">'+(r.ok?'PASS':'FAIL')+'</span><span style="flex:1">'+esc(r.name)+(r.ok?'':(' <span style="color:#ff8a80">→ got '+esc(JSON.stringify(r.got))+' / exp '+esc(JSON.stringify(r.exp))+'</span>'))+'</span></div>').join('');
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;inset:0;z-index:100000;overflow:auto;background:radial-gradient(120% 120% at 50% 0%,#1c2b46 0%,#0f1626 60%,#0a0f1a 100%);color:#dfe7f5;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:34px 20px';
+  el.innerHTML='<div style="max-width:780px;margin:0 auto"><div style="font-size:19px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px">자체 점검 결과 — '+(fail?('<span style="color:#ff8a80">실패 '+fail+'건</span>'):'<span style="color:#7CFC9A">전체 통과</span>')+' <span style="color:#9fb0cc;font-weight:600;font-size:14px">('+pass+'/'+R.length+')</span></div><div style="font-size:12.5px;color:#9fb0cc;margin-bottom:18px">핵심 순수 로직(nd · pM · wk · calc · calcW) 동작 고정 · 실제 함수 호출(사본 불일치 없음) · 일반 부팅에는 영향 없음</div><div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:8px 18px 12px;box-shadow:0 20px 50px rgba(0,0,0,.4)">'+rows+'</div><div style="margin-top:14px;font-size:11.5px;color:#74849e">콘솔(F12)에서 표 형태로도 확인 가능 · 일반 사용은 주소에서 <b style="color:#aebfe0">?selftest=1</b> 제거 후 새로고침</div></div>';
+  document.body.appendChild(el);
+  try{hideCover();progHide();}catch(_){}
+}
+window.__runSelfTest=__runSelfTest;
 document.addEventListener('DOMContentLoaded',async()=>{
   applyChartTheme();
   bindDelegatedEvents(); // 위임 리스너 — 스냅샷·일반 경로 모두 커버 (조기 return 이전, 멱등)
+  if(/[?&]selftest=1(?:&|$)/.test(location.search)){__runSelfTest();return;} // 셀프테스트 모드 — 일반 부팅 생략
   if(window.__SNAP__){try{
     const P=window.__SNAP__;
     S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};S.def={};
