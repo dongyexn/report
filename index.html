@@ -60,6 +60,7 @@ svg{display:block;flex-shrink:0;}
 .sbtg svg{width:16px;height:16px;transition:transform var(--tr);}
 #sidebar.mini .sbtg svg{transform:scaleX(-1);}
 .sbsc{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px;display:flex;flex-direction:column;}
+.sbsc>*{flex-shrink:0;}
 .sbsc .sb-bottom{margin-top:auto;padding-top:8px;}
 .sbsc::-webkit-scrollbar{display:none;}
 .sbsl{font-size:10px;font-weight:700;color:var(--lbl3);letter-spacing:.07em;text-transform:uppercase;padding:10px 8px 4px;white-space:nowrap;transition:opacity var(--tr);}
@@ -1062,7 +1063,12 @@ input,select,textarea,button{display:none!important;}
   .mom-row .delta .d{font-size:10px;padding:1px 6px;}
 
   /* 표: 가로 스크롤 */
-  .card>table.dt,.card>div>table.dt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+  /* 비-fixed 표(자동 레이아웃)는 자체 가로 스크롤 */
+  .card>table.dt:not([style*="table-layout"]),.card>div>table.dt:not([style*="table-layout"]){display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+  /* fixed 표는 컬럼 비율(colgroup/th %)을 지켜야 하므로 table 유지 + min-width로 가로 확보 */
+  .card>div>table.dt[style*="table-layout"],.card>table.dt[style*="table-layout"]{display:table!important;width:100%;min-width:560px;white-space:nowrap;}
+  /* wrapper 없이 card 직계인 fixed 표는 부모 card가 가로 스크롤을 담당 */
+  .card:has(>table.dt[style*="table-layout"]){overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .dt th,.dt td{padding:8px 8px;font-size:11.5px;}
   .dt th{font-size:9.5px;}
 
@@ -1121,6 +1127,38 @@ input,select,textarea,button{display:none!important;}
   .card,.ic,.hero,.sh,.dn-side,.mom-row,.cw,.tnav-i,.fgrp{min-width:0;}
   /* 긴 한글·영문·숫자·URL이 카드 밖으로 넘치지 않게 줄바꿈 */
   .ic-ttl,.ic-sub,.ct,.st,.hn,.hm,.km,.kl{overflow-wrap:anywhere;word-break:break-word;}
+
+  /* [이슈6] 사이드바 열림 시 배경(콘텐츠) 스크롤 락 — 사이드바 드래그가 뒤 페이지로 새지 않게 */
+  body.sb-locked #content{overflow:hidden!important;touch-action:none;}
+
+  /* [이슈7] 장기미처리 비율 현황(ltrmom) — 좁은 폭 최적화: 고정 132px 컬럼 → auto, 폰트 축소 */
+  .ltrmom-body{gap:10px;}
+  .ltrmom-row{grid-template-columns:30px auto 1fr;column-gap:5px;}
+  .ltrmom-row .lm-mo{font-size:12px;}
+  .ltrmom-row .lm-stat{font-size:10.5px;margin-right:4px;}
+  .ltrmom-bar .seg .seg-v{font-size:9px;}
+  .ltrmom-delta{min-width:0;}
+  .ltrmom-delta .lm-delta{font-size:10.5px;padding:3px 7px;gap:3px;}
+
+  /* [이슈8] 처리계획 textarea 셀 — 모바일 좌패딩 축소(인라인 padding-left:20px override) */
+  .dt td[style*="padding-left:20px"]{padding-left:6px!important;padding-right:4px!important;}
+
+  /* [이슈9] 공가세대 현황(vrow) — 5칸→3칸, 음수마진 제거, 구분선 숨김, 폰트 축소 */
+  .vrow{grid-template-columns:repeat(3,1fr)!important;margin:0!important;gap:8px;row-gap:14px;}
+  .vseg{padding:4px 6px!important;}
+  .vseg:first-child{padding-left:6px!important;}
+  .vseg+.vseg::before{display:none;}
+  .vseg-l{font-size:11px;gap:3px;}
+  .vseg-v{font-size:19px;}
+  .vseg-v .vseg-u{font-size:10px;}
+  .vseg-m{font-size:9.5px;margin-top:3px;}
+  .vseg-edit{margin-left:4px;padding-left:6px;}
+
+  /* [이슈3] 현장 관리 페이지 — 그리드 간격 축소(1열은 980 규칙에서 처리됨) */
+  .mg-grid{gap:10px;}
+  /* [이슈4] 설정 계정 관리 — 이름+저장 줄바꿈 허용 */
+  .acct-row{flex-wrap:wrap;}
+  .acct-row .acct-btn{flex-shrink:0;}
 }
 
 /* ===== SMALL MOBILE (≤480px) — screen only ===== */
@@ -1665,8 +1703,8 @@ function setSiteTrendYear(y){S.siteTrendYear=y;if(S.sid){dC('mo-'+S.sid);buildSi
 
 // SIDEBAR
 function toggleSB(){S.mini=!S.mini;document.getElementById('sidebar').classList.toggle('mini',S.mini);}
-function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');}
-function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');}
+function openMobileSB(){document.getElementById('sidebar').classList.add('mob-open');document.getElementById('scrim').classList.add('show');document.body.classList.add('sb-locked');}
+function closeMobileSB(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('scrim').classList.remove('show');document.body.classList.remove('sb-locked');}
 
 // PERSISTENCE — 공유 폴더(File System Access API, OneDrive 등) + localStorage/IndexedDB 백업.
 // 주의: fb* 명칭은 과거 Firebase 시절의 호환 shim. 실제 저장은 전부 폴더(sh*) 경유.
@@ -4093,7 +4131,8 @@ function openMo(){
   if(mb){mb.setAttribute('role','dialog');mb.setAttribute('aria-modal','true');mb.setAttribute('aria-labelledby','mt');if(!mb.hasAttribute('tabindex'))mb.setAttribute('tabindex','-1');}
   mo.classList.add('open');
   if(!_moKeyBound){_moKeyBound=true;document.addEventListener('keydown',_moKeydown,true);}
-  setTimeout(()=>{const f=_moFocusables(),t=f[0]||mb;try{if(t&&t.focus)t.focus();}catch(_){}},30);
+  // 초기 포커스는 모달 컨테이너로(첫 input에 두면 모바일에서 키보드가 즉시 떠 불편). Tab 시 내부 요소로 이동.
+  setTimeout(()=>{try{if(mb&&mb.focus)mb.focus();}catch(_){}},30);
 }
 function closeMo(){
   const mo=document.getElementById('mo');if(mo)mo.classList.remove('open');
