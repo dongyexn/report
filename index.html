@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-2XSXaacTUI6QAcCyMEJ5WMfN5dRniPXuqo6IenGuiBo=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-kSECc6Asc7YZRoepPlH//OgfQel90tmnGsFsAtwtJZw=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1927,6 +1927,11 @@ const FB_APPCHECK_SITE_KEY="6Lcl5zctAAAAAPgvPJKKLxBwgENnAmogtVTqf61f";
 // Firebase 금지문자(. # $ [ ] /) 회피용 키 인코딩 (공종명 등 키에 사용)
 function fbEncKey(k){return encodeURIComponent(String(k==null?'':k)).replace(/\./g,'%2E');}
 function fbDecKey(k){try{return decodeURIComponent(String(k));}catch(e){return String(k);}}
+// Firebase 키 규칙(. $ # / [ ] 금지) 회피: 게시 payload의 중첩 맵 키를 재귀 인코딩/디코딩한다.
+//   데이터 값이 키가 되는 맵(dtb 하자유형·rpb 보수주체·am/siteAm 공종)에 '/' 등이 들어가면 update 전체가 거부됨.
+//   구조 키(영문)는 encodeURIComponent가 그대로 두므로 실제로는 한글/기호 키만 변환된다(쓰기·읽기 대칭).
+function deepEncKeys(v){if(Array.isArray(v))return v.map(deepEncKeys);if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(function(k){o[fbEncKey(k)]=deepEncKeys(v[k]);});return o;}return v;}
+function deepDecKeys(v){if(Array.isArray(v))return v.map(deepDecKeys);if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(function(k){o[fbDecKey(k)]=deepDecKeys(v[k]);});return o;}return v;}
 function fbDomainOk(email){return /@hdec\.co\.kr$/i.test(String(email||'').trim());}
 function fb2Wait(ms){return new Promise(r=>setTimeout(r,ms));}
 function fb2IsEditor(){return FB2.role==='editor';}
@@ -2252,7 +2257,7 @@ async function fb2LoadReportLatest(){
   return{rm:rm,data:v[rm]||{}};
 }
 function fb2ApplyReport(rm,rep){
-  rep=rep||{};
+  rep=deepDecKeys(rep||{}); // 게시 시 인코딩된 중첩 맵 키(dtb/rpb/am/siteAm)를 원복 — 이후 st·am·siteAm은 정상 키
   const dash=rep._dash||{};
   S.sites=Array.isArray(dash.sites)?dash.sites:[];
   S.teams=Array.isArray(dash.teams)?dash.teams:[];
@@ -2427,8 +2432,8 @@ async function fb2Publish(){
       upd['report/'+rm+'/'+s2.id]={kpi:kpi,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
     });
     upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
-    await FB2.db.ref().update(upd);
-    await fb2SeedPlansAnalysis(); // 편집자가 입력해 둔 처리계획·분석의견을 리프로 시드(실시간 협업 시작점)
+    Object.keys(upd).forEach(function(p){upd[p]=deepEncKeys(upd[p]);}); // 중첩 맵 키(하자유형/공종/보수주체 등)에 '/'·'.' 등이 있으면 거부되므로 인코딩
+    await FB2.db.ref().update(upd); // 편집자가 입력해 둔 처리계획·분석의견을 리프로 시드(실시간 협업 시작점)
     fb2RefreshMeta();
     toast('등록 완료 · '+rm+' · 현장 '+dashSites().length+'개');
   }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
