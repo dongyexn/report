@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-kSECc6Asc7YZRoepPlH//OgfQel90tmnGsFsAtwtJZw=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-QXFXRSTzBOUikjjKYcmLDVOXLj4YT1J2chGEtjKk/LM=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -21,7 +21,7 @@
 --lbl:#1C1C1E;--lbl2:rgba(60,60,67,.58);--lbl3:rgba(60,60,67,.45);
 --gn:#34C759;--rd:#FF3B30;--am:#FF9500;
 --rsm:8px;--rmd:12px;--rlg:16px;--rxl:20px;--rp:999px;
---sw:240px;--swm:60px;--th:52px;--tr:.22s cubic-bezier(.4,0,.2,1);--ct:#5C5C60;}
+--sw:240px;--swm:64px;--th:52px;--tr:.22s cubic-bezier(.4,0,.2,1);--ct:#5C5C60;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
 body{font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:14px;color:var(--lbl);background:var(--bg);line-height:1.5;-webkit-font-smoothing:antialiased;}
@@ -266,7 +266,7 @@ table.dt-detail th{text-align:center!important;}
 .ltrbar:hover{height:11px;}
 .ltrbar .seg{height:100%;transition:filter .15s ease;}
 .ltrbar:hover .seg{filter:brightness(0.92) saturate(1.15);}
-.ltrbar .seg.s60{background:var(--rd);}
+.ltrbar .seg.s60{background:#DA6A60;}/* 추이차트 60일+ 색과 통일 */
 .ltrbar .seg.s30{background:#E89C9A;}
 .ltrbar .seg.s0{background:#B3C7DD;}
 .ltrbar-pct{font-size:11.5px;font-weight:600;color:var(--b700);font-variant-numeric:tabular-nums;min-width:42px;text-align:right;}
@@ -294,7 +294,7 @@ table.dt-detail th{text-align:center!important;}
 .ltrmom-bar .seg.s0 .seg-v{color:#33506e;}
 .ltrmom-row.cur .ltrmom-bar .seg.s0 .seg-v{color:#1c3551;}
 .ltrmom-bar .seg.s30{background:#E89C9A;}
-.ltrmom-bar .seg.s60{background:var(--rd);}
+.ltrmom-bar .seg.s60{background:#DA6A60;}
 .ltrmom-delta{flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;min-width:64px;}
 .ltrmom-delta .lm-delta{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;font-variant-numeric:tabular-nums;}
 .ltrmom-delta .lm-delta.up{background:#fdeaea;color:#C0392B;}
@@ -508,10 +508,27 @@ table.dt-detail th{text-align:center!important;}
 .pv-chip-x:hover{background:#FBE9E9;color:#C0392B;}
 .pv-add{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px dashed var(--sepo);border-radius:8px;background:#fff;color:var(--lbl2);font-size:17px;line-height:1;cursor:pointer;transition:all .12s;}
 .pv-add:hover{background:var(--fill);border-color:var(--b400);color:var(--b600);}
-.pv-chip.pv-drag{padding-left:5px;}
-.pv-grip{position:relative;flex:none;width:10px;height:10px;cursor:grab;color:var(--lbl3);}
-.pv-grip::before{content:"";position:absolute;top:2px;left:2px;width:2px;height:2px;background:currentColor;border-radius:.5px;box-shadow:4px 0 0 currentColor,0 4px 0 currentColor,4px 4px 0 currentColor;}
-.pv-grip:active{cursor:grabbing;}
+.pv-chip.pv-drag{cursor:grab;}
+.pv-chip.pv-drag:active{cursor:grabbing;}
+/* 지연구간 원탭 필터 칩 — on 색상은 추이차트·장기미처리 바의 밴드 색과 동일 */
+.rl-band-bar{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:wrap;margin-bottom:10px;}
+.rl-band{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;background:#fff;color:var(--lbl2);border:1px solid var(--sep);border-radius:var(--rp);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,border-color .12s,color .12s;}
+.rl-band b{font-weight:700;color:var(--lbl);font-variant-numeric:tabular-nums;}
+@media(hover:hover){.rl-band:hover{border-color:var(--b300);}}
+.rl-band.on{background:var(--b600);border-color:var(--b600);color:#fff;}
+.rl-band.on b{color:#fff;}
+.rl-band.d60.on{background:#DA6A60;border-color:#DA6A60;}
+.rl-band.d30.on{background:#E89C9A;border-color:#E89C9A;color:#6e2b27;}
+.rl-band.d30.on b{color:#6e2b27;}
+.rl-band.d0.on{background:#B3C7DD;border-color:#B3C7DD;color:#1c3551;}
+.rl-band.d0.on b{color:#1c3551;}
+/* 목록 행 상한 초과 시 더보기 */
+.rl-more-row td{text-align:center;padding:10px 0 6px;}
+.rl-more{min-width:220px;}
+/* 피벗 값 집계 선택 칩 */
+.pv-chip.pv-val{cursor:pointer;padding:0 9px 0 12px;}
+.pv-caret{font-size:9px;color:var(--lbl3);}
+.rl-menu-row.on{color:var(--b700);font-weight:700;}
 .pv-chip.pv-dragging{opacity:.45;border-style:dashed;box-shadow:none;}
 /* 피벗 표 — 개요(들여쓰기 계층) 형식 */
 .pv-scroll{flex:1 1 auto;min-height:0;overflow:auto;border:1px solid var(--sep);border-radius:var(--rmd);background:#fff;}
@@ -534,6 +551,12 @@ table.dt-detail th{text-align:center!important;}
 .rl-link:hover{text-decoration:underline;}
 .kc-click{cursor:pointer;}
 @media(hover:hover){.kc-click:hover{outline:2px solid var(--b300);outline-offset:-2px;}}
+/* 클릭 가능 KPI 카드의 '목록 보기' 버튼 표시 — pointer-events:none로 클릭은 카드(data-act)로 전달, 호버/프레스는 카드 상태에 연동 */
+.kc-cta{position:absolute;right:12px;top:12px;display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 6px 0 10px;border-radius:var(--rp);background:var(--b600);color:#fff;font-size:11px;font-weight:700;line-height:1;box-shadow:0 1px 2px rgba(44,67,124,.25);transition:background .12s,transform .1s;pointer-events:none;}
+.kc-click:hover .kc-cta{background:var(--b700);}
+.kc-click:active .kc-cta{transform:scale(.97);}
+.kc-cta svg{width:14px;height:14px;}
+@media print{.kc-cta{display:none!important;}}
 /* 현장 헤더 신선도 (간단) */
 .tbsu-up{font-weight:500;color:var(--lbl2);}
 .tbsu-up.stale{color:var(--am);font-weight:600;}
@@ -1682,6 +1705,10 @@ registerActions('click', {
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
   'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=REC_COLS.map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>REC_COLS.map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
+  'rec.more':()=>{const R=window.__REC;if(!R)return;R.limit=Infinity;recRenderBody();},
+  'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
+  'rec.pivotVal':(el)=>{const r=el.getBoundingClientRect();recPivotValMenu(r.left,r.bottom+4);},
+  'rec.pivotValPick':(el)=>{const R=window.__REC;if(!R)return;R.pivot.val=el.dataset.val;recClosePvMenu();recRenderModalBody();},
   'rec.sort':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.key;if(R.sort.key===k){if(R.sort.dir===1){R.sort.key=null;R.sort.dir=-1;}else R.sort.dir=1;}else{R.sort.key=k;R.sort.dir=-1;}recRenderHead();recRenderBody();},
   'rec.menuToggleRow':()=>{const R=window.__REC;if(!R)return;R.filterRow=!R.filterRow;const fr=document.querySelector('.rl-frow');if(fr)fr.classList.toggle('open',R.filterRow);if(!R.filterRow){R.filters={};document.querySelectorAll('.rl-fin').forEach(i=>{i.value='';});recRenderBody();}recCloseMenu();},
   'rec.menuAll':(el)=>{const M=window.__RECMENU;if(!M)return;M.sel=el.checked?new Set(M.all):new Set();recMenuRenderList();},
@@ -1707,7 +1734,7 @@ registerActions('click', {
 // ── [전환 완료] input 액션 ──
 registerActions('input', {
   'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
-  'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;recRenderBody();},
+  'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
   'rec.menuSearch':(el)=>{const M=window.__RECMENU;if(!M)return;M.q=el.value;const q=M.q.trim().toLowerCase();if(q)M.sel=new Set(M.all.filter(v=>String(v).toLowerCase().includes(q)));recMenuRenderList();},
   'set.exToken':(el)=>{S.exTk=el.value;localStorage.setItem('exTk',el.value);},
   'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
@@ -2510,9 +2537,13 @@ const REC_COLS=[
   {key:'delayDays',label:'지연일',type:'num',w:78,filter:'numRange'}
 ];
 function recCell(r,k){if(k==='__no')return '';const v=r[k];return v==null?'':v;}
+// 지연구간(밴드) 판정 — calc의 KPI 지연구간(d0/d30/d60)과 동일한 역산(기준월 말일 − 접수일). 원본 지연일 컬럼과 별개.
+function recDelayDays(r,R){return Math.max(0,Math.round((new Date(R.rmEnd)-new Date(r.receiptDate))/86400000));}
+function recBandOf(dd){return dd>=60?'d60':dd>=30?'d30':'d0';}
 function recComputeView(){
   const R=window.__REC;if(!R)return [];
   let rows=R.all.slice();
+  if(R.band)rows=rows.filter(r=>recBandOf(recDelayDays(r,R))===R.band); // 지연구간 칩 필터 (KPI와 동일 기준)
   for(const c of REC_COLS){
     if(c.key==='__no')continue;
     const raw=R.filters[c.key];
@@ -2641,25 +2672,28 @@ function recPivotData(){
   const R=window.__REC,P=R.pivot;
   recComputeView();
   const rows=R.view,rks=P.rows,ck=P.col,cset=new Set();
-  const root={value:'전체',children:{},cells:{},total:0,depth:-1};
+  const root={value:'전체',children:{},cells:{},cellsS:{},total:0,totalS:0,depth:-1};
   for(const r of rows){
     const cv=ck?(pivotCell(r,ck)||'(빈값)'):'__all';
+    const dd=recDelayDays(r,R); // 평균 지연일용 — KPI 지연구간과 동일 역산
     cset.add(cv);
-    root.total++;root.cells[cv]=(root.cells[cv]||0)+1;
+    root.total++;root.cells[cv]=(root.cells[cv]||0)+1;root.totalS+=dd;root.cellsS[cv]=(root.cellsS[cv]||0)+dd;
     let cur=root;
     for(const k of rks){
       const v=pivotCell(r,k)||'(빈값)';
-      let ch=cur.children[v];if(!ch)ch=cur.children[v]={value:v,children:{},cells:{},total:0,depth:cur.depth+1};
-      ch.total++;ch.cells[cv]=(ch.cells[cv]||0)+1;cur=ch;
+      let ch=cur.children[v];if(!ch)ch=cur.children[v]={value:v,children:{},cells:{},cellsS:{},total:0,totalS:0,depth:cur.depth+1};
+      ch.total++;ch.cells[cv]=(ch.cells[cv]||0)+1;ch.totalS+=dd;ch.cellsS[cv]=(ch.cellsS[cv]||0)+dd;cur=ch;
     }
   }
   const colsA=ck?[...cset].sort((a,b)=>String(a).localeCompare(String(b),'ko')):['__all'];
   const colTot={};colsA.forEach(cv=>colTot[cv]=root.cells[cv]||0);
-  return {root,colsA,colTot,grand:root.total,hasCol:!!ck,rks,maxD:rks.length,sort:P.sort||{key:'__total',dir:-1}};
+  const colTotS={};colsA.forEach(cv=>colTotS[cv]=root.cellsS[cv]||0);
+  const val=P.val||'count';
+  return {root,colsA,colTot,colTotS,grand:root.total,grandS:root.totalS,hasCol:!!ck,rks,maxD:rks.length,val,sort:Object.assign({},P.sort||{key:'__total',dir:-1},{vm:val})};
 }
 function pivotSortNodes(nodes,sort){
-  const k=sort.key,dir=sort.dir;
-  const val=n=>k.slice(0,2)==='c:'?(n.cells[k.slice(2)]||0):n.total;
+  const k=sort.key,dir=sort.dir,vm=sort.vm;
+  const val=n=>{const cc=k.slice(0,2)==='c:'?(n.cells[k.slice(2)]||0):n.total;if(vm!=='avgDelay')return cc;const ss=k.slice(0,2)==='c:'?((n.cellsS||{})[k.slice(2)]||0):(n.totalS||0);return cc?ss/cc:0;};
   return nodes.slice().sort((a,b)=>{
     if(k==='__label')return String(a.value).localeCompare(String(b.value),'ko')*dir;
     return (val(a)-val(b))*dir || String(a.value).localeCompare(String(b.value),'ko');
@@ -2669,25 +2703,26 @@ function recPivotTableHTML(){
   const D=recPivotData();
   if(!D.grand)return '<div class="pv-empty">표시할 데이터가 없습니다</div>';
   const cd=cv=>cv==='(빈값)'?'(빈값)':esc(cv),arr=k=>D.sort.key===k?(D.sort.dir>0?' ▲':' ▼'):'';
+  const dsp=(c,sm)=>D.val==='avgDelay'?(c?Math.round(sm/c).toLocaleString():'·'):(c?c.toLocaleString():'·'); // 값 모드별 셀 표시
   const lblHead=D.rks.length?D.rks.map(pivotFieldLabel).join(' › '):'전체';
   let h=`<thead><tr><th class="pv-rh pv-th" data-act="rec.pivotSort" data-pk="__label">${esc(lblHead)}${arr('__label')}</th>`;
   if(D.hasCol)D.colsA.forEach(cv=>h+=`<th class="pv-th" data-act="rec.pivotSort" data-pk="c:${esc(cv)}">${cd(cv)}${arr('c:'+cv)}</th>`);
-  h+=`<th class="pv-tot pv-th" data-act="rec.pivotSort" data-pk="__total">합계${arr('__total')}</th></tr></thead>`;
+  h+=`<th class="pv-tot pv-th" data-act="rec.pivotSort" data-pk="__total">${D.val==='avgDelay'?'전체 평균':'합계'}${arr('__total')}</th></tr></thead>`;
   let b='<tbody>';
   const emit=node=>{
     const isLeaf=node.depth>=D.maxD-1||!Object.keys(node.children).length;
     const ind=8+node.depth*16;
     b+=`<tr class="pv-row${isLeaf?'':' pv-grp'}"><td class="pv-rh" style="padding-left:${ind}px">${cd(node.value)}</td>`;
-    if(D.hasCol)D.colsA.forEach(cv=>{const n=node.cells[cv]||0;b+=`<td>${n?n.toLocaleString():'·'}</td>`;});
-    b+=`<td class="pv-tot">${node.total.toLocaleString()}</td></tr>`;
+    if(D.hasCol)D.colsA.forEach(cv=>{b+=`<td>${dsp(node.cells[cv]||0,(node.cellsS||{})[cv]||0)}</td>`;});
+    b+=`<td class="pv-tot">${dsp(node.total,node.totalS||0)}</td></tr>`;
     if(!isLeaf)pivotSortNodes(Object.values(node.children),D.sort).forEach(emit);
   };
   const top=pivotSortNodes(Object.values(D.root.children),D.sort);
-  if(!top.length){b+=`<tr class="pv-row"><td class="pv-rh" style="padding-left:8px">전체</td>`;if(D.hasCol)D.colsA.forEach(cv=>{const n=D.root.cells[cv]||0;b+=`<td>${n?n.toLocaleString():'·'}</td>`;});b+=`<td class="pv-tot">${D.grand.toLocaleString()}</td></tr>`;}
+  if(!top.length){b+=`<tr class="pv-row"><td class="pv-rh" style="padding-left:8px">전체</td>`;if(D.hasCol)D.colsA.forEach(cv=>{b+=`<td>${dsp(D.root.cells[cv]||0,D.root.cellsS[cv]||0)}</td>`;});b+=`<td class="pv-tot">${dsp(D.grand,D.grandS)}</td></tr>`;}
   top.forEach(emit);
-  b+='<tr class="pv-totrow"><td class="pv-rh">합계</td>';
-  if(D.hasCol)D.colsA.forEach(cv=>b+=`<td>${(D.colTot[cv]||0).toLocaleString()}</td>`);
-  b+=`<td class="pv-tot">${D.grand.toLocaleString()}</td></tr></tbody>`;
+  b+=`<tr class="pv-totrow"><td class="pv-rh">${D.val==='avgDelay'?'전체 평균':'합계'}</td>`;
+  if(D.hasCol)D.colsA.forEach(cv=>b+=`<td>${dsp(D.colTot[cv]||0,D.colTotS[cv]||0)}</td>`);
+  b+=`<td class="pv-tot">${dsp(D.grand,D.grandS)}</td></tr></tbody>`;
   return `<table class="pv-table pv-outline">${h}${b}</table>`;
 }
 // FLIP: mutate 전후 위치 차이를 transform으로 보간해 부드럽게 슬라이드(드래그 중인 칩 제외)
@@ -2708,38 +2743,51 @@ function pvChips(zone){
   const R=window.__REC,P=R.pivot;
   const list=zone==='rows'?P.rows:(P.col?[P.col]:[]),max=zone==='rows'?3:1;
   const drag=zone==='rows'&&list.length>1;
-  let html=list.map((k,i)=>`<span class="pv-chip${drag?' pv-drag':''}"${drag?` draggable="true" data-zone="${zone}" data-i="${i}" data-key="${esc(k)}"`:''}>${drag?'<span class="pv-grip" aria-hidden="true"></span>':''}${esc(pivotFieldLabel(k))}<button class="pv-chip-x" data-act="rec.pivotRemove" data-zone="${zone}" data-i="${i}" aria-label="제거">×</button></span>`).join('');
+  let html=list.map((k,i)=>`<span class="pv-chip${drag?' pv-drag':''}"${drag?` draggable="true" data-zone="${zone}" data-i="${i}" data-key="${esc(k)}"`:''}>${esc(pivotFieldLabel(k))}<button class="pv-chip-x" data-act="rec.pivotRemove" data-zone="${zone}" data-i="${i}" aria-label="제거">×</button></span>`).join('');
   if(list.length<max)html+=`<button class="pv-add" data-act="rec.pivotAdd" data-zone="${zone}" aria-label="필드 추가">+</button>`;
   return html;
 }
 function recPivotHTML(){
-  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><span class="pv-chip pv-chip-st">건수</span></div></div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
+  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><button class="pv-chip pv-val" data-act="rec.pivotVal"${(window.__REC.pivot.val||'count')==='avgDelay'?' data-tt="기준월 말일 − 접수일의 평균 (KPI 지연구간과 동일 기준)"':''}>${(window.__REC.pivot.val||'count')==='avgDelay'?'평균 지연일':'건수'} <span class="pv-caret">▾</span></button></div></div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
+}
+function recBandBarHTML(){
+  const R=window.__REC;if(!R||!R.bandCnt)return'';
+  const B=[{k:'',l:'전체',c:R.all.length},{k:'d60',l:'60일 이상',c:R.bandCnt.d60},{k:'d30',l:'30~59일',c:R.bandCnt.d30}];
+  if(R.scope!=='lul')B.push({k:'d0',l:'30일 미만',c:R.bandCnt.d0}); // 장기미처리(30일+) 목록엔 30일 미만이 항상 0 — 숨김
+  return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+`</div>`;
+}
+function recRowsCapped(R){
+  const total=R.view.length,lim=R.limit||Infinity;
+  let h=recRowsHTML(R.view.slice(0,lim));
+  if(total>lim)h+=`<tr class="rl-more-row"><td colspan="${REC_COLS.length}"><button class="btn bg2 bsm rl-more" data-act="rec.more">나머지 ${(total-lim).toLocaleString()}건 모두 표시</button></td></tr>`;
+  return h;
 }
 function recRenderModalBody(){
   const R=window.__REC;if(!R)return;const mb=document.getElementById('mbody');if(!mb)return;
   recClosePvMenu();
-  mb.innerHTML=R.pivotOn?recPivotHTML():recListBodyHTML();
-  if(!R.pivotOn){const cnt=document.getElementById('rlCnt');if(cnt)cnt.textContent=R.view.length.toLocaleString();}
+  mb.innerHTML=recBandBarHTML()+(R.pivotOn?recPivotHTML():recListBodyHTML());
+  const cnt=document.getElementById('rlCnt');if(cnt)cnt.textContent=R.view.length.toLocaleString();
 }
 function recPivotExport(){
   const R=window.__REC,P=R.pivot,D=recPivotData();
   if(!D.grand){toast('내보낼 데이터가 없습니다');return;}
   const cd=cv=>cv==='(빈값)'?'(빈값)':cv;
+  const nv=(c,sm)=>D.val==='avgDelay'?(c?Math.round(sm/c):0):c; // 값 모드별 수치
   const head=[D.rks.length?D.rks.map(pivotFieldLabel).join(' › '):'전체'];
   if(D.hasCol)D.colsA.forEach(cv=>head.push(cd(cv)));
-  head.push('합계');
+  head.push(D.val==='avgDelay'?'전체 평균':'합계');
   const aoa=[head];
   const walk=node=>{
     const isLeaf=node.depth>=D.maxD-1||!Object.keys(node.children).length;
     const row=['  '.repeat(Math.max(0,node.depth))+cd(node.value)];
-    if(D.hasCol)D.colsA.forEach(cv=>row.push(node.cells[cv]||0));
-    row.push(node.total);aoa.push(row);
+    if(D.hasCol)D.colsA.forEach(cv=>row.push(nv(node.cells[cv]||0,(node.cellsS||{})[cv]||0)));
+    row.push(nv(node.total,node.totalS||0));aoa.push(row);
     if(!isLeaf)pivotSortNodes(Object.values(node.children),D.sort).forEach(walk);
   };
   const top=pivotSortNodes(Object.values(D.root.children),D.sort);
-  if(!top.length){const row=['전체'];if(D.hasCol)D.colsA.forEach(cv=>row.push(D.root.cells[cv]||0));row.push(D.grand);aoa.push(row);}
+  if(!top.length){const row=['전체'];if(D.hasCol)D.colsA.forEach(cv=>row.push(nv(D.root.cells[cv]||0,D.root.cellsS[cv]||0)));row.push(nv(D.grand,D.grandS));aoa.push(row);}
   top.forEach(walk);
-  const tr=['합계'];if(D.hasCol)D.colsA.forEach(cv=>tr.push(D.colTot[cv]||0));tr.push(D.grand);aoa.push(tr);
+  const tr=[D.val==='avgDelay'?'전체 평균':'합계'];if(D.hasCol)D.colsA.forEach(cv=>tr.push(nv(D.colTot[cv]||0,D.colTotS[cv]||0)));tr.push(nv(D.grand,D.grandS));aoa.push(tr);
   exportXlsx(`피벗_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'피벗');
 }
 function recPivotAddMenu(zone,x,y){
@@ -2751,6 +2799,18 @@ function recPivotAddMenu(zone,x,y){
   let m=document.getElementById('pvMenu');
   if(!m){m=document.createElement('div');m.id='pvMenu';m.className='rl-menu';document.body.appendChild(m);}
   m.innerHTML=`<div class="rl-menu-hd">${zone==='rows'?'행':'열'} 필드 추가</div>`+avail.map(f=>`<button class="rl-menu-row" data-act="rec.pivotPick" data-key="${f.key}">${esc(f.label)}</button>`).join('');
+  m.style.display='block';
+  const mw=248,mh=Math.min(340,window.innerHeight*0.6);
+  m.style.left=Math.max(8,Math.min(x,window.innerWidth-mw-8))+'px';
+  m.style.top=Math.max(8,Math.min(y,window.innerHeight-mh-8))+'px';
+}
+function recPivotValMenu(x,y){
+  const R=window.__REC;if(!R)return;
+  window.__PVMENU={zone:'val'};
+  let m=document.getElementById('pvMenu');
+  if(!m){m=document.createElement('div');m.id='pvMenu';m.className='rl-menu';document.body.appendChild(m);}
+  const cur=R.pivot.val||'count';
+  m.innerHTML=`<div class="rl-menu-hd">값 집계</div>`+[['count','건수'],['avgDelay','평균 지연일']].map(([k,l])=>`<button class="rl-menu-row${cur===k?' on':''}" data-act="rec.pivotValPick" data-val="${k}">${l}${cur===k?' ✓':''}</button>`).join('');
   m.style.display='block';
   const mw=248,mh=Math.min(340,window.innerHeight*0.6);
   m.style.left=Math.max(8,Math.min(x,window.innerWidth-mw-8))+'px';
@@ -2780,7 +2840,7 @@ function recRowsHTML(rows){
 }
 function recRenderBody(){
   const R=window.__REC;if(!R)return;recComputeView();
-  const b=document.getElementById('rlBody');if(b)b.innerHTML=recRowsHTML(R.view);
+  const b=document.getElementById('rlBody');if(b)b.innerHTML=recRowsCapped(R);
   const cnt=document.getElementById('rlCnt');if(cnt)cnt.textContent=R.view.length.toLocaleString();
 }
 function recRenderHead(){
@@ -2791,7 +2851,7 @@ function recRenderHead(){
 function recListBodyHTML(){
   const R=window.__REC;recComputeView();
   const cols=REC_COLS.map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
-  return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsHTML(R.view)}</tbody></table></div>`;
+  return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
 }
 function openRecList(sid,scope,trade){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
@@ -2799,11 +2859,13 @@ function openRecList(sid,scope,trade){
   const base=(scope==='lul'?st.lul:st.ul)||[];
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
-  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:{rows:['trade'],col:null,sort:{key:'__total',dir:-1}},label:(site.name||'')+(trade?('_'+trade):'')};
+  const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
+  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'},label:(site.name||'')+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500};
+  {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
   const title=`${esc(site.name)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
-  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><span class="rl-count">표시 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 ${rows.length.toLocaleString()}</span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
-  document.getElementById('mbody').innerHTML=recListBodyHTML();
+  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 ${rows.length.toLocaleString()}</span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
+  recRenderModalBody();
   document.getElementById('mf').innerHTML='';
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
   openMo();
@@ -3203,10 +3265,10 @@ const tblThG=(cls,txt)=>`<th class="cc ${cls} tl-grp">${txt}</th>`;
 function sortDR(all){if(!S.dsort?.col)return all;const{col,dir}=S.dsort,getV=({s,st})=>({region:s.region,name:s.name,units:s.units||0,tR:st.tR,res:st.res,rate:st.rate,unr:st.unr,deltaUnr:st.unr-st.prev.unr,lt:st.lt,ltr:st.ltr,delta:st.ltr-st.prev.ltr}[col]);return all.slice().sort((a,b)=>{const va=getV(a),vb=getV(b);if(typeof va==='string')return dir*va.localeCompare(vb,'ko');return dir*(va-vb);});}
 function sortDT(col){if(!S.dsort)S.dsort={col:null,dir:-1};if(S.dsort.col===col){if(S.dsort.dir===1){S.dsort.col=null;S.dsort.dir=-1;}else S.dsort.dir=1;}else{S.dsort={col,dir:-1};}if(S.view==='dashboard')rDash();}
 function rDTMark(){document.querySelectorAll('#dtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');const act=S.dsort?.col===c;th.classList.toggle('act',act);if(mk)mk.textContent=act?(S.dsort.dir===1?'▲':'▼'):'↕';th.setAttribute('aria-sort',act?(S.dsort.dir===1?'ascending':'descending'):'none');});}
-function attachLtrTip(){if(window._ltrTipAttached)return;window._ltrTipAttached=true;const tip=document.getElementById('htooltip');if(!tip)return;const show=(e,bar)=>{const[nm,unrS,d60S,d30S,d0S]=bar.dataset.tip.split('|'),unr=Number(unrS)||0,d60=Number(d60S)||0,d30=Number(d30S)||0,d0=Number(d0S)||0,pct=n=>unr>0?(n/unr*100).toFixed(1)+'%':'0%';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:var(--rd)"></span><span class="tlabel">60일 이상</span><span class="tval">${d60.toLocaleString()}건 (${pct(d60)})</span></div><div class="trow"><span class="tmark" style="background:#E89C9A"></span><span class="tlabel">30~59일</span><span class="tval">${d30.toLocaleString()}건 (${pct(d30)})</span></div><div class="trow"><span class="tmark" style="background:#B3C7DD"></span><span class="tlabel">30일 미만</span><span class="tval">${d0.toLocaleString()}건 (${pct(d0)})</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};const hide=()=>tip.classList.remove('show');// document 전체 위임 — 대시보드 + 현장 패널 모든 ltrbar 커버
+function attachLtrTip(){if(window._ltrTipAttached)return;window._ltrTipAttached=true;const tip=document.getElementById('htooltip');if(!tip)return;const show=(e,bar)=>{const[nm,unrS,d60S,d30S,d0S]=bar.dataset.tip.split('|'),unr=Number(unrS)||0,d60=Number(d60S)||0,d30=Number(d30S)||0,d0=Number(d0S)||0,pct=n=>unr>0?(n/unr*100).toFixed(1)+'%':'0%';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:#DA6A60"></span><span class="tlabel">60일 이상</span><span class="tval">${d60.toLocaleString()}건 (${pct(d60)})</span></div><div class="trow"><span class="tmark" style="background:#E89C9A"></span><span class="tlabel">30~59일</span><span class="tval">${d30.toLocaleString()}건 (${pct(d30)})</span></div><div class="trow"><span class="tmark" style="background:#B3C7DD"></span><span class="tlabel">30일 미만</span><span class="tval">${d0.toLocaleString()}건 (${pct(d0)})</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};const hide=()=>tip.classList.remove('show');// document 전체 위임 — 대시보드 + 현장 패널 모든 ltrbar 커버
 document.addEventListener('mouseover',e=>{const bar=e.target.closest('.ltrbar');if(bar&&bar.dataset.tip)show(e,bar);});document.addEventListener('mousemove',e=>{if(tip.classList.contains('show')){tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';}});document.addEventListener('mouseout',e=>{const bar=e.target.closest('.ltrbar');if(bar&&!e.relatedTarget?.closest('.ltrbar'))hide();});
   // 장기미처리 비율 현황 바 — 세그먼트별 개별 툴팁
-  const showSeg=(e,seg)=>{const[lbl,band,cntS,totS]=seg.dataset.tip.split('|'),cnt=Number(cntS)||0,tot=Number(totS)||0,pc=tot>0?(cnt/tot*100).toFixed(1):'0.0',bg=seg.classList.contains('s60')?'var(--rd)':seg.classList.contains('s30')?'#E89C9A':'#B3C7DD';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:${bg}"></span><span class="tlabel">${esc(lbl)} · ${esc(band)}</span><span class="tval">${cnt.toLocaleString()}건 (${pc}%)</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};
+  const showSeg=(e,seg)=>{const[lbl,band,cntS,totS]=seg.dataset.tip.split('|'),cnt=Number(cntS)||0,tot=Number(totS)||0,pc=tot>0?(cnt/tot*100).toFixed(1):'0.0',bg=seg.classList.contains('s60')?'#DA6A60':seg.classList.contains('s30')?'#E89C9A':'#B3C7DD';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:${bg}"></span><span class="tlabel">${esc(lbl)} · ${esc(band)}</span><span class="tval">${cnt.toLocaleString()}건 (${pc}%)</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};
   document.addEventListener('mouseover',e=>{const seg=e.target.closest('.ltrmom-bar .seg');if(seg&&seg.dataset.tip)showSeg(e,seg);});document.addEventListener('mouseout',e=>{const seg=e.target.closest('.ltrmom-bar .seg');if(seg&&!e.relatedTarget?.closest('.ltrmom-bar .seg'))hide();});}
 // 사이드바 mini 상태에서 호버 시 우측에 라벨 툴팁 표시 (DOM 위임)
 function attachSBTip(){if(window._sbTipAttached)return;window._sbTipAttached=true;const sb=document.getElementById('sidebar'),tip=document.getElementById('htooltip');if(!sb||!tip)return;const show=(target)=>{if(!sb.classList.contains('mini'))return;const txt=target.dataset.tip;if(!txt)return;tip.innerHTML=`<div style="font-size:12px;font-weight:500">${esc(txt)}</div>`;const r=target.getBoundingClientRect();tip.style.left=(r.right+10)+'px';tip.style.top=(r.top+r.height/2)+'px';tip.classList.remove('gl');tip.classList.add('sb-mode');tip.classList.add('show');};const hide=()=>{tip.classList.remove('show');};sb.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(t)show(t);});sb.addEventListener('mouseout',e=>{const t=e.target.closest('[data-tip]');if(t&&!e.relatedTarget?.closest('[data-tip]'))hide();});sb.addEventListener('mouseleave',hide);
@@ -3233,7 +3295,7 @@ function buildDashMonthTable(){
     return (st.weekly||[]).slice().sort((a,b)=>a.week<b.week?-1:a.week>b.week?1:0);
   }).filter(arr=>arr.length);
   // 전체 월 목록 = 모든 현장 주차의 'YYYY-MM' 합집합
-  const moKeys=[...new Set(siteWeekly.flatMap(arr=>arr.map(w=>w.week.slice(0,7))))].sort();
+  const moKeys=[...new Set(siteWeekly.flatMap(arr=>arr.map(w=>w.week.slice(0,7))))].filter(mk=>mk<=S.rm).sort();
   // 월말 스냅샷: 각 월말 시점마다 현장별 '그 달 이전까지의 마지막 스냅샷'을 carry-forward 합산.
   // (현장마다 주차 집합이 달라서, 해당 월에 접수 없는 현장이 통째로 누락 → 합계 출렁임 → 월간델타 음수 발생하던 버그 수정)
   const moMap={};
@@ -3270,12 +3332,12 @@ function rDash(){
   const rate=tR>0?tRes/tR*100:0,pRate=pR>0?pRes/pR*100:0;
   const tUnits=dashSites().reduce((a,s)=>a+(s.units||0),0);
   document.getElementById('dkpi').innerHTML=[
-    {cls:'bl',label:'관리대상현장',valHTML:`<span class="kpi-pc">${tUnits.toLocaleString()}<span class="u">세대</span></span><span class="kpi-mo kpi-team">${esc((((S.teams||[]).find(t=>t.id===S.teamId)||(S.teams||[])[0])||{}).name||'전체')}</span>`,meta:`<span class="kpi-pc">${dashSites().length.toLocaleString()}개 현장</span><span class="kpi-mo">${dashSites().length}개 현장 ${tUnits.toLocaleString()}세대</span>`,icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'},
-    {cls:'sk',label:'전체 접수',val:tR,unit:'건',meta:`세대당 ${tUnits>0?(tR/tUnits).toFixed(1):'0.0'}건`,icon:'M12 2H4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z'},
-    {cls:'ms',label:'처리 완료',val:tRes,unit:'건',meta:`처리율 ${rate.toFixed(1)}%`,icon:'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'},
-    {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`,icon:'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z'},
-    {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`,icon:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2'},
-  ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="${k.icon}"/></svg></div></div>`).join('');
+    {cls:'bl',label:'관리대상현장',valHTML:`<span class="kpi-pc">${tUnits.toLocaleString()}<span class="u">세대</span></span><span class="kpi-mo kpi-team">${esc((((S.teams||[]).find(t=>t.id===S.teamId)||(S.teams||[])[0])||{}).name||'전체')}</span>`,meta:`<span class="kpi-pc">${dashSites().length.toLocaleString()}개 현장</span><span class="kpi-mo">${dashSites().length}개 현장 ${tUnits.toLocaleString()}세대</span>`},
+    {cls:'sk',label:'전체 접수',val:tR,unit:'건',meta:`세대당 ${tUnits>0?(tR/tUnits).toFixed(1):'0.0'}건`},
+    {cls:'ms',label:'처리 완료',val:tRes,unit:'건',meta:`처리율 ${rate.toFixed(1)}%`},
+    {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`},
+    {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`},
+  ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div></div>`).join('');
   document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const d=(st.ltr-st.prev.ltr).toFixed(1),dN=Number(d),isUp=dN>0,isFlat=dN===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--b700);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.ltr.toFixed(1)}% → 금월 ${st.ltr.toFixed(1)}%" aria-label="전월 ${st.prev.ltr.toFixed(1)}% → 금월 ${st.ltr.toFixed(1)}%">${arrow} ${sign}${Math.abs(dN).toFixed(1)}%</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
   // 합계 행 — sortDT에도 위치 고정 (tfoot에 별도 배치). 데이터 0건일 땐 비움.
   const ft=document.getElementById('dtfoot');
@@ -3711,7 +3773,7 @@ function rSite(sid){
     const inner=`<div class="lm-fill" style="width:${fillW}%">${segs}</div>`;
     return`<div class="ltrmom-row${isCur?' cur':''}"><span class="lm-mo">${label}</span><span class="lm-stat">${lt.toLocaleString()}건 · ${ltr.toFixed(1)}%</span><div class="ltrmom-bar">${inner}</div></div>`;
   };
-  const _legend=`<div class="ltrmom-lg"><div class="li"><span class="mk" style="background:var(--rd)"></span>60일 이상</div><div class="li"><span class="mk" style="background:#E89C9A"></span>30~59일</div><div class="li"><span class="mk" style="background:#B3C7DD"></span>30일 미만</div></div>`;
+  const _legend=`<div class="ltrmom-lg"><div class="li"><span class="mk" style="background:#DA6A60"></span>60일 이상</div><div class="li"><span class="mk" style="background:#E89C9A"></span>30~59일</div><div class="li"><span class="mk" style="background:#B3C7DD"></span>30일 미만</div></div>`;
   const ltrMomBar=`<div class="card ltrmom-card" data-print="tr-ltr"><div class="ltrmom-head"><span class="lm-ttl">장기미처리 비율 현황</span>${_legend}</div><div class="ltrmom-body"><div class="ltrmom-rows">${_ltrMomRow('전월',st.prev.dd,st.prev.unr,false)}${_ltrMomRow('금월',st.dd,st.unr,true)}</div><div class="ltrmom-delta">${_deltaBadge}</div></div></div>`;
 
   const units=site.units||0;
@@ -3720,12 +3782,12 @@ function rSite(sid){
   const _kvSite=`<span class="kpi-screen">${esc(site.name||'-')}</span><span class="kpi-print">${units.toLocaleString()}<span class="u">세대</span></span>`;
   const _kmSite=`<span class="kpi-screen">${units.toLocaleString()}세대 · ${site.buildings||0}개동${compDate}</span><span class="kpi-print">${site.buildings||0}개동${site.completionDate?` · ${site.completionDate}`:''}</span>`;
   const kpis=[
-    {cls:'bl kc-site',label:_klSite,valHTML:_kvSite,meta:_kmSite,icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'},
-    {cls:'sk',label:'전체 접수',val:st.tR,unit:'건',meta:`세대당 ${units>0?(st.tR/units).toFixed(1):'0.0'}건`,icon:'M12 2H4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z'},
-    {cls:'ms',label:'처리 완료',val:st.res,unit:'건',meta:`처리율 ${st.rate.toFixed(1)}%`,icon:'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'},
-    {cls:'wh',label:'미처리',val:st.unr,unit:'건',meta:`세대당 ${units>0?(st.unr/units).toFixed(1):'0.0'}건`,icon:'M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z',act:'ul',tt:'미처리 하자리스트 보기'},
-    {cls:'wh',label:'장기미처리(30일+)',val:st.lt,unit:'건',meta:`미처리의 ${st.ltr.toFixed(1)}%`,icon:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2',act:'lul',tt:'장기미처리 하자리스트 보기'},
-  ].map(k=>`<div class="kc ${k.cls}${k.act?' kc-click':''}"${k.act?` data-act="rec.list" data-sid="${esc(sid)}" data-scope="${k.act}"`:''}${k.tt?` data-tt="${esc(k.tt)}"`:''}><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="${k.icon}"/></svg></div></div>`).join('');
+    {cls:'bl kc-site',label:_klSite,valHTML:_kvSite,meta:_kmSite},
+    {cls:'sk',label:'전체 접수',val:st.tR,unit:'건',meta:`세대당 ${units>0?(st.tR/units).toFixed(1):'0.0'}건`},
+    {cls:'ms',label:'처리 완료',val:st.res,unit:'건',meta:`처리율 ${st.rate.toFixed(1)}%`},
+    {cls:'wh',label:'미처리',val:st.unr,unit:'건',meta:`세대당 ${units>0?(st.unr/units).toFixed(1):'0.0'}건`,act:'ul',tt:'미처리 하자리스트 보기'},
+    {cls:'wh',label:'장기미처리(30일+)',val:st.lt,unit:'건',meta:`미처리의 ${st.ltr.toFixed(1)}%`,act:'lul',tt:'장기미처리 하자리스트 보기'},
+  ].map(k=>`<div class="kc ${k.cls}${k.act?' kc-click':''}"${k.act?` data-act="rec.list" data-sid="${esc(sid)}" data-scope="${k.act}"`:''}${k.tt?` data-tt="${esc(k.tt)}"`:''}><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div>${k.act?`<span class="kc-cta">목록 보기 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>`:''}</div>`).join('');
   // 공종 TOP5 표 — 미처리를 전월/금월 분개 + 증감. 기타 행(6위~끝, 시공업체 외 N개) + 합계 행 추가.
   // colspan: 순위/공종/시공업체/전월/금월/증감/비율/처리계획 = 8열
   const trRowFn=(t,i,planMap,planKey)=>{
@@ -3784,7 +3846,7 @@ function rSite(sid){
   const _wkBody=_wkAll.map((w,i)=>{
     const prev=i>0?_wkAll[i-1]:null,prev2=i>1?_wkAll[i-2]:null;
     return{w,m:_metrics(w,prev,prev2),first:i===0,yr:w.week.slice(0,4)};
-  }).filter(x=>x.yr===_curYear).map((x,j,arr)=>{
+  }).filter(x=>x.yr===_curYear&&x.w.week.slice(0,7)<=S.rm).map((x,j,arr)=>{
     const {w,m,first}=x;
     const firstOfMonth=j===0||arr[j-1].w.m!==w.m;
     const lastOfMonth=j===arr.length-1||arr[j+1].w.m!==w.m;
@@ -3797,7 +3859,7 @@ function rSite(sid){
   const _moRows=_moKeys.map((k,i)=>{
     const w=_moMapAll[k],prev=i>0?_moMapAll[_moKeys[i-1]]:null,prev2=i>1?_moMapAll[_moKeys[i-2]]:null;
     return{w,k,m:_metrics(w,prev,prev2),first:i===0,yr:k.slice(0,4)};
-  }).filter(x=>x.yr===_curYear);
+  }).filter(x=>x.yr===_curYear&&x.k<=S.rm);
   const _moBody=_moRows.map((x,j)=>{
     const {w,m,first}=x;
     return`<tr><td class="cc mcell">${w.m}월</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first)}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first)}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first)}</tr>`;
@@ -4754,6 +4816,11 @@ function __runSelfTest(){
   const ok=(name,cond)=>R.push({name,ok:!!cond,got:!!cond,exp:true});
   try{
     // --- nd(): 날짜 정규화 (다양한 입력 → YYYY-MM-DD) ---
+    eq('band 60+',recBandOf(75),'d60');
+    eq('band 경계60',recBandOf(60),'d60');
+    eq('band 30~59',recBandOf(45),'d30');
+    eq('band 경계30',recBandOf(30),'d30');
+    eq('band 30미만',recBandOf(3),'d0');
     eq('nd 하이픈',nd('2026-05-01'),'2026-05-01');
     eq('nd 점구분',nd('2026.5.1'),'2026-05-01');
     eq('nd 슬래시',nd('2026/5/1'),'2026-05-01');
