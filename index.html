@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-FWlQvUzvI+kDt6nsBrvZOM17kO+7IhqGOcJzObnQ/ow=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-yQVln+lSjXJTZWSUErMGUdS5g/h1sGT+O0ic9Kn9De4=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -3068,6 +3068,12 @@ function calcW(items,rmEnd,pmEnd){
   const DAY=86400000;
   const cutSet={};
   for(const i of items){const k=wk(i.receiptDate);if(k)cutSet[k]=true;}
+  // 월말 컷 추가: 월별 표의 각 월 값이 '월 마지막 일요일'이 아닌 '월말일' 기준이 되도록.
+  // KPI(unr=접수≤월말−처리≤월말)·도넛·추이차트 종점(refLim)과 동일 수식으로 정렬된다. 일요일 컷 값들은 불변.
+  const _me=ym=>{const[y,m]=ym.split('-').map(Number);cutSet[`${ym}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`]=true;};
+  for(const i of items){const rd=i.receiptDate;if(rd&&/^\d{4}-\d{2}/.test(rd))_me(rd.slice(0,7));}
+  if(rmEnd)cutSet[rmEnd]=true;
+  if(pmEnd)cutSet[pmEnd]=true;
   const cuts=Object.keys(cutSet).sort();const W=cuts.length;if(!W)return[];
   const cutMs=cuts.map(c=>new Date(c).getTime());
   const byReceipt=items.filter(i=>i.receiptDate).slice().sort((a,b)=>a.receiptDate<b.receiptDate?-1:a.receiptDate>b.receiptDate?1:0);
@@ -3095,9 +3101,15 @@ function calcW(items,rmEnd,pmEnd){
   let a0=0,a30=0,a60=0;const arr=[];
   for(let c=0;c<W;c++){a0+=D0[c];a30+=D30[c];a60+=D60[c];
     arr.push({week:cuts[c],r:rArr[c],res:resArr[c],u:rArr[c]-resArr[c],d0:a0,d30:a30,d60:a60});}
-  // M월 Nw주 — 같은 달 내 누적 주 번호 (월 바뀌면 1로 리셋).
+  // M월 Nw주 — 같은 달 내 누적 주 번호 (월 바뀌면 1로 리셋). 일요일 컷만 주번호를 증가시키고,
+  // 월말(비일요일) 컷은 'M월 말' 라벨 + sun:false — 월별 표 전용 스냅샷임을 표시(주차별 표는 sun 컷만 표시).
   let lastM=null,wInM=0;
-  arr.forEach(r=>{const m=Number(r.week.slice(5,7));if(m===lastM)wInM++;else{wInM=1;lastM=m;}r.m=m;r.wn=wInM;r.label=`${m}월 ${wInM}주`;});
+  arr.forEach(r=>{const m=Number(r.week.slice(5,7));r.m=m;
+    const isSun=new Date(r.week).getUTCDay()===0;r.sun=isSun;
+    if(m!==lastM){wInM=0;lastM=m;}
+    if(isSun){wInM++;r.wn=wInM;r.label=`${m}월 ${wInM}주`;}
+    else{r.wn=wInM;r.label=`${m}월 말`;}
+  });
   return arr;
 }
 function calcMo(items){const m={};items.forEach(i=>{const k=(i.receiptDate||'').slice(0,7);if(!k)return;if(!m[k])m[k]={month:k,r:0,res:0,u:0};m[k].r++;const done=i.status==='처리'&&i.completionDate;if(done)m[k].res++;else m[k].u++;});return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month));}
@@ -3866,7 +3878,7 @@ function rSite(sid){
   const _wkBody=_wkAll.map((w,i)=>{
     const prev=i>0?_wkAll[i-1]:null,prev2=i>1?_wkAll[i-2]:null;
     return{w,m:_metrics(w,prev,prev2),first:i===0,yr:w.week.slice(0,4)};
-  }).filter(x=>x.yr===_curYear&&x.w.week.slice(0,7)<=S.rm).map((x,j,arr)=>{
+  }).filter(x=>x.yr===_curYear&&x.w.week.slice(0,7)<=S.rm&&(x.w.sun!==false||x.w.week===st.rmEnd)).map((x,j,arr)=>{
     const {w,m,first}=x;
     const firstOfMonth=j===0||arr[j-1].w.m!==w.m;
     const lastOfMonth=j===arr.length-1||arr[j+1].w.m!==w.m;
@@ -4875,6 +4887,11 @@ function __runSelfTest(){
     const w=a.weekly||[];
     ok('calcW 누적접수 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].r<w[i-1].r)return false;return true;})());
     ok('calcW 누적처리 단조증가',(()=>{for(let i=1;i<w.length;i++)if(w[i].res<w[i-1].res)return false;return true;})());
+    // --- calcW(): 월말 컷 == KPI (월별 표·KPI·도넛 일치의 핵심 불변식) ---
+    const wme=w.find(x=>x.week===a.rmEnd);
+    ok('calcW 기준월말 컷 존재',!!wme);
+    eq('calcW 월말 u == KPI 미처리',wme?wme.u:null,a.unr);
+    ok('calcW 월말 컷 sun·라벨 정합',!!wme&&(wme.sun?/주$/.test(wme.label):/말$/.test(wme.label)));
     // --- 중대하자 의심 후보 추출(규칙) + _calcImpl ---
     eq('isCrit 누수내용',isCritCandidate(norm({'접수내용':'안방 천장 누수 발생','접수일':'2026-05-01','처리상태':'미처리'})),true);
     eq('isCrit 하자유형 누수',isCritCandidate(norm({'하자유형':'누수','접수일':'2026-05-01','처리상태':'미처리'})),true);
