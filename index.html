@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-QXFXRSTzBOUikjjKYcmLDVOXLj4YT1J2chGEtjKk/LM=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-FWlQvUzvI+kDt6nsBrvZOM17kO+7IhqGOcJzObnQ/ow=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -522,9 +522,11 @@ table.dt-detail th{text-align:center!important;}
 .rl-band.d30.on b{color:#6e2b27;}
 .rl-band.d0.on{background:#B3C7DD;border-color:#B3C7DD;color:#1c3551;}
 .rl-band.d0.on b{color:#1c3551;}
-/* 목록 행 상한 초과 시 더보기 */
-.rl-more-row td{text-align:center;padding:10px 0 6px;}
-.rl-more{min-width:220px;}
+/* 표시 건수 필터 (밴드 바 우측, iOS 세그먼트) */
+.rl-lim{display:inline-flex;align-items:center;margin-left:auto;background:var(--fill);border-radius:var(--rp);padding:2px;gap:2px;}
+.rl-lim button{border:none;background:transparent;padding:4px 10px;border-radius:var(--rp);font-size:11px;font-weight:600;color:var(--lbl2);cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s;}
+.rl-lim button.on{background:#fff;color:var(--lbl);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.rl-lim-lbl{font-size:11px;font-weight:600;color:var(--lbl3);margin:0 2px 0 8px;}
 /* 피벗 값 집계 선택 칩 */
 .pv-chip.pv-val{cursor:pointer;padding:0 9px 0 12px;}
 .pv-caret{font-size:9px;color:var(--lbl3);}
@@ -551,11 +553,11 @@ table.dt-detail th{text-align:center!important;}
 .rl-link:hover{text-decoration:underline;}
 .kc-click{cursor:pointer;}
 @media(hover:hover){.kc-click:hover{outline:2px solid var(--b300);outline-offset:-2px;}}
-/* 클릭 가능 KPI 카드의 '목록 보기' 버튼 표시 — pointer-events:none로 클릭은 카드(data-act)로 전달, 호버/프레스는 카드 상태에 연동 */
-.kc-cta{position:absolute;right:12px;top:12px;display:inline-flex;align-items:center;gap:3px;height:26px;padding:0 6px 0 10px;border-radius:var(--rp);background:var(--b600);color:#fff;font-size:11px;font-weight:700;line-height:1;box-shadow:0 1px 2px rgba(44,67,124,.25);transition:background .12s,transform .1s;pointer-events:none;}
-.kc-click:hover .kc-cta{background:var(--b700);}
+/* 클릭 가능 KPI 카드의 '목록 보기' 버튼 — 현장관리 '+ 추가' 버튼(btn bo tm-add)과 동일한 시각. pointer-events:none로 클릭은 카드(data-act)로 전달 */
+.kc-cta{position:absolute;right:12px;top:12px;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--rp);background:transparent;color:var(--b600);border:1.5px solid var(--b200);font-size:11px;font-weight:600;line-height:1.2;transition:background .15s,transform .1s;pointer-events:none;}
+.kc-click:hover .kc-cta{background:var(--b50);}
 .kc-click:active .kc-cta{transform:scale(.97);}
-.kc-cta svg{width:14px;height:14px;}
+.kc-cta svg{width:13px;height:13px;}
 @media print{.kc-cta{display:none!important;}}
 /* 현장 헤더 신선도 (간단) */
 .tbsu-up{font-weight:500;color:var(--lbl2);}
@@ -1503,7 +1505,17 @@ const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(
 // 캐시 무효화는 자동: S.def를 Proxy로 감싸 set/delete 시 bumpDef() 호출 → defVer↑ + 캐시 비움.
 // (S.def는 전부 통째 교체/삭제만 — 깊은 in-place 편집(push/splice/필드수정)은 트랩 미포착이라 금지: 항상 통째 교체)
 const _calcCache=new Map();
-function bumpDef(){S.defVer++;_calcCache.clear();}
+function bumpDef(){S.defVer++;_calcCache.clear();warmCalcKick();}
+// ── 대시보드 첫 진입 렉 방지: 데이터 변경 후 유휴 시간에 현장별 집계를 미리 계산해 캐시를 채운다 ──
+// Proxy set(초기 로드·업로드·동기화)마다 bumpDef가 킥 → 600ms 조용해지면 현장당 1태스크로 순차 워밍.
+// 진입 시 캐시 히트로 계산 0. 무효화는 기존 bumpDef가 처리하므로 정합성 영향 없음. 스냅샷 모드는 임베드 집계라 불필요.
+let _warmT=null,_warmQ=null;
+function warmCalcKick(){clearTimeout(_warmT);_warmQ=null;_warmT=setTimeout(()=>{if(window.__SNAP__)return;_warmQ=(S.sites||[]).slice();_warmStep();},600);}
+function _warmStep(){
+  if(!_warmQ||!_warmQ.length)return;
+  const idle=window.requestIdleCallback||function(f){return setTimeout(()=>f(),120);};
+  idle(()=>{if(!_warmQ)return;const s=_warmQ.shift();if(s){try{calc(S.def[s.id]||[],s,S.rm);}catch(e){}}if(_warmQ&&_warmQ.length)_warmStep();},{timeout:3000});
+}
 S.def=new Proxy(S.def,{set(t,k,v){t[k]=v;bumpDef();return true;},deleteProperty(t,k){delete t[k];bumpDef();return true;}});
 // ===== 팀 / 권역 모델 =====
 function uid(p){return (p||'id')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -1705,7 +1717,7 @@ registerActions('click', {
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
   'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=REC_COLS.map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>REC_COLS.map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
-  'rec.more':()=>{const R=window.__REC;if(!R)return;R.limit=Infinity;recRenderBody();},
+  'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
   'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
   'rec.pivotVal':(el)=>{const r=el.getBoundingClientRect();recPivotValMenu(r.left,r.bottom+4);},
   'rec.pivotValPick':(el)=>{const R=window.__REC;if(!R)return;R.pivot.val=el.dataset.val;recClosePvMenu();recRenderModalBody();},
@@ -2754,13 +2766,13 @@ function recBandBarHTML(){
   const R=window.__REC;if(!R||!R.bandCnt)return'';
   const B=[{k:'',l:'전체',c:R.all.length},{k:'d60',l:'60일 이상',c:R.bandCnt.d60},{k:'d30',l:'30~59일',c:R.bandCnt.d30}];
   if(R.scope!=='lul')B.push({k:'d0',l:'30일 미만',c:R.bandCnt.d0}); // 장기미처리(30일+) 목록엔 30일 미만이 항상 0 — 숨김
-  return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+`</div>`;
+  const lims=[[500,'500건'],[1000,'1,000건'],[5000,'5,000건'],[0,'전체']]; // 0=Infinity
+  const cur=(R.limit===Infinity||!R.limit)?0:R.limit;
+  const limHTML=R.pivotOn?'':`<span class="rl-lim-lbl">표시</span><span class="rl-lim">${lims.map(([n,l])=>`<button class="${cur===n?'on':''}" data-act="rec.limit" data-n="${n}">${l}</button>`).join('')}</span>`; // 피벗은 집계라 표시건수 무의미 — 숨김
+  return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+limHTML+`</div>`;
 }
 function recRowsCapped(R){
-  const total=R.view.length,lim=R.limit||Infinity;
-  let h=recRowsHTML(R.view.slice(0,lim));
-  if(total>lim)h+=`<tr class="rl-more-row"><td colspan="${REC_COLS.length}"><button class="btn bg2 bsm rl-more" data-act="rec.more">나머지 ${(total-lim).toLocaleString()}건 모두 표시</button></td></tr>`;
-  return h;
+  return recRowsHTML(R.view.slice(0,R.limit||Infinity)); // 표시 건수는 밴드 바 우측 필터로 제어
 }
 function recRenderModalBody(){
   const R=window.__REC;if(!R)return;const mb=document.getElementById('mbody');if(!mb)return;
@@ -3353,9 +3365,17 @@ function rDash(){
   }
   rDTMark();
   attachLtrTip();
-  try{buildDashMonthTable();}catch(e){console.error('buildDashMonthTable failed',e);}
-  try{rCharts(all);}catch(e){console.error('rCharts failed',e);}
-  rInsights(all,tR,tRes,tU,tLt,rate,pRate);
+  // 2단계 렌더: KPI·현장표를 먼저 페인트하고 무거운 표·차트·이슈는 다음 프레임에 생성(체감 즉시성).
+  // rDash._flush 일치 검사 = 토큰(연속 호출 시 이전 지연분 무효화). 동기 완결이 필요한 경로(스냅샷 생성)는 rDash._flush()로 즉시 실행.
+  const _late=()=>{
+    if(rDash._flush!==_late)return;rDash._flush=null;
+    if(S.view!=='dashboard')return; // 이탈 시 스킵 — 재진입 시 go()가 rDash를 다시 부름
+    try{buildDashMonthTable();}catch(e){console.error('buildDashMonthTable failed',e);}
+    try{rCharts(all);}catch(e){console.error('rCharts failed',e);}
+    rInsights(all,tR,tRes,tU,tLt,rate,pRate);
+  };
+  rDash._flush=_late;
+  (window.requestAnimationFrame||function(f){setTimeout(f,16);})(()=>_late());
 }
 // 주요 이슈 — 11종 후보 점수화 → 상위 3개 노출.
 // 점수 = 전월대비 변화 점수×0.6 + 현장 간 z-score×0.4 (월간회의: 전월대비 우선, 튀는 현장 가중).
@@ -4776,7 +4796,7 @@ async function exportSnapshot(){
     rDash();                                   // 대시보드 wks/am 캡처 + #d-insight 렌더
     await new Promise(r=>setTimeout(r,120));
     for(const s2 of dashSites()){rSite(s2.id);await new Promise(r=>setTimeout(r,90));} // 현장별 차트 캡처
-    go('dashboard');await new Promise(r=>setTimeout(r,40));
+    go('dashboard');if(rDash._flush)rDash._flush();await new Promise(r=>setTimeout(r,40)); // 2단계 렌더 강제 완료 — __CAPTURE·인사이트 DOM 확보
     const cap=window.__CAPTURE||{}; window.__CAPTURE=null;
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
