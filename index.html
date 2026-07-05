@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-yQVln+lSjXJTZWSUErMGUdS5g/h1sGT+O0ic9Kn9De4=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-gXJC2mk3s2T8QG5mxYNa/JtH7vDEkljxKroQIbTk2+U=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -446,7 +446,7 @@ table.dt-detail th{text-align:center!important;}
 .mt2{font-size:17px;font-weight:700;color:var(--lbl);margin-bottom:18px;}
 .mf2{margin-top:22px;display:flex;justify-content:flex-end;gap:8px;}
 /* 미처리 레코드 리스트 (드릴다운) */
-#mb.wide{width:80vw;max-width:80vw;height:80vh;}
+#mb.wide{width:88vw;max-width:88vw;height:88vh;}
 .rl-thead{display:flex;align-items:center;gap:8px;width:100%;}
 .rl-title{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rl-thead .rl-count{margin-left:auto;font-size:12px;font-weight:500;color:var(--lbl2);white-space:nowrap;}
@@ -2540,6 +2540,7 @@ const REC_COLS=[
   {key:'unit',label:'호',type:'str',w:62},
   {key:'receiptDate',label:'접수일',type:'str',w:132,filter:'dateRange'},
   {key:'defectClass',label:'하자구분',type:'str',w:84},
+  {key:'space',label:'공간',type:'str',w:84},
   {key:'trade',label:'공종',type:'str',w:96},
   {key:'defectType',label:'하자유형',type:'str',w:96},
   {key:'receiptContent',label:'접수내용',type:'str',left:true,w:null},
@@ -4430,6 +4431,7 @@ function norm(r){
     saleStatus:String(pick('입주상태','분양상태')||'입주완료'),
     unitType:String(pick('세대구분')||'세대'),
     moveIn:String(pick('입점여부')||'Y'),
+    space:String(pick('공간')||'').trim(),
     receiptContent:String(pick('접수내용')||'').trim(),
     complaint:String(pick('민원')||'').trim(),
     siteName:String(pick('현장')||'').trim(),
