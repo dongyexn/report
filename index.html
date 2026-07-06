@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-zm2NdagtucRQonBqlTulkqr94XTQEiP0Hn5ds8bFs7g=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-ntuwRnaHvlf7ptN9BTC1VzYqym/VlId8a/ANOR1ehKk=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1325,17 +1325,12 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
    대시보드/현장패널/모바일 모든 컨텍스트에서 현재 인라인과 동일한 16px를 유지한다.
    인쇄(.ct,.st{10pt!important})·모바일 .ct(13px!important)는 인라인·클래스 무관하게 덮으므로 영향 없음. */
 .cardttl{font-size:16px;color:var(--ct);}
-.gsrch-wrap{display:flex;align-items:center;gap:0;margin-left:auto;margin-right:10px;background:var(--bg2);border:1.5px solid var(--sepo);border-radius:var(--rmd);padding:0 4px 0 10px;height:29px;transition:border-color .15s;}
-.gsrch-wrap:focus-within{border-color:#3E71D2;}
-.gsrch{border:none;background:transparent;font-size:12.5px;width:170px;color:var(--lbl);}
-.gsrch::placeholder{color:var(--lbl3);}
-.gsrch-btn{display:flex;align-items:center;padding:5px;color:var(--lbl2);border-radius:6px;}
-.gsrch-btn:hover{color:#3E71D2;}
-@media(max-width:768px){.gsrch{width:96px;font-size:12px;}.gsrch-wrap{margin-right:6px;}}
-body.snap .gsrch-wrap{display:none;} /* 정적 스냅샷: 원본 행 데이터가 없어 검색 불가 */
-.gs-hit{cursor:pointer;}
-.gs-hit:hover{background:var(--bg2);}
-.gs-done{color:var(--gn);font-weight:600;} .gs-open{color:var(--am);font-weight:600;}
+.rl-qsrch{display:flex;align-items:center;gap:0;background:var(--bg2);border:1.5px solid var(--sepo);border-radius:var(--rmd);padding:0 6px 0 10px;height:28px;transition:border-color .15s;margin-right:8px;}
+.rl-qsrch:focus-within{border-color:#3E71D2;}
+.rl-qsrch input{border:none;background:transparent;font-size:12.5px;width:150px;color:var(--lbl);}
+.rl-qsrch input::placeholder{color:var(--lbl3);}
+.rl-qsrch svg{color:var(--lbl3);flex-shrink:0;}
+@media(max-width:768px){.rl-qsrch input{width:104px;}}
 .vrm-sel{margin-left:6px;}
 .nvi:focus-visible,.sti:focus-visible,.rgh:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;border-radius:8px;}
 th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
@@ -1410,7 +1405,6 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
       <button class="hamb no-print" data-act="nav.mobileOpen" aria-label="메뉴 열기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 4h12M2 8h12M2 12h12"></path></svg></button>
       <div id="tbt" class="tbt" style="font-size: 20px">설정</div>
       <div id="tbsu" class="tbsu"></div>
-      <div class="gsrch-wrap no-print"><input id="gsrch" class="gsrch" type="search" enterkeyhint="search" placeholder="세대·하자 검색" aria-label="세대·하자 통합 검색 — 동, 호, 공종, 접수내용" data-act="top.search"><button class="gsrch-btn" data-act="top.searchGo" aria-label="검색 실행"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></button></div>
     </div>
     <div class="tbr">
       <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"></rect><path d="M5 1v4M11 1v4M2 7h12"></path></svg><span id="mchip">기준월 2026-05</span></div>
@@ -1774,7 +1768,6 @@ registerActions('click', {
   'team.addTeam':()=>tmAddTeam(), 'team.addRegion':()=>tmAddRegion(), 'region.del':(el)=>tmDeleteRegion(el.dataset.rgn),
   'uz':()=>{const fi=document.getElementById('fi');if(fi)fi.click();},
   'smt.sort':(el)=>sortSMT(el.dataset.key), 'site.del':(el)=>delS(el.dataset.sid), 'site.addModal':()=>openSM(null),
-  'top.searchGo':()=>{const i=document.getElementById('gsrch');if(i)globalSearch(i.value);},
   'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('복사할 전월 계획이 없거나 이미 입력되어 있습니다');},
   'panel.tab':(el)=>setTab(el.dataset.tab), 'panel.ai':(el)=>runAI(el.dataset.sid), 'panel.sort':(el)=>sortPanel(el.dataset.tbl, el),
   'vac.edit':(el)=>openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf),
@@ -1784,14 +1777,12 @@ registerActions('click', {
 registerActions('input', {
   'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
   'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
+  'rec.qsearch':(el)=>{const R=window.__REC;if(!R)return;R.q=el.value;clearTimeout(R._qt);R._qt=setTimeout(recRenderModalBody,150);}, // 목록 내 통합 검색(디바운스) — 피벗 모드도 함께 갱신
   'rec.menuSearch':(el)=>{const M=window.__RECMENU;if(!M)return;M.q=el.value;const q=M.q.trim().toLowerCase();if(q)M.sel=new Set(M.all.filter(v=>String(v).toLowerCase().includes(q)));recMenuRenderList();},
   'set.exToken':(el)=>{S.exTk=el.value;localStorage.setItem('exTk',el.value);},
   'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
   'site.completion':(el)=>clampYear(el), 'util.clampYear':(el)=>clampYear(el),
   'panel.plan':(el)=>{autoResize(el);schedulePlanSave(el);}
-});
-registerActions('keydown',{
-  'top.search':(el,e)=>{if(e.key==='Enter'){e.preventDefault();globalSearch(el.value);}}
 });
 // ── [전환 완료] change 액션 (site.upd: 셀렉트도 동일 핸들러로 재사용) ──
 registerActions('change', {
@@ -2691,6 +2682,16 @@ function recComputeView(){
   const R=window.__REC;if(!R)return [];
   let rows=R.all.slice();
   if(R.band)rows=rows.filter(r=>recBandOf(recDelayDays(r,R))===R.band); // 지연구간 칩 필터 (KPI와 동일 기준)
+  if(R.q&&R.q.trim()){ // 통합 검색: 공백=AND, 'N동'/'N호'는 정밀, 그 외는 주요 필드 부분매치
+    const toks=R.q.trim().split(/\s+/).filter(Boolean);
+    rows=rows.filter(r=>toks.every(t=>{
+      let m;
+      if((m=t.match(/^(.+)동$/)))return String(r.building||'')===m[1]||String(r.building||'')===t;
+      if((m=t.match(/^(.+)호$/)))return String(r.unit||'')===m[1]||String(r.unit||'')===t;
+      const blob=(String(r.building||'')+'|'+String(r.unit||'')+'|'+String(r.trade||'')+'|'+String(r.defectType||'')+'|'+String(r.space||'')+'|'+String(r.contractor||'')+'|'+String(r.receiptContent||'')+'|'+String(r.complaint||'')).toLowerCase();
+      return blob.includes(t.toLowerCase());
+    }));
+  }
   for(const c of REC_COLS){
     if(c.key==='__no')continue;
     const raw=R.filters[c.key];
@@ -2914,6 +2915,7 @@ function recRenderModalBody(){
   recClosePvMenu();
   mb.innerHTML=recBandBarHTML()+(R.pivotOn?recPivotHTML():recListBodyHTML());
   const cnt=document.getElementById('rlCnt');if(cnt)cnt.textContent=R.view.length.toLocaleString();
+  {const tot=document.getElementById('rlTot');if(tot&&R.all)tot.textContent=R.all.length.toLocaleString();}
 }
 function recPivotExport(){
   const R=window.__REC,P=R.pivot,D=recPivotData();
@@ -2989,6 +2991,7 @@ function recRenderBody(){
   const R=window.__REC;if(!R)return;recComputeView();
   const b=document.getElementById('rlBody');if(b)b.innerHTML=recRowsCapped(R);
   const cnt=document.getElementById('rlCnt');if(cnt)cnt.textContent=R.view.length.toLocaleString();
+  {const tot=document.getElementById('rlTot');if(tot&&R.all)tot.textContent=R.all.length.toLocaleString();}
 }
 function recRenderHead(){
   const R=window.__REC;if(!R)return;
@@ -2999,50 +3002,6 @@ function recListBodyHTML(){
   const R=window.__REC;recComputeView();
   const cols=REC_COLS.map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
-}
-// ── 세대·하자 통합 검색 — 현장 전화 대응용: "101동 1203호 뭐 걸려있지?"를 즉답 ──
-//   공백 구분 토큰 AND 매치. 'N동'/'N호' 토큰은 동·호 필드에 정밀 매치, 그 외는 주요 필드 부분 매치.
-//   뷰어·스냅샷은 원본 행(S.def)이 없어 검색 불가 — 편집자 로컬 데이터 전용(입력창은 snap에서 숨김).
-function gsMatch(item,toks){
-  for(const t of toks){
-    let m;
-    if((m=t.match(/^(.+)동$/)))     {if(String(item.building||'')!==m[1]&&String(item.building||'')!==t)return false;continue;}
-    if((m=t.match(/^(.+)호$/)))     {if(String(item.unit||'')!==m[1]&&String(item.unit||'')!==t)return false;continue;}
-    const blob=(String(item.building||'')+'|'+String(item.unit||'')+'|'+String(item.trade||'')+'|'+String(item.defectType||'')+'|'+String(item.space||'')+'|'+String(item.contractor||'')+'|'+String(item.receiptContent||'')+'|'+String(item.complaint||'')).toLowerCase();
-    if(!blob.includes(t.toLowerCase()))return false;
-  }
-  return true;
-}
-function globalSearch(q){
-  q=String(q||'').trim();
-  if(!q){toast('검색어를 입력하세요 (예: 101동 1203호, 누수, 도배)');return;}
-  if(!Object.keys(S.def||{}).length){toast('검색할 데이터가 없습니다 · 리스트를 먼저 업로드하세요');return;}
-  const toks=q.split(/\s+/).filter(Boolean);
-  const CAP=300,hits=[];let total=0;
-  for(const s of dashSites()){
-    for(const it of (S.def[s.id]||[])){
-      if(!gsMatch(it,toks))continue;
-      total++;
-      if(hits.length<CAP)hits.push({s,it});
-    }
-  }
-  const rowsHtml=hits.map(({s,it})=>{
-    const done=it.status==='처리';
-    const cont=(it.receiptContent||'').replace(/\s+/g,' ').trim();
-    return `<tr class="gs-hit" data-act="nav.site" data-site="${esc(s.id)}" role="button" tabindex="0" aria-label="${esc(s.name)} ${esc(it.building||'')}동 ${esc(it.unit||'')}호 현장 열기">`
-      +`<td style="white-space:nowrap"><b style="color:var(--b700)">${esc(shortName(s.name))}</b></td>`
-      +`<td class="cc">${esc(it.building||'-')}</td><td class="cc">${esc(it.unit||'-')}</td>`
-      +`<td>${esc(it.trade||'-')}</td><td>${esc(it.defectType||'-')}</td>`
-      +`<td class="cc" style="white-space:nowrap">${esc(it.receiptDate||'-')}</td>`
-      +`<td class="cc ${done?'gs-done':'gs-open'}">${done?'처리':'미처리'}</td>`
-      +`<td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(cont)}">${esc(cont.slice(0,120))||'-'}</td></tr>`;
-  }).join('');
-  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">통합 검색 · ${esc(q)}</span><span class="rl-count">결과 <b>${total.toLocaleString()}</b>건${total>CAP?` (상위 ${CAP}건 표시)`:''}</span><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
-  document.getElementById('mb').innerHTML=total?`<div style="overflow:auto;max-height:70vh"><table class="dt" style="min-width:860px"><thead><tr><th>현장</th><th class="cc" style="width:56px">동</th><th class="cc" style="width:56px">호</th><th style="width:84px">공종</th><th style="width:96px">하자유형</th><th class="cc" style="width:96px">접수일</th><th class="cc" style="width:64px">상태</th><th>접수내용</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="padding:8px 2px;font-size:11.5px;color:var(--lbl3)">행을 클릭하면 해당 현장 패널로 이동합니다.</div></div>`
-    :'<div style="text-align:center;padding:36px;color:var(--lbl3)">일치하는 건이 없습니다.</div>';
-  document.getElementById('mf').innerHTML='';
-  const mb2=document.getElementById('mb');if(mb2)mb2.classList.add('wide');
-  openMo();
 }
 function openRecList(sid,scope,trade){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
@@ -3055,7 +3014,7 @@ function openRecList(sid,scope,trade){
   {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
   const title=`${esc(site.name)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
-  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 ${rows.length.toLocaleString()}</span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
+  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value="${esc(R.q||'')}"></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
   recRenderModalBody();
   document.getElementById('mf').innerHTML='';
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
