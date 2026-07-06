@@ -1,0 +1,125 @@
+{
+  // ===================================================================
+  // H서비스센터 하자처리 대시보드 — Firebase Realtime Database 보안 규칙
+  // 프로젝트: report-c29a1
+  // 이 파일을 리포지토리에서 버전관리하고, 변경 시 리뷰 후 배포한다.
+  //   배포:  firebase deploy --only database   (firebase.json 에 "database":{"rules":"database.rules.json"} 등록)
+  //   또는 Firebase 콘솔 > Realtime Database > 규칙 에 붙여넣기.
+  //   테스트: firebase emulators:exec --only database "node --test tests/database.rules.test.mjs"
+  //
+  // 권한 모델
+  //   - 접근 자격(VERIF): 로그인 + 이메일 인증 완료 + @hdec.co.kr 도메인
+  //   - 역할(users/{uid}/role): editor(관리자) / viewer(사용자) / blocked(차단)
+  //   - MEMBER = VERIF 이고 role 이 editor 또는 viewer (blocked·미등록 제외)
+  //   - EDITOR = VERIF 이고 role 이 editor
+  //   - 최초 관리자는 콘솔에서 users/{uid}/role="editor" 로 1회 부트스트랩(아래 규칙상 본인은 viewer로만 자기등록 가능).
+  //
+  // 경로별 권한
+  //   users/{uid}      : 본인·관리자 읽기 / 본인은 viewer로만 자기등록·역할유지, 관리자는 전체 변경
+  //   report/{기준월}   : MEMBER 읽기 / EDITOR 만 쓰기(게시)
+  //   plans/{sid}/...  : MEMBER 읽기·쓰기(처리계획 실시간 협업, ≤5000자)
+  //   analysis/{sid}   : MEMBER 읽기·쓰기(분석의견, ≤20000자)
+  //   meta/{sid}       : MEMBER 읽기·쓰기(최종수정 표시)
+  //   siteConfig/{sid} : MEMBER 읽기 / EDITOR 만 쓰기(현장 토글)
+  //
+  // 수용 리스크(문서화): plans/analysis/meta 의 $sid 는 존재 검증을 하지 않는다.
+  //   RTDB 규칙에서 현장 존재 검증은 비용·복잡도 대비 실익이 낮고, 접근 주체가 이메일 인증된
+  //   사내 도메인 계정으로 한정되므로 임의 경로 생성(용량 남용)은 감사·차단으로 대응한다.
+  // ===================================================================
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      // 목록 전체 읽기는 관리자만(계정 관리 화면용)
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && root.child('users').child(auth.uid).child('role').val() == 'editor'",
+      "$uid": {
+        // 본인 레코드는 본인이, 그 외에는 관리자가 읽을 수 있음
+        ".read": "auth != null && (auth.uid == $uid || (auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && root.child('users').child(auth.uid).child('role').val() == 'editor'))",
+        // 쓰기: ① 본인이면 (최초 등록 시에만) role을 viewer로 생성 / 등록 이후엔 기존 role 유지만 가능
+        //         (자기 권한 상승 차단 + blocked 계정이 스스로 viewer로 되돌리는 자가해제 차단)
+        //         + email 은 본인 토큰 이메일과 일치해야 함(타인 이메일 기재 레코드 생성·변조 차단)
+        //           클라이언트가 가입·기록 시 이메일을 소문자로 정규화하므로 토큰 이메일과 대소문자 일치.
+        //       ② 또는 관리자면 누구든 변경 가능
+        ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && ( (auth.uid == $uid && newData.child('email').val() == auth.token.email && ( (!data.exists() && newData.child('role').val() == 'viewer') || (data.exists() && newData.child('role').val() == data.child('role').val()) )) || root.child('users').child(auth.uid).child('role').val() == 'editor' )",
+        // 레코드에는 최소 email·role 이 있어야 함(역할 없는 레코드 생성 차단)
+        ".validate": "newData.hasChildren(['email','role'])",
+        "email":     { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "role":      { ".validate": "newData.isString() && (newData.val() == 'editor' || newData.val() == 'viewer' || newData.val() == 'blocked')" },
+        "name":      { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "lastSeen":  { ".validate": "newData.isNumber()" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "report": {
+      // 게시 집계 읽기: 모든 MEMBER (뷰어는 최신 기준월을 limitToLast로 조회)
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$rm": {
+        // 게시(쓰기)는 관리자만
+        ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && root.child('users').child(auth.uid).child('role').val() == 'editor'",
+        ".validate": "$rm.matches(/^[0-9]{4}-[0-9]{2}$/)"
+      }
+    },
+
+    "reportIndex": {
+      // 게시월 인덱스: 뷰어 기준월 선택기가 이 노드만 읽어 목록을 구성(report 전체 다운로드 방지).
+      // 게시(fb2Publish) 시 reportIndex/{rm}=Date.now() 로 편집자가 기록.
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$rm": {
+        ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && root.child('users').child(auth.uid).child('role').val() == 'editor'",
+        ".validate": "$rm.matches(/^[0-9]{4}-[0-9]{2}$/) && newData.isNumber()"
+      }
+    },
+
+    "plans": {
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$sid": {
+        "$field": {
+          "$key": {
+            // 처리계획 리프 쓰기: MEMBER, 허용된 3개 필드만, 문자열 ≤5000자
+            ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer') && ($field == 'processingPlan' || $field == 'vacantProcessingPlan' || $field == 'commercialProcessingPlan')",
+            ".validate": "newData.isString() && newData.val().length <= 5000"
+          }
+        }
+      }
+    },
+
+    "analysis": {
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$sid": {
+        // 분석의견은 기준월별 아카이브: analysis/{sid}/{YYYY-MM} = HTML 문자열 ≤20000자.
+        // 쓰기는 월 노드에만 허용 — 구버전 형태(analysis/{sid} = 문자열) 직접 쓰기는 거부된다.
+        // 기존 레거시 문자열 데이터는 읽기 가능하며, 클라이언트가 최초 조우 시 현재 기준월 노드로
+        // 재기록해 마이그레이션한다(하위 경로 쓰기가 원시값 부모를 대체하는 RTDB 의미론, 멱등).
+        "$rm": {
+          ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+          ".validate": "$rm.matches(/^[0-9]{4}-[0-9]{2}$/) && newData.isString() && newData.val().length <= 20000"
+        }
+      }
+    },
+
+    "meta": {
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$sid": {
+        ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "updatedBy": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "$other":    { ".validate": false }
+      }
+    },
+
+    "siteConfig": {
+      ".read": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && (root.child('users').child(auth.uid).child('role').val() == 'editor' || root.child('users').child(auth.uid).child('role').val() == 'viewer')",
+      "$sid": {
+        // 현장 토글 쓰기: 관리자만
+        ".write": "auth != null && auth.token.email_verified == true && auth.token.email.matches(/@hdec[.]co[.]kr$/) && root.child('users').child(auth.uid).child('role').val() == 'editor'",
+        "hasCommercial": { ".validate": "newData.isBoolean()" },
+        "showVacant":    { ".validate": "newData.isBoolean()" },
+        "updatedAt":     { ".validate": "newData.isNumber()" },
+        "$other":        { ".validate": false }
+      }
+    }
+  }
+}

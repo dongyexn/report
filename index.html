@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-gXJC2mk3s2T8QG5mxYNa/JtH7vDEkljxKroQIbTk2+U=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-zm2NdagtucRQonBqlTulkqr94XTQEiP0Hn5ds8bFs7g=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1325,6 +1325,20 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
    대시보드/현장패널/모바일 모든 컨텍스트에서 현재 인라인과 동일한 16px를 유지한다.
    인쇄(.ct,.st{10pt!important})·모바일 .ct(13px!important)는 인라인·클래스 무관하게 덮으므로 영향 없음. */
 .cardttl{font-size:16px;color:var(--ct);}
+.gsrch-wrap{display:flex;align-items:center;gap:0;margin-left:auto;margin-right:10px;background:var(--bg2);border:1.5px solid var(--sepo);border-radius:var(--rmd);padding:0 4px 0 10px;height:29px;transition:border-color .15s;}
+.gsrch-wrap:focus-within{border-color:#3E71D2;}
+.gsrch{border:none;background:transparent;font-size:12.5px;width:170px;color:var(--lbl);}
+.gsrch::placeholder{color:var(--lbl3);}
+.gsrch-btn{display:flex;align-items:center;padding:5px;color:var(--lbl2);border-radius:6px;}
+.gsrch-btn:hover{color:#3E71D2;}
+@media(max-width:768px){.gsrch{width:96px;font-size:12px;}.gsrch-wrap{margin-right:6px;}}
+body.snap .gsrch-wrap{display:none;} /* 정적 스냅샷: 원본 행 데이터가 없어 검색 불가 */
+.gs-hit{cursor:pointer;}
+.gs-hit:hover{background:var(--bg2);}
+.gs-done{color:var(--gn);font-weight:600;} .gs-open{color:var(--am);font-weight:600;}
+.vrm-sel{margin-left:6px;}
+.nvi:focus-visible,.sti:focus-visible,.rgh:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;border-radius:8px;}
+th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 </style>
 </head>
 <body>
@@ -1367,18 +1381,18 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
   <div class="sbsc">
     <div class="teamsel" id="teamsel"></div>
     <div class="sbsl">메인</div>
-    <div class="nvi" data-view="dashboard" data-tip="대시보드" data-act="nav.go">
+    <div class="nvi" role="button" tabindex="0" data-view="dashboard" data-tip="대시보드" data-act="nav.go">
       <div class="nic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z" opacity=".85"></path></svg></div>
       <span class="nil" style="font-size:13px;text-align:left">대시보드</span>
     </div>
     <div id="rgnav"></div>
     <div class="sb-bottom">
     <div class="sbsl">관리</div>
-    <div class="nvi" data-view="manage" data-tip="현장 관리" data-act="nav.go">
+    <div class="nvi" role="button" tabindex="0" data-view="manage" data-tip="현장 관리" data-act="nav.go">
       <div class="nic"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14V3.2a.7.7 0 0 1 .7-.7h5.1a.7.7 0 0 1 .7.7V14M8.5 6.8h4.8a.7.7 0 0 1 .7.7V14M1 14h14"></path><path d="M4.2 5.3h1.4M4.2 7.8h1.4M4.2 10.3h1.4M10.6 9.2h1.4M10.6 11.5h1.4"></path></svg></div>
       <span class="nil" style="font-size:13px">현장 관리</span>
     </div>
-    <div class="nvi act" data-view="settings" data-tip="설정" data-act="nav.go">
+    <div class="nvi act" role="button" tabindex="0" data-view="settings" data-tip="설정" data-act="nav.go">
       <div class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
       <span class="nil" style="font-size:13px">설정</span>
     </div>
@@ -1396,6 +1410,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
       <button class="hamb no-print" data-act="nav.mobileOpen" aria-label="메뉴 열기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 4h12M2 8h12M2 12h12"></path></svg></button>
       <div id="tbt" class="tbt" style="font-size: 20px">설정</div>
       <div id="tbsu" class="tbsu"></div>
+      <div class="gsrch-wrap no-print"><input id="gsrch" class="gsrch" type="search" enterkeyhint="search" placeholder="세대·하자 검색" aria-label="세대·하자 통합 검색 — 동, 호, 공종, 접수내용" data-act="top.search"><button class="gsrch-btn" data-act="top.searchGo" aria-label="검색 실행"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></button></div>
     </div>
     <div class="tbr">
       <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"></rect><path d="M5 1v4M11 1v4M2 7h12"></path></svg><span id="mchip">기준월 2026-05</span></div>
@@ -1437,17 +1452,17 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
       <div class="card mb12"><div class="sh"><div class="ct cardttl">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
       <div class="card mb12"><div class="ct cardttl">현장별 하자처리 현황</div>
         <table class="dt" id="dtable"><thead><tr>
-          <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
-          <th style="width:15%" data-sort="name" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="units" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="tR" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="res" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="rate" data-act="dash.sort" data-key="rate">처리율 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="unr" data-act="dash.sort" data-key="unr">미처리 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="deltaUnr" data-act="dash.sort" data-key="deltaUnr">전월대비 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="lt" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:25%;min-width:160px;text-align: center" data-sort="ltr" data-act="dash.sort" data-key="ltr">장기미처리 비율 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="delta" data-act="dash.sort" data-key="delta">전월대비 <span class="sortmk">↕</span></th>
+          <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" tabindex="0" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
+          <th style="width:15%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="units" tabindex="0" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="tR" tabindex="0" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="res" tabindex="0" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="rate" tabindex="0" data-act="dash.sort" data-key="rate">처리율 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="unr" tabindex="0" data-act="dash.sort" data-key="unr">미처리 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="deltaUnr" tabindex="0" data-act="dash.sort" data-key="deltaUnr">전월대비 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7%;text-align: right" data-sort="lt" tabindex="0" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:25%;min-width:160px;text-align: center" data-sort="ltr" tabindex="0" data-act="dash.sort" data-key="ltr">장기미처리 비율 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="delta" tabindex="0" data-act="dash.sort" data-key="delta">전월대비 <span class="sortmk">↕</span></th>
         </tr></thead>
         <tbody id="dtbody"></tbody><tfoot id="dtfoot"></tfoot></table>
       </div>
@@ -1628,7 +1643,7 @@ function updSite(id,field,value){
   if((field==='name'||field==='region')&&S.view==='dashboard')rDash();
   if((field==='hasCommercial'||field==='showVacant')&&S.view==='site'&&S.sid===id)rSite(id);
 }
-function todayYM(){return new Date().toISOString().slice(0,7);}
+function todayYM(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;} // 로컬 날짜 기준 — toISOString(UTC)은 KST 매월 1일 00~09시에 기준월이 한 달 밀림
 // HTML 이스케이프 — textarea 내용/사용자 입력값을 안전하게 attribute·content로 렌더링
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 // 태그드 템플릿 — 보간값을 자동 HTML 이스케이프해 안전한 문자열을 만든다(기본 안전).
@@ -1652,6 +1667,18 @@ function html(strings,...vals){
 function safeHTML(dirty){
   const s=String(dirty==null?'':dirty);
   if(window.DOMPurify&&DOMPurify.sanitize){
+    // class 토큰 화이트리스트 훅(1회 등록): 살균 통과 HTML이 앱 스타일 클래스를 도용해 UI를 위장하지 못하도록
+    // 인사이트 카드가 실제 사용하는 클래스만 통과시킨다. (AI 분석 HTML은 인라인 스타일만 사용 → 무영향)
+    if(!safeHTML._clsHook){
+      safeHTML._cls=new Set(['ic','ic-i','ic-t','ic-ttl','ic-sub','warn','bad','ok']);
+      DOMPurify.addHook('uponSanitizeAttribute',(node,data)=>{
+        if(data.attrName==='class'){
+          data.attrValue=String(data.attrValue).split(/\s+/).filter(c=>safeHTML._cls.has(c)).join(' ');
+          if(!data.attrValue)data.keepAttr=false;
+        }
+      });
+      safeHTML._clsHook=true;
+    }
     return DOMPurify.sanitize(s,{
       ALLOWED_TAGS:['div','p','ul','ol','li','strong','b','em','i','span','br','small','h1','h2','h3','h4','table','thead','tbody','tr','td','th','svg','path'],
       ALLOWED_ATTR:['style','class','viewBox','fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','d','opacity','width','height','xmlns'],
@@ -1687,7 +1714,15 @@ function _delegate(type, e){
   const el = t.closest('[data-act]');
   if(!el) return;
   const fn = _DELEGATED[type] && _DELEGATED[type][el.dataset.act];
-  if(fn) fn(el, e);
+  if(fn){ fn(el, e); return; }
+  // 키보드 접근성: 전용 keydown 핸들러가 없는 data-act 요소에서 Enter/Space를 클릭 핸들러로 승격.
+  //   tabindex 부여 요소 한정 + 폼 컨트롤·링크·버튼 제외(네이티브 동작 보존, Space 스크롤 오발동 방지).
+  if(type==='keydown'&&(e.key==='Enter'||e.key===' ')&&el.hasAttribute('tabindex')){
+    const tg=e.target.tagName;
+    if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||tg==='BUTTON'||tg==='A'||e.target.isContentEditable)return;
+    const cfn=_DELEGATED['click']&&_DELEGATED['click'][el.dataset.act];
+    if(cfn){e.preventDefault();cfn(el,e);}
+  }
 }
 let _delegationBound = false;
 function bindDelegatedEvents(){
@@ -1739,6 +1774,8 @@ registerActions('click', {
   'team.addTeam':()=>tmAddTeam(), 'team.addRegion':()=>tmAddRegion(), 'region.del':(el)=>tmDeleteRegion(el.dataset.rgn),
   'uz':()=>{const fi=document.getElementById('fi');if(fi)fi.click();},
   'smt.sort':(el)=>sortSMT(el.dataset.key), 'site.del':(el)=>delS(el.dataset.sid), 'site.addModal':()=>openSM(null),
+  'top.searchGo':()=>{const i=document.getElementById('gsrch');if(i)globalSearch(i.value);},
+  'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('복사할 전월 계획이 없거나 이미 입력되어 있습니다');},
   'panel.tab':(el)=>setTab(el.dataset.tab), 'panel.ai':(el)=>runAI(el.dataset.sid), 'panel.sort':(el)=>sortPanel(el.dataset.tbl, el),
   'vac.edit':(el)=>openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf),
   'ul.cancel':()=>{cancelUL();closeMo();}, 'ul.confirmSite':(el)=>confirmNewSite(el.dataset.name, Number(el.dataset.idx), Number(el.dataset.total))
@@ -1753,8 +1790,12 @@ registerActions('input', {
   'site.completion':(el)=>clampYear(el), 'util.clampYear':(el)=>clampYear(el),
   'panel.plan':(el)=>{autoResize(el);schedulePlanSave(el);}
 });
+registerActions('keydown',{
+  'top.search':(el,e)=>{if(e.key==='Enter'){e.preventDefault();globalSearch(el.value);}}
+});
 // ── [전환 완료] change 액션 (site.upd: 셀렉트도 동일 핸들러로 재사용) ──
 registerActions('change', {
+  'viewer.rm':(el)=>fb2SwitchReportMonth(el.value),
   'dash.monthYear':(el)=>setDashMonthYear(el.value),
   'dash.trendYear':(el)=>setTrendYear(el.value), 'site.trendYear':(el)=>setSiteTrendYear(el.value),
   'team.switch':(el)=>switchTeam(el.value), 'team.rename':(el)=>updTeamName(el.dataset.tid, el.value),
@@ -1886,6 +1927,7 @@ async function metaLoad(){
     if(Array.isArray(o.regionOrder))S.regionOrder=o.regionOrder;
     if(Array.isArray(o.teams))S.teams=o.teams;
     if(o.teamId)S.teamId=o.teamId;
+    anaNormalize(); // 레거시 분석의견(문자열) → 현재 기준월 맵으로 승격 (rm 확정 이후 시점)
   }catch(e){console.warn('metaLoad failed',e);}
 }
 
@@ -1920,7 +1962,7 @@ async function defLoadAll(){
     for(const row of rows){
       try{
         const raw=defDecode(row);
-        if(raw)S.def[row.sid]=JSON.parse(raw);
+        if(raw)S.def[row.sid]=Object.freeze(JSON.parse(raw)); // freeze: 통째 교체 규약 강제 — push/splice 등 in-place 편집 시 무증상 캐시 스테일 차단
       }catch(e){console.warn('defLoad parse failed for',row.sid,e);}
     }
   }catch(e){console.warn('defLoadAll failed',e);}
@@ -1955,6 +1997,7 @@ const FB2={
   ready:false,role:null,user:null,_entering:false,_loginWatch:null,
   users:{},_usersBound:false,
   subs:[],_foBound:false,
+  _siteSubs:[],_siteSubSid:null,
   _siteCfg:{},_siteCfgBound:false,
   _pendRerender:false,_pendReport:null,_pendReportRm:null
 };
@@ -2108,6 +2151,9 @@ function fb2ShowBlocked(){
 function fb2Cleanup(){
   try{(FB2.subs||[]).forEach(function(off){try{off();}catch(_){}});}catch(_){}
   FB2.subs=[];
+  try{(FB2._siteSubs||[]).forEach(function(off){try{off();}catch(_){}});}catch(_){}
+  FB2._siteSubs=[];FB2._siteSubSid=null;
+  if(FB2._reportOff){try{FB2._reportOff();}catch(_){}FB2._reportOff=null;}
   FB2._usersBound=false;
   FB2._siteCfgBound=false;
   FB2.users={};FB2._siteCfg={};
@@ -2257,8 +2303,8 @@ async function fb2Enter(user){
     hideCover();
     fb2RenderAcct();
     fb2BindFocusout();
-    fb2SubPlans();
-    fb2SubAnalysis();
+    fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
+    if(S.view==='site'&&S.sid)fb2ScopeSiteSubs(S.sid);
     fb2SubSiteConfig();
     if(role==='editor'){
       document.body.classList.remove('viewer');
@@ -2280,6 +2326,7 @@ async function fb2EnterViewer(){
     if(!rep){fb2ViewerEmpty();return;}
     fb2ApplyReport(rep.rm,rep.data);
     fb2SubReport(rep.rm);
+    fb2InitViewerRmSel(rep.rm); // 기준월 아카이브 선택기 (게시월 2개 이상일 때 표시)
   }catch(e){console.error('[FB2] viewer 진입 실패',e);fb2ViewerEmpty();}
 }
 function fb2ViewerEmpty(){
@@ -2328,53 +2375,109 @@ function fb2ApplyReport(rm,rep){
 
 // ----- 실시간 구독 -----
 function fb2SubReport(rm){
+  if(FB2._reportOff){try{FB2._reportOff();}catch(_){}} // 월 전환 시 이전 구독 해제(누적 방지)
   const ref=FB2.db.ref('report/'+rm);
   const h=ref.on('value',function(snap){
     const data=snap.val();if(!data)return;
     if(shEditing()){FB2._pendReport=data;FB2._pendReportRm=rm;return;}
     fb2ApplyReport(rm,data);
   });
-  FB2.subs.push(function(){ref.off('value',h);});
+  FB2._reportOff=function(){ref.off('value',h);};
 }
-function fb2SubPlans(){
-  const ref=FB2.db.ref('plans');
+// ── 뷰어 기준월 선택 — 월간보고 아카이브 열람 ──
+async function fb2InitViewerRmSel(curRm){
+  try{
+    const snap=await FB2.db.ref('reportIndex').once('value');
+    const idx=snap.val()||{};
+    const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
+    if(!months.includes(curRm))months.push(curRm); // 인덱스 도입 전 게시분 폴백
+    months.sort().reverse();
+    const mc=document.querySelector('.mc');if(!mc)return;
+    let sel=document.getElementById('vrm');
+    if(!sel){sel=document.createElement('select');sel.id='vrm';sel.className='fbu-sel vrm-sel';sel.setAttribute('data-act','viewer.rm');sel.setAttribute('aria-label','열람할 기준월 선택');mc.appendChild(sel);}
+    sel.innerHTML=months.map(m=>`<option value="${m}" ${m===curRm?'selected':''}>${m}</option>`).join('');
+    sel.style.display=months.length>1?'':'none'; // 게시월이 1개면 숨김
+  }catch(e){console.warn('[FB2] reportIndex',e);}
+}
+async function fb2SwitchReportMonth(rm){
+  if(!/^\d{4}-\d{2}$/.test(rm)||rm===S.rm)return;
+  try{
+    toast(rm+' 게시본 불러오는 중…');
+    const snap=await FB2.db.ref('report/'+rm).once('value');
+    const data=snap.val();
+    if(!data){toast(rm+' 게시본이 없습니다');const sel=document.getElementById('vrm');if(sel)sel.value=S.rm;return;}
+    fb2ApplyReport(rm,data);
+    fb2SubReport(rm);
+    fb2InitViewerRmSel(rm); // 칩 갱신 후 선택 상태 재동기화
+  }catch(e){console.warn('[FB2] 월 전환 실패',e);toast('기준월 전환 실패');}
+}
+// ── P2: plans/analysis 구독 스코프 축소 ──
+//   구버전은 루트 'value' 구독이라 누군가 키 하나를 수정할 때마다 전원이 전체 트리를 재전송받았다
+//   (월버킷 복합키가 누적되면 키스트로크당 수백KB). 신버전: 진입 시 once로 1회 전체 병합(로컬 캐시 시드),
+//   이후에는 현재 보고 있는 현장의 plans/{sid}·analysis/{sid}만 value 구독하고 현장 전환 시 off/재구독.
+//   다른 현장의 원격 변경은 그 현장에 진입하는 순간(value 초기 발화) 병합된다.
+// ★병합(교체 아님): Firebase 리프에 없는 로컬 키를 보존해야 다른 처리계획 칸이 사라지지 않음.
+//   원격 값이 로컬과 다를 때만 changed=true → 자기 저장 에코 시에는 재렌더 생략(깜빡임 방지).
+function _fb2MergePlanFields(sid,fields){
   const PF=['processingPlan','vacantProcessingPlan','commercialProcessingPlan'];
-  const h=ref.on('value',function(snap){
-    const v=snap.val()||{};
+  let changed=false;
+  if(!S.cmt[sid])S.cmt[sid]={};
+  PF.forEach(function(f){
+    const leaf=fields&&fields[f];
+    if(leaf&&typeof leaf==='object'){
+      if(!S.cmt[sid][f]||typeof S.cmt[sid][f]!=='object')S.cmt[sid][f]={};
+      const tgt=S.cmt[sid][f];
+      for(const ek in leaf){
+        const dk=fbDecKey(ek);
+        if(tgt[dk]!==leaf[ek]){tgt[dk]=leaf[ek];changed=true;}
+      }
+    }
+  });
+  return changed;
+}
+async function fb2PrimePlansAnalysis(){
+  try{
+    const pair=await Promise.all([FB2.db.ref('plans').once('value'),FB2.db.ref('analysis').once('value')]);
     let changed=false;
-    // ★병합(교체 아님): Firebase 리프에 없는 로컬 키를 보존해야 다른 처리계획 칸이 사라지지 않음.
-    //   원격 값이 로컬과 다를 때만 changed=true → 자기 저장 에코 시에는 재렌더 생략(깜빡임 방지).
-    for(const sid in v){
-      if(!S.cmt[sid])S.cmt[sid]={};
-      const fields=v[sid]||{};
-      PF.forEach(function(f){
-        const leaf=fields[f];
-        if(leaf&&typeof leaf==='object'){
-          if(!S.cmt[sid][f]||typeof S.cmt[sid][f]!=='object')S.cmt[sid][f]={};
-          const tgt=S.cmt[sid][f];
-          for(const ek in leaf){
-            const dk=fbDecKey(ek);
-            if(tgt[dk]!==leaf[ek]){tgt[dk]=leaf[ek];changed=true;}
-          }
-        }
-      });
+    const pv=pair[0].val()||{};
+    for(const sid in pv){if(_fb2MergePlanFields(sid,pv[sid]))changed=true;}
+    const av=pair[1].val()||{};
+    for(const sid in av){
+      const v=av[sid];
+      if(typeof v==='string'){ // 레거시 단일 문자열 → 현재 기준월로 승격 + 원격도 월 노드로 재기록(하위 쓰기가 원시값 부모를 대체 — 멱등)
+        if(v.length&&anaGet(sid)!==v){anaSet(sid,v);changed=true;try{if(/^\d{4}-\d{2}$/.test(S.rm))FB2.db.ref('analysis/'+sid+'/'+S.rm).set(v.slice(0,20000));}catch(_){}}
+      }else if(v&&typeof v==='object'){
+        for(const rm in v){if(typeof v[rm]==='string'&&anaGet(sid,rm)!==v[rm]){anaSet(sid,v[rm],rm);changed=true;}}
+      }
     }
     if(changed){lsSave();fb2Rerender();}
-  });
-  FB2.subs.push(function(){ref.off('value',h);});
+  }catch(e){console.warn('[FB2] prime plans/analysis',e);}
 }
-function fb2SubAnalysis(){
-  const ref=FB2.db.ref('analysis');
-  const h=ref.on('value',function(snap){
-    const v=snap.val()||{};
-    let changed=false;
-    for(const sid in v){if(typeof v[sid]==='string'&&S.ana[sid]!==v[sid]){S.ana[sid]=v[sid];changed=true;}}
-    if(!changed)return; // 자기 저장 에코 → 재렌더 생략(깜빡임 방지)
+function fb2ScopeSiteSubs(sid){
+  sid=sid||null;
+  if(FB2._siteSubSid===sid)return;
+  (FB2._siteSubs||[]).forEach(function(off){try{off();}catch(_){}});
+  FB2._siteSubs=[];FB2._siteSubSid=sid;
+  if(!sid||!FB2.ready||!FB2.db)return;
+  const pref=FB2.db.ref('plans/'+sid);
+  const ph=pref.on('value',function(snap){
+    if(_fb2MergePlanFields(sid,snap.val()||{})){lsSave();fb2Rerender();}
+  });
+  FB2._siteSubs.push(function(){pref.off('value',ph);});
+  const aref=FB2.db.ref('analysis/'+sid);
+  const ah=aref.on('value',function(snap){
+    const v=snap.val();let ch=false,curTxt=null;
+    if(typeof v==='string'){ // 레거시 → 현재 기준월 승격
+      if(v.length&&anaGet(sid)!==v){anaSet(sid,v);ch=true;curTxt=v;}
+    }else if(v&&typeof v==='object'){
+      for(const rm in v){if(typeof v[rm]!=='string')continue;if(anaGet(sid,rm)!==v[rm]){anaSet(sid,v[rm],rm);ch=true;if(rm===S.rm)curTxt=v[rm];}}
+    }
+    if(!ch)return; // 자기 저장 에코 → 재렌더 생략(깜빡임 방지)
     lsSave();
-    if(S.view==='site'&&S.sid&&typeof v[S.sid]==='string'&&!shEditing()){const el=document.getElementById('ait-'+S.sid);if(el)el.innerHTML=safeHTML(v[S.sid]);}
+    if(curTxt!=null&&S.view==='site'&&S.sid===sid&&!shEditing()){const el=document.getElementById('ait-'+sid);if(el)el.innerHTML=safeHTML(curTxt);}
     fb2Rerender();
   });
-  FB2.subs.push(function(){ref.off('value',h);});
+  FB2._siteSubs.push(function(){aref.off('value',ah);});
 }
 // ----- 현장 토글(공가세대 표시·공가상가 포함) 실시간 동기화 -----
 // 편집자만 변경 가능. siteConfig/{sid} 리프에 저장 → 모든 사용자에게 실시간 반영.
@@ -2436,9 +2539,17 @@ function fb2PlanWrite(sid,field,key,value){
     fb2TouchMeta(sid);
   }catch(e){console.warn('[FB2] planWrite',e);}
 }
+// ── 분석의견 월별 아카이브 — S.ana[sid] = { 'YYYY-MM': html } ──
+//   처리계획(기준월@공종 키)과 대칭. 분석은 calc(기준월) 산출물이라 태생이 월간 문서인데
+//   기존 단일 문자열 저장은 매월 재생성 시 전월 분석을 파괴했다. 레거시 문자열 값(로컬·원격)은
+//   최초 조우 시 '현재 기준월' 항목으로 1회 승격한다(귀속 월 정보가 없어 현재월이 최선의 추정).
+function anaNormalize(){let ch=false;for(const sid in S.ana){const v=S.ana[sid];if(typeof v==='string'){S.ana[sid]=v.length?{[S.rm]:v}:{};ch=true;}}return ch;}
+function anaGet(sid,rm){const m=S.ana[sid];if(!m)return'';if(typeof m==='string')return m;const v=m[rm||S.rm];return typeof v==='string'?v:'';}
+function anaSet(sid,txt,rm){if(!S.ana[sid]||typeof S.ana[sid]!=='object')S.ana[sid]={};S.ana[sid][rm||S.rm]=txt;}
 function fb2AnaWrite(sid,txt){
   if(!FB2.ready||!FB2.db)return;
-  try{FB2.db.ref('analysis/'+sid).set(String(txt==null?'':txt).slice(0,20000));fb2TouchMeta(sid);}
+  if(!/^\d{4}-\d{2}$/.test(S.rm))return;
+  try{FB2.db.ref('analysis/'+sid+'/'+S.rm).set(String(txt==null?'':txt).slice(0,20000));fb2TouchMeta(sid);}
   catch(e){console.warn('[FB2] anaWrite',e);}
 }
 function fb2TouchMeta(sid){
@@ -2454,10 +2565,8 @@ async function fb2Publish(){
   const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
   try{
     toast('등록 준비 중…');
-    window.__CAPTURE={};
-    rDash();await fb2Wait(120);
-    for(const s2 of dashSites()){rSite(s2.id);await fb2Wait(90);}
-    const cap=window.__CAPTURE||{};window.__CAPTURE=null;
+    const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3): 느린 기기·백그라운드 탭 캡처 누락 불가
+    if(S.view==='dashboard'&&rDash._flush)rDash._flush(); // 대시보드에 있으면 인사이트를 동기 최신화 후 캡처
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const rm=S.rm;
     const upd={};
@@ -2471,24 +2580,49 @@ async function fb2Publish(){
       upd['report/'+rm+'/'+s2.id]={kpi:kpi,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
     });
     upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
+    upd['reportIndex/'+rm]=Date.now(); // 게시월 인덱스 — 뷰어 기준월 선택기가 이 노드만 읽어 목록 구성(전체 report 다운로드 방지)
     Object.keys(upd).forEach(function(p){upd[p]=deepEncKeys(upd[p]);}); // 중첩 맵 키(하자유형/공종/보수주체 등)에 '/'·'.' 등이 있으면 거부되므로 인코딩
-    await FB2.db.ref().update(upd); // 편집자가 입력해 둔 처리계획·분석의견을 리프로 시드(실시간 협업 시작점)
+    await FB2.db.ref().update(upd);
+    // 편집자가 로컬에만 갖고 있던 처리계획·분석의견을 리프로 시드(실시간 협업 시작점) — 실패해도 게시 자체는 완료.
+    try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
     fb2RefreshMeta();
     toast('등록 완료 · '+rm+' · 현장 '+dashSites().length+'개');
   }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
   finally{if(btn)btn.disabled=false;}
 }
 async function fb2SeedPlansAnalysis(){
-  const upd={};
+  // 시드는 '원격에 없는 리프만' 채운다(add-only). 처리계획·분석의견은 뷰어 포함 MEMBER 전원이
+  // 실시간으로 쓰는 협업 데이터인데, P2 이후 편집자 로컬은 안 보고 있던 현장에 대해 스테일일 수 있어
+  // 무조건 덮어쓰면 게시 순간 동료가 쓴 값이 편집자의 옛 값으로 회귀한다. 원격 우선 + 빈 곳만 시드.
   const PF=['processingPlan','vacantProcessingPlan','commercialProcessingPlan'];
+  const pair=await Promise.all([FB2.db.ref('plans').once('value'),FB2.db.ref('analysis').once('value')]);
+  const remoteP=pair[0].val()||{},remoteA=pair[1].val()||{};
+  const upd={};
   for(const sid in S.cmt){
     const cm=S.cmt[sid]||{};
     PF.forEach(function(f){
       const leaf=cm[f];
-      if(leaf&&typeof leaf==='object'){for(const k in leaf){const v=leaf[k];if(typeof v==='string'&&v.length)upd['plans/'+sid+'/'+f+'/'+fbEncKey(k)]=v.slice(0,5000);}}
+      if(leaf&&typeof leaf==='object'){
+        for(const k in leaf){
+          const v=leaf[k];if(typeof v!=='string'||!v.length)continue;
+          const ek=fbEncKey(k);
+          const rv=remoteP[sid]&&remoteP[sid][f]?remoteP[sid][f][ek]:undefined;
+          if(rv!==undefined)continue; // 원격에 이미 존재 → 덮어쓰지 않음
+          upd['plans/'+sid+'/'+f+'/'+ek]=v.slice(0,5000);
+        }
+      }
     });
   }
-  for(const sid in S.ana){const v=S.ana[sid];if(typeof v==='string'&&v.length)upd['analysis/'+sid]=v.slice(0,20000);}
+  for(const sid in S.ana){
+    const m=S.ana[sid];if(!m||typeof m!=='object')continue; // 부팅 시 anaNormalize로 맵 보장
+    const rnode=remoteA[sid];
+    for(const rm in m){
+      const v=m[rm];if(typeof v!=='string'||!v.length||!/^\d{4}-\d{2}$/.test(rm))continue;
+      const rv=(rnode&&typeof rnode==='object')?rnode[rm]:(typeof rnode==='string'&&rm===S.rm?rnode:undefined);
+      if(typeof rv==='string'&&rv.length)continue; // 원격 우선(add-only)
+      upd['analysis/'+sid+'/'+rm]=v.slice(0,20000);
+    }
+  }
   if(Object.keys(upd).length)await FB2.db.ref().update(upd);
 }
 function fb2RefreshMeta(){
@@ -2835,7 +2969,7 @@ function recHeadHTML(){
   const ths=REC_COLS.map(c=>{
     const sortable=c.key!=='__no';
     const arr=R.sort.key===c.key?(R.sort.dir>0?' ▲':' ▼'):'';
-    const act=sortable?rawHTML(' data-act="rec.sort"'):'';
+    const act=sortable?rawHTML(' tabindex="0" data-act="rec.sort"'):'';
     return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}</th>`;
   }).join('');
   const fins=REC_COLS.map(recFilterCellHTML).join('');
@@ -2865,6 +2999,50 @@ function recListBodyHTML(){
   const R=window.__REC;recComputeView();
   const cols=REC_COLS.map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
+}
+// ── 세대·하자 통합 검색 — 현장 전화 대응용: "101동 1203호 뭐 걸려있지?"를 즉답 ──
+//   공백 구분 토큰 AND 매치. 'N동'/'N호' 토큰은 동·호 필드에 정밀 매치, 그 외는 주요 필드 부분 매치.
+//   뷰어·스냅샷은 원본 행(S.def)이 없어 검색 불가 — 편집자 로컬 데이터 전용(입력창은 snap에서 숨김).
+function gsMatch(item,toks){
+  for(const t of toks){
+    let m;
+    if((m=t.match(/^(.+)동$/)))     {if(String(item.building||'')!==m[1]&&String(item.building||'')!==t)return false;continue;}
+    if((m=t.match(/^(.+)호$/)))     {if(String(item.unit||'')!==m[1]&&String(item.unit||'')!==t)return false;continue;}
+    const blob=(String(item.building||'')+'|'+String(item.unit||'')+'|'+String(item.trade||'')+'|'+String(item.defectType||'')+'|'+String(item.space||'')+'|'+String(item.contractor||'')+'|'+String(item.receiptContent||'')+'|'+String(item.complaint||'')).toLowerCase();
+    if(!blob.includes(t.toLowerCase()))return false;
+  }
+  return true;
+}
+function globalSearch(q){
+  q=String(q||'').trim();
+  if(!q){toast('검색어를 입력하세요 (예: 101동 1203호, 누수, 도배)');return;}
+  if(!Object.keys(S.def||{}).length){toast('검색할 데이터가 없습니다 · 리스트를 먼저 업로드하세요');return;}
+  const toks=q.split(/\s+/).filter(Boolean);
+  const CAP=300,hits=[];let total=0;
+  for(const s of dashSites()){
+    for(const it of (S.def[s.id]||[])){
+      if(!gsMatch(it,toks))continue;
+      total++;
+      if(hits.length<CAP)hits.push({s,it});
+    }
+  }
+  const rowsHtml=hits.map(({s,it})=>{
+    const done=it.status==='처리';
+    const cont=(it.receiptContent||'').replace(/\s+/g,' ').trim();
+    return `<tr class="gs-hit" data-act="nav.site" data-site="${esc(s.id)}" role="button" tabindex="0" aria-label="${esc(s.name)} ${esc(it.building||'')}동 ${esc(it.unit||'')}호 현장 열기">`
+      +`<td style="white-space:nowrap"><b style="color:var(--b700)">${esc(shortName(s.name))}</b></td>`
+      +`<td class="cc">${esc(it.building||'-')}</td><td class="cc">${esc(it.unit||'-')}</td>`
+      +`<td>${esc(it.trade||'-')}</td><td>${esc(it.defectType||'-')}</td>`
+      +`<td class="cc" style="white-space:nowrap">${esc(it.receiptDate||'-')}</td>`
+      +`<td class="cc ${done?'gs-done':'gs-open'}">${done?'처리':'미처리'}</td>`
+      +`<td style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(cont)}">${esc(cont.slice(0,120))||'-'}</td></tr>`;
+  }).join('');
+  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">통합 검색 · ${esc(q)}</span><span class="rl-count">결과 <b>${total.toLocaleString()}</b>건${total>CAP?` (상위 ${CAP}건 표시)`:''}</span><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
+  document.getElementById('mb').innerHTML=total?`<div style="overflow:auto;max-height:70vh"><table class="dt" style="min-width:860px"><thead><tr><th>현장</th><th class="cc" style="width:56px">동</th><th class="cc" style="width:56px">호</th><th style="width:84px">공종</th><th style="width:96px">하자유형</th><th class="cc" style="width:96px">접수일</th><th class="cc" style="width:64px">상태</th><th>접수내용</th></tr></thead><tbody>${rowsHtml}</tbody></table><div style="padding:8px 2px;font-size:11.5px;color:var(--lbl3)">행을 클릭하면 해당 현장 패널로 이동합니다.</div></div>`
+    :'<div style="text-align:center;padding:36px;color:var(--lbl3)">일치하는 건이 없습니다.</div>';
+  document.getElementById('mf').innerHTML='';
+  const mb2=document.getElementById('mb');if(mb2)mb2.classList.add('wide');
+  openMo();
 }
 function openRecList(sid,scope,trade){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
@@ -3116,6 +3294,9 @@ function calcW(items,rmEnd,pmEnd){
 function calcMo(items){const m={};items.forEach(i=>{const k=(i.receiptDate||'').slice(0,7);if(!k)return;if(!m[k])m[k]={month:k,r:0,res:0,u:0};m[k].r++;const done=i.status==='처리'&&i.completionDate;if(done)m[k].res++;else m[k].u++;});return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month));}
 function wk(d){if(!d)return null;const m=String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(!m)return null;const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(isNaN(dt))return null;const sunOff=(7-dt.getUTCDay())%7;const sun=new Date(dt.getTime()+sunOff*86400000);return `${sun.getUTCFullYear()}-${String(sun.getUTCMonth()+1).padStart(2,'0')}-${String(sun.getUTCDate()).padStart(2,'0')}`;}
 // 상가 표기 감지 — 동/호 오타 변형 포함 ([강산살상성싱]+[가거기], 뒤에 숫자 허용)
+// 상가 라벨 판별 — '상가'와 업로드 데이터에서 실제 관찰된 오타 변형을 넓게 매칭.
+//   수용 리스크: 문자클래스 조합상 '살기' 등 우연 조합도 매치되지만, 검사 대상이 동·호 필드
+//   (isVacStore에서 hasCommercial 현장 + 공용 하자 한정)라 실데이터 오탐 개연성은 낮음.
 function isStoreLabel(s){return /[강산살상성싱][가거기]/.test(String(s||''));}
 // 공가세대/공가상가 하자건 판정 (둘 중 하나라도 해당하면 공가 건)
 // - 공가세대 하자: (모든 현장) 하자구분='세대' AND 입주상태∈{미분양,미납}
@@ -3142,21 +3323,44 @@ function go(view,sid){
   document.getElementById('pbtn').style.display=(view==='dashboard'||view==='site')?'':'none';
   if(view==='dashboard')rDash();
   if(view==='site'&&sid)rSite(sid);
+  try{if(FB2.ready)fb2ScopeSiteSubs(view==='site'?sid:null);}catch(_){}// P2: 보고 있는 현장만 plans/analysis 실시간 구독
   if(view==='manage')rManage();
   if(view==='settings')loadSettings();
   const _c=document.getElementById('content');if(_c)_c.scrollTop=0;
+  // 해시 딥링크 동기화 — 새로고침 유지 + "#site/{sid}" 링크 공유. replaceState라 hashchange 미발화(루프 없음).
+  if(!document.body.classList.contains('snap')){
+    try{
+      const want=(view==='site'&&sid)?('#site/'+encodeURIComponent(sid)):('#'+view);
+      if(location.hash!==want)history.replaceState(null,'',want);
+    }catch(_){}
+  }
 }
+// 해시 → 화면 복원. 유효하면 true(부팅 기본 진입 대체), 아니면 false.
+function parseHashNav(){
+  try{
+    const h=decodeURIComponent(location.hash||'');
+    let m;
+    if((m=h.match(/^#site\/(.+)$/))){
+      const sid=m[1];
+      if(teamSites().some(s=>s.id===sid)){go('site',sid);return true;}
+      return false;
+    }
+    if((m=h.match(/^#(dashboard|manage|settings)$/))){go(m[1]);return true;}
+  }catch(_){}
+  return false;
+}
+window.addEventListener('hashchange',function(){parseHashNav();}); // 주소창 직접 수정·붙여넣기 대응
 function rNav(){
   const c=document.getElementById('rgnav');
   c.innerHTML=orderedRGS().map(r=>{
     const sites=teamSites().filter(s=>s.region===r);
     const er=esc(r);
     return`<div class="rgblock" data-region="${er}">`
-      +`<div class="rgh open" draggable="true" data-region="${er}" data-tip="${er} (${sites.length}개)" data-act="nav.region">`
+      +`<div class="rgh open" role="button" tabindex="0" draggable="true" data-region="${er}" data-tip="${er} (${sites.length}개)" data-act="nav.region">`
       +`<span class="rgdrag" data-tt="권역 순서 변경" aria-label="권역 순서 변경">⠿</span>${er}<span style="margin-left:4px;font-size:9px;color:var(--lbl3)">${sites.length}</span>`
       +`<svg class="rgch" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg></div>`
       +`<div class="rgs" data-region="${er}">`
-      +sites.map(s=>{const en=esc(s.name);return `<div class="sti${S.sid===s.id?' act':''}" draggable="true" data-site="${s.id}" data-region="${er}" data-tip="${er} · ${en}" data-act="nav.site"><span class="std"></span><span class="stl">${en}</span></div>`;}).join('')
+      +sites.map(s=>{const en=esc(s.name);return `<div class="sti${S.sid===s.id?' act':''}" role="button" tabindex="0" draggable="true" data-site="${s.id}" data-region="${er}" data-tip="${er} · ${en}" data-act="nav.site"><span class="std"></span><span class="stl">${en}</span></div>`;}).join('')
       +`</div></div>`;
   }).join('');
   wireNavDnD();
@@ -3211,12 +3415,12 @@ function rSMgr(){const el=document.getElementById('mgsites');if(!el)return;if(!t
   const regOpts=s=>regs.map(r=>`<option ${s.region===r?'selected':''}>${esc(r)}</option>`).join('')+(regs.includes(s.region)?'':`<option selected>${esc(s.region||'')}</option>`);
   const fmtUp=iso=>{if(!iso)return '<span style="color:var(--lbl3)">—</span>';const d=new Date(iso);if(isNaN(d))return '<span style="color:var(--lbl3)">—</span>';return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;};
   el.innerHTML=`<div style="overflow-x:auto"><table class="dt mgtbl" id="smtable"><thead><tr>
-    <th style="width:12%" data-sort="region" data-act="smt.sort" data-key="region">권역 <span class="sortmk"></span></th>
-    <th style="width:20%" data-sort="name" data-act="smt.sort" data-key="name">현장명 <span class="sortmk"></span></th>
-    <th class="cc" style="width:8%" data-sort="units" data-act="smt.sort" data-key="units">세대수 <span class="sortmk"></span></th>
-    <th class="cc" style="width:7%" data-sort="buildings" data-act="smt.sort" data-key="buildings">동수 <span class="sortmk"></span></th>
-    <th class="cc" style="width:8%" data-sort="commercialUnits" data-act="smt.sort" data-key="commercialUnits">상가수 <span class="sortmk"></span></th>
-    <th class="cc" style="width:8%" data-sort="completionDate" data-act="smt.sort" data-key="completionDate">준공일 <span class="sortmk"></span></th>
+    <th style="width:12%" data-sort="region" tabindex="0" data-act="smt.sort" data-key="region">권역 <span class="sortmk"></span></th>
+    <th style="width:20%" data-sort="name" tabindex="0" data-act="smt.sort" data-key="name">현장명 <span class="sortmk"></span></th>
+    <th class="cc" style="width:8%" data-sort="units" tabindex="0" data-act="smt.sort" data-key="units">세대수 <span class="sortmk"></span></th>
+    <th class="cc" style="width:7%" data-sort="buildings" tabindex="0" data-act="smt.sort" data-key="buildings">동수 <span class="sortmk"></span></th>
+    <th class="cc" style="width:8%" data-sort="commercialUnits" tabindex="0" data-act="smt.sort" data-key="commercialUnits">상가수 <span class="sortmk"></span></th>
+    <th class="cc" style="width:8%" data-sort="completionDate" tabindex="0" data-act="smt.sort" data-key="completionDate">준공일 <span class="sortmk"></span></th>
     <th class="cc" style="width:8%">공가세대</th>
     <th class="cc" style="width:8%">공가상가</th>
     <th class="cc" style="width:10%">업데이트일</th>
@@ -3287,7 +3491,7 @@ const tblMetrics=(cur,prev,prev2)=>{const tR=cur.r,cumRes=cur.res,unr=cur.u,d0=c
 const tblTh=(cls,txt)=>`<th class="cc ${cls}">${txt}</th>`;
 const tblThG=(cls,txt)=>`<th class="cc ${cls} tl-grp">${txt}</th>`;
 // SORTING dashboard table
-function sortDR(all){if(!S.dsort?.col)return all;const{col,dir}=S.dsort,getV=({s,st})=>({region:s.region,name:s.name,units:s.units||0,tR:st.tR,res:st.res,rate:st.rate,unr:st.unr,deltaUnr:st.unr-st.prev.unr,lt:st.lt,ltr:st.ltr,delta:st.ltr-st.prev.ltr}[col]);return all.slice().sort((a,b)=>{const va=getV(a),vb=getV(b);if(typeof va==='string')return dir*va.localeCompare(vb,'ko');return dir*(va-vb);});}
+function sortDR(all){if(!S.dsort?.col)return all;const{col,dir}=S.dsort,getV=({s,st})=>({region:s.region,name:s.name,units:s.units||0,tR:st.tR,res:st.res,rate:st.rate,unr:st.unr,deltaUnr:st.unr-st.prev.unr,lt:st.lt,ltr:st.ltr,delta:st.lt-st.prev.lt}[col]);return all.slice().sort((a,b)=>{const va=getV(a),vb=getV(b);if(typeof va==='string')return dir*va.localeCompare(vb,'ko');return dir*(va-vb);});}
 function sortDT(col){if(!S.dsort)S.dsort={col:null,dir:-1};if(S.dsort.col===col){if(S.dsort.dir===1){S.dsort.col=null;S.dsort.dir=-1;}else S.dsort.dir=1;}else{S.dsort={col,dir:-1};}if(S.view==='dashboard')rDash();}
 function rDTMark(){document.querySelectorAll('#dtable th[data-sort]').forEach(th=>{const c=th.dataset.sort,mk=th.querySelector('.sortmk');const act=S.dsort?.col===c;th.classList.toggle('act',act);if(mk)mk.textContent=act?(S.dsort.dir===1?'▲':'▼'):'↕';th.setAttribute('aria-sort',act?(S.dsort.dir===1?'ascending':'descending'):'none');});}
 function attachLtrTip(){if(window._ltrTipAttached)return;window._ltrTipAttached=true;const tip=document.getElementById('htooltip');if(!tip)return;const show=(e,bar)=>{const[nm,unrS,d60S,d30S,d0S]=bar.dataset.tip.split('|'),unr=Number(unrS)||0,d60=Number(d60S)||0,d30=Number(d30S)||0,d0=Number(d0S)||0,pct=n=>unr>0?(n/unr*100).toFixed(1)+'%':'0%';tip.innerHTML=`<div class="trow"><span class="tmark" style="background:#DA6A60"></span><span class="tlabel">60일 이상</span><span class="tval">${d60.toLocaleString()}건 (${pct(d60)})</span></div><div class="trow"><span class="tmark" style="background:#E89C9A"></span><span class="tlabel">30~59일</span><span class="tval">${d30.toLocaleString()}건 (${pct(d30)})</span></div><div class="trow"><span class="tmark" style="background:#B3C7DD"></span><span class="tlabel">30일 미만</span><span class="tval">${d0.toLocaleString()}건 (${pct(d0)})</span></div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};const hide=()=>tip.classList.remove('show');// document 전체 위임 — 대시보드 + 현장 패널 모든 ltrbar 커버
@@ -3363,17 +3567,17 @@ function rDash(){
     {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`},
     {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`},
   ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div></div>`).join('');
-  document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const d=(st.ltr-st.prev.ltr).toFixed(1),dN=Number(d),isUp=dN>0,isFlat=dN===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--b700);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.ltr.toFixed(1)}% → 금월 ${st.ltr.toFixed(1)}%" aria-label="전월 ${st.prev.ltr.toFixed(1)}% → 금월 ${st.ltr.toFixed(1)}%">${arrow} ${sign}${Math.abs(dN).toFixed(1)}%</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
+  document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const ld=st.lt-st.prev.lt,isUp=ld>0,isFlat=ld===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--b700);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}" aria-label="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
   // 합계 행 — sortDT에도 위치 고정 (tfoot에 별도 배치). 데이터 0건일 땐 비움.
   const ft=document.getElementById('dtfoot');
   if(ft){
     if(!all.length){ft.innerHTML='';}
     else{
-      const tLtr=tU>0?tLt/tU*100:0,pLtr=pU>0?pLt/pU*100:0,fdN=Number((tLtr-pLtr).toFixed(1));
+      const tLtr=tU>0?tLt/tU*100:0,pLtr=pU>0?pLt/pU*100:0,fld=tLt-pLt;
       const fp60=tU>0?Math.min(tDd60/tU*100,100):0,fp30=tU>0?Math.min(tDd30/tU*100,100):0,fp0=tU>0?Math.min(tDd0/tU*100,100):0;
-      const farrow=fdN===0?'─':fdN>0?'▲':'▼',fsign=fdN===0?'':fdN>0?'+':'−',fbadge=fdN===0?'bgr':fdN>0?'brd':'bgn';
+      const farrow=fld===0?'─':fld>0?'▲':'▼',fsign=fld===0?'':fld>0?'+':'−',fbadge=fld===0?'bgr':fld>0?'brd':'bgn';
       const fuD=tU-pU,fuArrow=fuD===0?'─':fuD>0?'▲':'▼',fuSign=fuD>0?'+':fuD<0?'−':'',fuBadge=fuD===0?'bgr':fuD>0?'brd':'bgn';
-      ft.innerHTML=`<tr class="tot"><td class="cc" style="white-space:nowrap"></td><td><b>합계</b></td><td class="n">${tUnits.toLocaleString()}</td><td class="n">${tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${tRes.toLocaleString()}</td><td class="n">${rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${tU.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${fuBadge}" data-tt="전월 ${pU.toLocaleString()} → 금월 ${tU.toLocaleString()}" aria-label="전월 ${pU.toLocaleString()} → 금월 ${tU.toLocaleString()}">${fuArrow} ${fuSign}${Math.abs(fuD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${tLt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="합계|${tU}|${tDd60}|${tDd30}|${tDd0}|${tLtr.toFixed(1)}"><div class="seg s60" style="width:${fp60}%"></div><div class="seg s30" style="width:${fp30}%"></div><div class="seg s0" style="width:${fp0}%"></div></div><span class="ltrbar-pct">${tLtr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${fbadge}" data-tt="전월 ${pLtr.toFixed(1)}% → 금월 ${tLtr.toFixed(1)}%" aria-label="전월 ${pLtr.toFixed(1)}% → 금월 ${tLtr.toFixed(1)}%">${farrow} ${fsign}${Math.abs(fdN).toFixed(1)}%</span></td></tr>`;
+      ft.innerHTML=`<tr class="tot"><td class="cc" style="white-space:nowrap"></td><td><b>합계</b></td><td class="n">${tUnits.toLocaleString()}</td><td class="n">${tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${tRes.toLocaleString()}</td><td class="n">${rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${tU.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${fuBadge}" data-tt="전월 ${pU.toLocaleString()} → 금월 ${tU.toLocaleString()}" aria-label="전월 ${pU.toLocaleString()} → 금월 ${tU.toLocaleString()}">${fuArrow} ${fuSign}${Math.abs(fuD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${tLt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="합계|${tU}|${tDd60}|${tDd30}|${tDd0}|${tLtr.toFixed(1)}"><div class="seg s60" style="width:${fp60}%"></div><div class="seg s30" style="width:${fp30}%"></div><div class="seg s0" style="width:${fp0}%"></div></div><span class="ltrbar-pct">${tLtr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${fbadge}" data-tt="전월 ${pLt.toLocaleString()} → 금월 ${tLt.toLocaleString()}" aria-label="전월 ${pLt.toLocaleString()} → 금월 ${tLt.toLocaleString()}">${farrow} ${fsign}${Math.abs(fld).toLocaleString()}</span></td></tr>`;
     }
   }
   rDTMark();
@@ -3572,6 +3776,52 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
   S._dashIns=items.map(x=>({cls:x.cls,icon:x.icon,ttl:x.ttl,sub:x.sub}));
 }
 function dC(k){if(S.charts[k]){S.charts[k].$destroyed=true;S.charts[k].destroy();delete S.charts[k];}}
+// ── 게시·스냅샷용 순수 집계 (P3: __CAPTURE 렌더 부수효과 의존 제거) ──
+// capWks: 주차별 누계 스냅샷 — rChartsImpl/buildSiteTrend의 차트 데이터 계산과 동일 수식(BIT-EXACT).
+//   입력 defs는 receiptDate 형식(YYYY-MM-DD) 필터가 이미 적용된 배열을 기대(차트 코드와 동일 입력).
+function capWks(defs,rm,year){
+  const _ty=Number(year);
+  const ymPart=rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
+  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
+  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
+  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
+  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
+  while(prevCutoff<refLimStr){
+    const isPartial=sunTS>refLimTS;
+    const cutTS=isPartial?refLimTS:sunTS;
+    const cutD=new Date(cutTS),cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`;
+    const m=cutD.getUTCMonth()+1;
+    let weekNum;
+    if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;
+    else weekNum=1;
+    let cR=0,cRes=0,curU=0,curLt=0,curLt60=0;
+    for(const it of defs){if(it.receiptDate>cutoff)continue;cR++;const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
+    wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
+    if(isPartial)break;
+    sunTS+=7*86400000;prevCutoff=cutoff;
+  }
+  return wks;
+}
+// capAm: 기준월말 시점 미처리 공종 분포 — rChartsImpl/buildSiteTradeDonut의 도넛 데이터와 동일 수식.
+function capAm(defs,rm){
+  const _rmP=rm.split('-').map(Number),_rmEnd=`${rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
+  const am={};(defs||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
+  return am;
+}
+// capAll: 게시/스냅샷 전체 캡처 — 연도 선택 규칙(trendYearInfo)까지 차트 렌더와 동일하게 적용.
+//   렌더·setTimeout 없이 순수 산출 → 느린 기기/백그라운드 탭에서의 캡처 누락 클래스 제거.
+function capAll(){
+  const allDefRaw=dashSites().flatMap(s=>S.def[s.id]||[]);
+  const allDef=allDefRaw.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+  const cap={wks:capWks(allDef,S.rm,trendYearInfo(allDef,'trendYear').year),am:capAm(allDefRaw,S.rm),siteWks:{},siteAm:{}};
+  for(const s of dashSites()){
+    const defs=S.def[s.id]||[];
+    const sd=defs.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+    cap.siteWks[s.id]=capWks(sd,S.rm,trendYearInfo(sd,'siteTrendYear').year);
+    cap.siteAm[s.id]=capAm(defs,S.rm);
+  }
+  return cap;
+}
 function rCharts(all){
   // Globally disable datalabels by default (enabled per-dataset where needed)
   if(window.ChartDataLabels&&!Chart.__dlOff){Chart.register(ChartDataLabels);Chart.defaults.set('plugins.datalabels',{display:false});Chart.__dlOff=true;}
@@ -3610,33 +3860,11 @@ function rChartsImpl(all){
   // 메인 차트: 선택연도 1/1부터 (기준월 말일·선택연도 말일 중 이른 시점)까지, 각 주 일요일 기준 누계 스냅샷
   // 막대 = 그 주 시점의 미처리 누계 (현재 누적 접수 - 누적 처리)
   // 선   = 그 주 시점의 누계 전체접수 / 누계 처리완료
-  const allDef=dashSites().flatMap(s=>S.def[s.id]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
+  const allDefRaw=dashSites().flatMap(s=>S.def[s.id]||[]);
+  const allDef=allDefRaw.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
   const _tyInfo=trendYearInfo(allDef,'trendYear'),_ty=Number(_tyInfo.year);
   {const _sel=document.getElementById('dtrend-yr');if(_sel)_sel.innerHTML=trendYrOptions(_tyInfo);}
-  const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
-  // 종료 시점: 기준월 말일과 선택연도 12/31 중 이른 쪽 (과거연도는 그 해 말까지, 당해연도는 기준월까지)
-  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
-  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
-  // 각 주 일요일 시퀀스 — 선택연도 1/1 직후 첫 일요일부터 종료시점까지
-  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
-  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
-  while(prevCutoff<refLimStr){
-    const isPartial=sunTS>refLimTS;
-    const cutTS=isPartial?refLimTS:sunTS;
-    const cutD=new Date(cutTS),cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`;
-    const m=cutD.getUTCMonth()+1;
-    // 주차 라벨: 같은 달 내 누적 주 번호
-    let weekNum;
-    if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;
-    else weekNum=1;
-    // 누계 통계: 접수일 <= cutoff인 모든 건
-    let cR=0,cRes=0,curU=0,curLt=0,curLt60=0;
-    for(const it of allDef){if(it.receiptDate>cutoff)continue;cR++;const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
-    wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
-    if(isPartial)break;
-    sunTS+=7*86400000;prevCutoff=cutoff;
-  }
-  if(window.__CAPTURE)window.__CAPTURE.wks=wks.map(x=>({...x}));
+  const wks=capWks(allDef,S.rm,_ty); // 순수 집계 공유 — 게시/스냅샷(capAll)과 동일 산출 보장
   if(window.__SNAP__&&window.__SNAP__.wks)for(let _i=0;_i<wks.length;_i++){if(window.__SNAP__.wks[_i])wks[_i]=window.__SNAP__.wks[_i];}
   const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
   // y1(누계 접수·처리 라인) 동적 범위 — 데이터 최저~최고에 바짝 맞춰 변화를 극대화
@@ -3690,9 +3918,7 @@ function rChartsImpl(all){
 
   // 3) Top trades treemap (with fallback if library missing)
   dC('mx');const mxEl=document.getElementById('c-mx');if(mxEl){
-    const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-    const am={};dashSites().flatMap(s=>S.def[s.id]||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
-    if(window.__CAPTURE)window.__CAPTURE.am={...am};
+    const am=capAm(allDefRaw,S.rm); // 순수 집계 공유
     if(window.__SNAP__&&window.__SNAP__.am)Object.assign(am,window.__SNAP__.am);
     const ownEtc=am['기타']||0;delete am['기타'];
     const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
@@ -3783,7 +4009,7 @@ function vacPaneHTML(sid,site,cm,stat,kind){
 function rSite(sid){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
   const allItems=S.def[sid]||[],filtered=allItems;
-  const st=calc(filtered,site,S.rm),cm=S.cmt[sid]||{processingPlan:{},vacantProcessingPlan:{},teamLeaderComment:''},ai=S.ana[sid]||'';
+  const st=calc(filtered,site,S.rm),cm=S.cmt[sid]||{processingPlan:{},vacantProcessingPlan:{},teamLeaderComment:''},ai=anaGet(sid); // 기준월 아카이브 — 월 전환 시 해당 월 분석 표시
   const showSedae=site.showVacant!==false;         // 공가세대 탭
   const showSangga=!!site.hasCommercial;           // 공가상가 탭 (독립)
   if(S.tab==='vacant'&&!showSedae)S.tab='overview';
@@ -3956,8 +4182,8 @@ function rSite(sid){
 <div class="tpane ${S.tab==='trade'?'act':''}" data-tab="trade">
   <div class="as">
     ${ltrMomBar}
-    <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card" data-print="tr-all"><div class="ct">공종별 전체 처리 현황</div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" data-act="panel.sort" data-tbl="trade-${esc(sid)}">공종 <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" data-act="panel.sort" data-tbl="trade-${esc(sid)}">시공업체 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${allTradeRows||'<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody></table></div>
+    <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div><button class="btn bo bsm no-print" data-act="panel.carryPlan" data-sid="${esc(sid)}" data-tt="전월(${pM(S.rm)}) 처리계획을 이번 달 빈 칸에만 복사합니다" aria-label="전월 처리계획 불러오기">전월 계획 불러오기</button></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
+    <div class="card" data-print="tr-all"><div class="ct">공종별 전체 처리 현황</div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">공종 <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">시공업체 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${allTradeRows||'<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody></table></div>
   </div>
 </div>
 
@@ -3992,21 +4218,7 @@ function buildSiteTrend(sid,st){
   const siteDef=(S.def[sid]||[]).filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
   const _tyInfo=trendYearInfo(siteDef,'siteTrendYear'),_ty=Number(_tyInfo.year);
   {const _sel=document.getElementById('strend-yr');if(_sel)_sel.innerHTML=trendYrOptions(_tyInfo);}
-  const ymPart=S.rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
-  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
-  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
-  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
-  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
-  while(prevCutoff<refLimStr){
-    const isPartial=sunTS>refLimTS,cutTS=isPartial?refLimTS:sunTS,cutD=new Date(cutTS);
-    const cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`,m=cutD.getUTCMonth()+1;
-    let weekNum;if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;else weekNum=1;
-    let cR=0,cRes=0,curU=0,curLt=0,curLt60=0;
-    for(const it of siteDef){if(it.receiptDate>cutoff)continue;cR++;const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
-    wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
-    if(isPartial)break;sunTS+=7*86400000;prevCutoff=cutoff;
-  }
-  if(window.__CAPTURE){(window.__CAPTURE.siteWks=window.__CAPTURE.siteWks||{})[sid]=wks.map(x=>({...x}));}
+  const wks=capWks(siteDef,S.rm,_ty); // 순수 집계 공유 — 게시/스냅샷(capAll)과 동일 산출 보장
   if(window.__SNAP__&&window.__SNAP__.siteWks&&window.__SNAP__.siteWks[sid]){const _sw=window.__SNAP__.siteWks[sid];for(let _i=0;_i<wks.length;_i++){if(_sw[_i])wks[_i]=_sw[_i];}}
   const cumR=wks.map(x=>x.cumR),cumRes=wks.map(x=>x.cumRes);
   const _y1vals=[...cumR,...cumRes].filter(v=>v>0);let _y1min=0,_y1max;
@@ -4040,9 +4252,7 @@ function buildSiteMom(sid,st){
 function buildSiteTradeDonut(sid){
   const mxEl=document.getElementById('c-mx-'+sid);if(!mxEl)return;
   if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||'#1C1C1E';ctx.font=`700 ${opts.valueSize||16}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||'rgba(60,60,67,.58)';ctx.font=`600 ${opts.labelSize||11}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
-  const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  const am={};(S.def[sid]||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
-  if(window.__CAPTURE){(window.__CAPTURE.siteAm=window.__CAPTURE.siteAm||{})[sid]={...am};}
+  const am=capAm(S.def[sid]||[],S.rm); // 순수 집계 공유
   if(window.__SNAP__&&window.__SNAP__.siteAm&&window.__SNAP__.siteAm[sid]){for(const _k in am)delete am[_k];Object.assign(am,window.__SNAP__.siteAm[sid]);}
   const ownEtc=am['기타']||0;delete am['기타'];
   const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
@@ -4063,6 +4273,27 @@ function renderTabCharts(sid,st){
 
 // SAVE
 // 호환용 — 이제 textarea는 schedulePlanSave를 통해 자동저장. 외부에서 직접 호출하는 경우만 남김.
+// ── 처리계획 전월 이월 — 월초 반복 타이핑 제거. add-only: 이미 입력된 이번 달 칸은 건드리지 않음(시드와 동일 원칙). ──
+//   세대·공가·상가 3개 필드를 한 번에 처리. 복사분은 fb2PlanWrite로 즉시 동기화(협업자에게도 반영).
+function carryPlansForward(sid){
+  const prev=pM(S.rm),PF=['processingPlan','vacantProcessingPlan','commercialProcessingPlan'];
+  const cm=S.cmt[sid];if(!cm)return 0;
+  let n=0;
+  PF.forEach(function(f){
+    const leaf=cm[f];if(!leaf||typeof leaf!=='object')return;
+    for(const k in leaf){
+      if(!k.startsWith(prev+'@'))continue;
+      const v=leaf[k];if(typeof v!=='string'||!v.trim())continue;
+      const cur=S.rm+k.slice(prev.length);
+      const ex=leaf[cur];
+      if(typeof ex==='string'&&ex.trim())continue; // add-only: 이번 달 값 보존
+      leaf[cur]=v;n++;
+      try{fb2PlanWrite(sid,f,cur,v);}catch(_){}
+    }
+  });
+  if(n)lsSave();
+  return n;
+}
 function openVacEdit(sid,vl,statusField){
   statusField=statusField||'vacantStatus';
   const cur=S.cmt[sid]?.[statusField]||{};
@@ -4093,6 +4324,21 @@ function openVacEdit(sid,vl,statusField){
   setTimeout(()=>$mb.focus(),30);
 }
 
+// ── PII 마스킹 (P4) — 외부 AI(Gemini)로 나가는 자유 텍스트 전용 ──
+//   대상: 휴대전화·일반전화·이메일·호칭(님/씨) 붙은 인명. 동·호수는 원인분석에 필요하므로 마스킹하지 않음(운영 결정).
+//   저장·화면 표시 데이터는 원본 유지 — 프롬프트 조립 직전에만 적용. (게시 경로는 redactUL이 별도 담당)
+//   범용 한국어 PII 마스킹은 성숙한 OSS가 사실상 없어(영문 위주) 도메인 특화 정규식으로 유지.
+//   _PII_ROLE: 님/씨 앞에 붙는 흔한 직책·역할 명사 — 인명이 아니므로 보존(과잉 마스킹 방지).
+const _PII_ROLE=new Set(['고객','손님','선생','사장','기사','소장','반장','과장','차장','부장','대리','주임','팀장','실장','원장','이사','상무','전무','대표','회장','여사','담당','담당자','관리자','작업자','기술자','입주자','입주민','세대주','어르신','사모','아저','아주머','어머','아버']);
+function maskPII(s){
+  return String(s==null?'':s)
+    .replace(/01[016789][ .-]?\d{3,4}[ .-]?\d{4}\b/g,'010-****-****')
+    .replace(/\b0\d{1,2}[ .-]\d{3,4}[ .-]\d{4}\b/g,'0**-***-****')
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,'***@***')
+    .replace(/([가-힣]{2,4})(님|씨)(?![가-힣])/g,(m,name,h)=>_PII_ROLE.has(name)?m:'○○'+h);
+  // 알려진 한계: '홍길동님이'처럼 님/씨 뒤에 조사가 바로 붙으면 매치하지 않음(의도 — 완화 시 '날씨가' 등
+  // 일반 어휘 오탐이 발생). 인명 마스킹은 best-effort이며 고위험 PII(전화·이메일)는 위 규칙이 전담.
+}
 async function runAI(sid){if(!S.ck){toast('설정에서 Gemini API 키를 입력하세요');return;}const site=S.sites.find(s=>s.id===sid);if(!site)return;const st=calc(S.def[sid]||[],site,S.rm),el=document.getElementById(`ait-${sid}`);if(el)el.innerHTML='<p style="color:var(--lbl3)">AI 분석 생성 중…</p>';
 const systemInstruction = 
   "You are a senior housing defect maintenance manager at a construction company, writing the analysis section of a monthly executive meeting report. " +
@@ -4126,13 +4372,13 @@ const _kw=/누수|민원|품의|자재|피해|보상|결로|곰팡이|균열|파
 const _daysB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
 const _scored=_ul.map(i=>{const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;return{c,dd,co:i.complaint,t:i.trade||'',kw:_kw.test(c)||_kw.test(i.complaint||'')};}).filter(x=>x.c);
 _scored.sort((a,b)=>(b.kw-a.kw)||(b.dd-a.dd));
-const _sample=_scored.slice(0,40).map(x=>`- [${x.t}|${x.dd}일${x.kw?'|★':''}] ${x.c.slice(0,60)}`).join('\n');
+const _sample=_scored.slice(0,40).map(x=>`- [${x.t}|${x.dd}일${x.kw?'|★':''}] ${maskPII(x.c).slice(0,60)}`).join('\n');
 const _contentBlock=_sample?`\n[미처리건 접수내용 샘플 — ★는 누수·민원·품의·자재·피해보상 등 주요 키워드 포함건]\n${_sample}`:`\n[미처리건 접수내용] 제공된 접수내용 데이터 없음 (해당 분석 항목 생략)`;
 // 중대하자 의심 후보 블록 — 규칙(isCritCandidate)으로 넓게 추출한 후보 + 의심사유 태그. AI가 매뉴얼 기준으로 최종 판정.
-const _critList=(st.critUl||[]).slice(0,12).map(i=>{const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const rs=critReason(i).join('/');return `- ${i.building||'?'}동 ${i.unit||'?'}호 [${i.trade||'-'}|${i.defectType||'-'}|${dd}일|의심:${rs}] ${c.slice(0,70)}`;}).join('\n');
+const _critList=(st.critUl||[]).slice(0,12).map(i=>{const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const rs=critReason(i).join('/');return `- ${i.building||'?'}동 ${i.unit||'?'}호 [${i.trade||'-'}|${i.defectType||'-'}|${dd}일|의심:${rs}] ${maskPII(c).slice(0,70)}`;}).join('\n');
 const _critBlock=(st.critUnr>0)?`\n[중대하자 의심 후보 — 규칙 추출, AI가 사내 매뉴얼 기준으로 최종 판정할 것] 미처리 의심 ${st.critUnr}건(전월 의심 ${st.critPrevUnr}건)\n${_critList}`:`\n[중대하자 의심 후보] 규칙상 의심 0건`;
 const p=`현대건설 ${(curTeam()?curTeam().name:'H서비스센터')} ${site.name} 현장의 하자처리 현황을 분석하여 한국어 개조식으로 작성하세요. 기준월 ${S.rm}, 전월 대비 변화를 중심으로 분석할 것.\n[현장] ${site.name}(${site.region}), ${site.units}세대 ${site.buildings}동, 준공 ${site.completionDate}\n[현황] 전체접수 ${st.tR}건(전월${st.prev.total}), 처리 ${st.res}건(전월${st.prev.res}), 미처리 ${st.unr}건(전월${st.prev.unr}), 처리율 ${st.rate.toFixed(1)}%(전월${st.prev.rate.toFixed(1)}%), 장기미처리 ${st.lt}건(전월${st.prev.lt}건, 미처리의 ${st.ltr.toFixed(1)}%), 지연구간: ~29일 ${st.dd[0]}, 30~59일 ${st.dd[1]}, 60일+ ${st.dd[2]}\n[상위공종(미처리)] ${st.top.filter(t=>!t.isT&&!t.isO).map(t=>`${t.t}:${t.c}건`).join(', ')}\n[하자유형(미처리)] ${Object.entries(st.dtb).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,c])=>`${t}:${c}건`).join(', ')}\n[공가세대] 총접수 ${st.vT}건, 미처리 ${st.vUnr}건${_critBlock}${_contentBlock}\n\n위 데이터를 분석해 시스템 지침의 형식·내용 규칙에 따라 작성하세요. 단순 수치 나열이 아닌 해석·원인·대응을 담되, 데이터가 없거나 특이사항이 없는 항목은 생략하고 중요한 것만 최대 6개 소제목으로 쓸 것. (단 중대하자는 시스템 지침 G에 따라 처리)`;
-try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ck},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();S.ana[sid]=txt;lsSave();fb2AnaWrite(sid,txt);if(el)el.innerHTML=safeHTML(txt);toast('AI 분석 완료');}
+try{const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':S.ck},body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents:[{parts:[{text:p}]}],generationConfig:{maxOutputTokens:4096,temperature:0.4,thinkingConfig:{thinkingBudget:0}}})});const d=await r.json();if(d.error)throw new Error(d.error.message||'API 오류');let txt=d.candidates?.[0]?.content?.parts?.[0]?.text||'분석 결과를 불러올 수 없습니다.';txt=txt.replace(/^```html\s*/i,'').replace(/```$/,'').trim();anaSet(sid,txt);lsSave();fb2AnaWrite(sid,txt);if(el)el.innerHTML=safeHTML(txt);toast('AI 분석 완료');}
 catch(e){if(el)el.innerHTML=`<p style="color:var(--rd)">(AI 오류: ${esc(e.message)})</p>`;}}
 
 // 대시보드 주요 이슈 — 규칙기반 선정 결과(수치·맥락)를 현장패널과 동일한 작성규칙(개조식·논리적 인과·담당자 권한 내 조치)으로 AI 재작성. 3슬롯·2줄 형식 유지.
@@ -4379,7 +4625,7 @@ async function doSaveUL(byName,allItems){
     progMsg(`저장 중: ${name}`);
     progSet(k/entries.length*100,`${k+1} / ${entries.length}개 현장 · ${its.length.toLocaleString()}건 압축`);
     await nextFrame();
-    S.def[site.id]=its;
+    S.def[site.id]=Object.freeze(its); // freeze: 통째 교체 규약 강제
     site.lastUploadedAt=new Date().toISOString();
     await defSave(site.id,its);// 현장 단위로 압축+IndexedDB 쓰기
     savedCount+=its.length;savedSites++;
@@ -4469,7 +4715,7 @@ function delS(sid){
 }
 function doDelS(sid){
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
-  const snap={site:JSON.parse(JSON.stringify(site)),def:S.def[sid]?JSON.parse(JSON.stringify(S.def[sid])):null,cmt:S.cmt[sid]?JSON.parse(JSON.stringify(S.cmt[sid])):null,ana:(typeof S.ana[sid]==='string')?S.ana[sid]:null};
+  const snap={site:JSON.parse(JSON.stringify(site)),def:S.def[sid]?JSON.parse(JSON.stringify(S.def[sid])):null,cmt:S.cmt[sid]?JSON.parse(JSON.stringify(S.cmt[sid])):null,ana:S.ana[sid]?JSON.parse(JSON.stringify(S.ana[sid])):null};
   S.sites=S.sites.filter(s=>s.id!==sid);
   delete S.def[sid];delete S.cmt[sid];delete S.ana[sid];
   defDelete(sid);lsSave();rNav();
@@ -4482,9 +4728,9 @@ function undoDelS(){
   const snap=_undoDel;if(!snap)return;_undoDel=null;
   if(S.sites.some(s=>s.id===snap.site.id)){toast('이미 복원되어 있습니다');return;}
   S.sites.push(snap.site);
-  if(snap.def){S.def[snap.site.id]=snap.def;defSave(snap.site.id,snap.def);}
+  if(snap.def){S.def[snap.site.id]=Object.freeze(snap.def);defSave(snap.site.id,snap.def);}
   if(snap.cmt)S.cmt[snap.site.id]=snap.cmt;
-  if(typeof snap.ana==='string')S.ana[snap.site.id]=snap.ana;
+  if(snap.ana!=null)S.ana[snap.site.id]=snap.ana;
   ensureTeams();lsSave();rNav();
   if(S.view==='manage')rManage();else rSMgr();
   toast('삭제 취소됨 · '+snap.site.name);
@@ -4806,12 +5052,9 @@ async function exportSnapshot(){
   try{
     if(!Object.keys(S.def||{}).length){toast('데이터가 없습니다');return;}
     toast('스냅샷 생성 중…');
-    window.__CAPTURE={};
-    rDash();                                   // 대시보드 wks/am 캡처 + #d-insight 렌더
-    await new Promise(r=>setTimeout(r,120));
-    for(const s2 of dashSites()){rSite(s2.id);await new Promise(r=>setTimeout(r,90));} // 현장별 차트 캡처
-    go('dashboard');if(rDash._flush)rDash._flush();await new Promise(r=>setTimeout(r,40)); // 2단계 렌더 강제 완료 — __CAPTURE·인사이트 DOM 확보
-    const cap=window.__CAPTURE||{}; window.__CAPTURE=null;
+    const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
+    go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화(스냅샷은 문서 자체를 내보내므로 대시보드 상태 필요)
+    await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
     dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:[],critUl:redactUL(r.critUl)});});
@@ -4861,6 +5104,33 @@ function __runSelfTest(){
     eq('nd 8자리',nd('20260501'),'2026-05-01');
     eq('nd 한국식시각',nd('2026-05-01 오전 12:00:00'),'2026-05-01');
     eq('nd 빈문자열',nd(''),'');
+    // --- maskPII(): 외부 AI 전송 전 개인정보 마스킹 (P4) ---
+    eq('mask 휴대폰',maskPII('연락처 010-1234-5678 입니다'),'연락처 010-****-**** 입니다');
+    eq('mask 휴대폰 무구분',maskPII('01012345678 연락'),'010-****-**** 연락');
+    eq('mask 일반전화',maskPII('사무실 02-123-4567'),'사무실 0**-***-****');
+    eq('mask 이메일',maskPII('kim@hdec.co.kr 회신'),'***@*** 회신');
+    eq('mask 인명호칭',maskPII('홍길동님 요청사항'),'○○님 요청사항');
+    eq('mask 역할명 보존',maskPII('고객님 및 담당자님 협의'),'고객님 및 담당자님 협의');
+    eq('mask 동호수 보존',maskPII('101동 1203호 주방 누수'),'101동 1203호 주방 누수');
+    // --- 분석의견 월별 아카이브 (anaGet/anaSet/anaNormalize) ---
+    {const _rm0=S.rm,_bak=S.ana['__t'];S.rm='2026-05';
+     S.ana['__t']='레거시 문자열';anaNormalize();
+     eq('ana 레거시 승격',anaGet('__t','2026-05'),'레거시 문자열');
+     anaSet('__t','6월 분석','2026-06');
+     eq('ana 월별 독립',anaGet('__t','2026-05'),'레거시 문자열');
+     eq('ana 월별 조회',anaGet('__t','2026-06'),'6월 분석');
+     eq('ana 빈 월',anaGet('__t','2026-07'),'');
+     if(_bak===undefined)delete S.ana['__t'];else S.ana['__t']=_bak;S.rm=_rm0;}
+    // --- 처리계획 전월 이월 (carryPlansForward: add-only) ---
+    {const _rm0=S.rm,_bak=S.cmt['__t'];S.rm='2026-06';
+     S.cmt['__t']={processingPlan:{'2026-05@도배':'전월 계획','2026-05@타일':'전월 타일','2026-06@타일':'이미 입력됨'}};
+     const _fbW=window.fb2PlanWrite;window.fb2PlanWrite=function(){};
+     const n=carryPlansForward('__t');
+     window.fb2PlanWrite=_fbW;
+     eq('이월 add-only 건수',n,1);
+     eq('이월 빈칸 복사',S.cmt['__t'].processingPlan['2026-06@도배'],'전월 계획');
+     eq('이월 기존값 보존',S.cmt['__t'].processingPlan['2026-06@타일'],'이미 입력됨');
+     if(_bak===undefined)delete S.cmt['__t'];else S.cmt['__t']=_bak;S.rm=_rm0;}
     eq('nd null',nd(null),'');
     eq('nd Date객체',nd(new Date(2026,4,1)),'2026-05-01');
     // --- pM(): 직전 월(연 경계 포함) ---
@@ -4939,6 +5209,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const P=window.__SNAP__;
     S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};Object.keys(S.def).forEach(_k=>delete S.def[_k]);
     if(P.rm)S.rm=P.rm;
+    anaNormalize(); // 구버전 스냅샷(문자열 ana) 호환
     document.body.classList.add('snap');
     ensureTeams();
     const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 스냅샷';
@@ -5008,7 +5279,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // 기준월 chip 표시 + 사이드바 초기 렌더 (게이트 뒤에서 미리 그려둠)
   const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;
   rTeamSel();rNav();rSMgr();
-  go('dashboard');
+  if(!parseHashNav())go('dashboard'); // 해시 딥링크 우선 (#site/{sid} 등) — 없거나 무효면 대시보드
   // 부팅 중 어느 단계에서 로딩창이 켜졌든, 완료 시 반드시 닫음
   progHide();
 });
