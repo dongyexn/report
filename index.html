@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-H5D+JhXRF9znoQgn7x7/MZefBl5QDM9hXu73YJkqRFU=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-IsJYzy5qOvyIO4DnVnNHryFY1opvprQqtD0Fbxea644=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -543,6 +543,7 @@ table.dt-detail th{text-align:center!important;}
 .pv-table td.pv-tot{font-weight:700;color:var(--b800);background:#FAFBFC;}
 .pv-pct{font-size:10px;color:var(--lbl3);margin-left:4px;font-weight:400;}
 /* README(사용 안내) 문서 렌더 */
+.md-scroll{max-height:min(74vh,900px);overflow-y:auto;overscroll-behavior:contain;margin:0 -8px;padding:0 8px;} /* 모달 안에서 문서 전체를 스크롤로 읽기 */
 .md-doc{font-size:13.5px;line-height:1.75;color:var(--lbl);max-width:820px;margin:0 auto;padding:4px 2px 12px;}
 .md-doc h1{font-size:20px;margin:6px 0 14px;letter-spacing:-.01em;}
 .md-doc h2{font-size:16px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--sep);}
@@ -1536,18 +1537,27 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
           </div>
           <div class="card">
             <div class="set-h">AI 분석 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="set-h-link">Google AI Studio ↗</a></div>
-            <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey">
+            <div class="share-row" style="align-items:flex-start">
+              <div class="share-info" style="flex:1;min-width:0"><b>Gemini API 키</b><span>개인 키 · 이 PC의 브라우저에만 저장 · 접수내용은 PII 마스킹 후 전송</span>
+                <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey" style="margin-top:8px;font-size:12.5px">
+              </div>
+            </div>
             <div class="share-sep"></div>
             <div class="share-row" style="align-items:flex-start">
               <div class="share-info" style="flex:1;min-width:0"><b>분석 추가 지침</b><span>기본 작성 규칙 위에 덧붙는 팀 지침 · 예: 공가세대 항목은 항상 포함할 것, 결로는 원인별로 구분해 분석할 것</span>
                 <textarea class="inp" id="cfgAiRules" rows="3" placeholder="비우면 기본 규칙만 사용" data-act="set.aiRules" style="margin-top:8px;resize:vertical;font-size:12.5px;line-height:1.55"></textarea>
               </div>
             </div>
+            <div class="share-sep"></div>
             <div class="share-row" style="align-items:flex-start">
               <div class="share-info" style="flex:1;min-width:0"><b>중대하자 의심 키워드 추가</b><span>쉼표로 구분 · 기본 규칙(누수·침수, 엘리베이터, 퇴거, 언론, 피해보상, 장문민원 등)에 더해 의심 후보로 추출</span>
                 <input class="inp" id="cfgCritKw" placeholder="예: 화재, 감전, 석면" data-act="set.critKw" style="margin-top:8px;font-size:12.5px">
               </div>
-              <button class="btn bo bsm" data-act="set.aiRulesReset" data-tt="추가 지침·키워드를 모두 비워 기본 규칙으로 되돌림">기본값</button>
+            </div>
+            <div class="share-sep"></div>
+            <div class="share-row">
+              <div class="share-info"><b>기본값 복원</b><span>추가 지침·키워드를 모두 비우고 기본 규칙으로 되돌림</span></div>
+              <button class="btn bo bsm" data-act="set.aiRulesReset">복원</button>
             </div>
           </div>
         </div>
@@ -1826,6 +1836,8 @@ registerActions('click', {
   'rec.menuTreeCheck':(el)=>{const M=window.__RECMENU;if(!M||!M.dateTree)return;const leaves=recDateLeaves(M.dateTree,el.dataset.node);const st=recTri(leaves,M.sel);if(st==='all')leaves.forEach(v=>M.sel.delete(v));else leaves.forEach(v=>M.sel.add(v));recMenuRenderList();},
   'rec.menuApply':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;if(M.sel.size>=M.all.length)delete R.valueFilters[M.key];else R.valueFilters[M.key]=new Set(M.sel);recRenderBody();recCloseMenu();},
   'rec.menuClear':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;delete R.valueFilters[M.key];recRenderBody();recCloseMenu();},
+  'rec.menuHideCol':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;if(!R.hidden)R.hidden=new Set();const col=recCols().find(c=>c.key===M.key);R.hidden.add(M.key);recCloseMenu();recRenderModalBody();toast(`「${col?col.label:M.key}」 열을 숨겼습니다 · 아무 열 헤더 우클릭으로 복원`);},
+  'rec.menuShowCols':()=>{const R=window.__REC;if(!R||!R.hidden)return;R.hidden.clear();recCloseMenu();recRenderModalBody();},
   'rec.pivotToggle':()=>{const R=window.__REC;if(!R)return;R.pivotOn=!R.pivotOn;recRenderModalBody();const b=document.querySelector('[data-act="rec.pivotToggle"]');if(b)b.textContent=R.pivotOn?'목록':'피벗';const hd=document.querySelector('.rl-thead');if(hd)hd.classList.toggle('pivot-mode',R.pivotOn);},
   'rec.pivotExport':()=>recPivotExport(),
   'rec.pivotAdd':(el)=>{const r=el.getBoundingClientRect();recPivotAddMenu(el.dataset.zone,r.left,r.bottom+4);},
@@ -2935,7 +2947,7 @@ function recMenuListHTML(){
 }
 function recMenuHTML(){
   const M=window.__RECMENU,col=recCols().find(c=>c.key===M.key);
-  return `<div class="rl-menu-hd">${esc(col?col.label:'')} 필터</div><button class="rl-menu-row" data-act="rec.menuToggleRow">${window.__REC.filterRow?'필터행 숨기기':'필터행 표시'}</button><div class="rl-menu-sep"></div><input class="rl-menu-q" placeholder="검색" data-act="rec.menuSearch" value="${esc(M.q||'')}" autocomplete="off"><div class="rl-menu-list" id="rlMenuList">${recMenuListHTML()}</div><div class="rl-menu-foot"><button class="btn bg2 bsm" data-act="rec.menuClear">필터 해제</button><button class="btn bo bsm" data-act="rec.menuApply">적용</button></div>`;
+  return `<div class="rl-menu-hd">${esc(col?col.label:'')} 필터</div><button class="rl-menu-row" data-act="rec.menuToggleRow">${window.__REC.filterRow?'필터행 숨기기':'필터행 표시'}</button><button class="rl-menu-row" data-act="rec.menuHideCol">이 열 숨기기</button>${(window.__REC.hidden&&window.__REC.hidden.size)?`<button class="rl-menu-row" data-act="rec.menuShowCols">숨긴 열 모두 표시 (${window.__REC.hidden.size})</button>`:''}<div class="rl-menu-sep"></div><input class="rl-menu-q" placeholder="검색" data-act="rec.menuSearch" value="${esc(M.q||'')}" autocomplete="off"><div class="rl-menu-list" id="rlMenuList">${recMenuListHTML()}</div><div class="rl-menu-foot"><button class="btn bg2 bsm" data-act="rec.menuClear">필터 해제</button><button class="btn bo bsm" data-act="rec.menuApply">적용</button></div>`;
 }
 function recMenuSyncAll(){
   const M=window.__RECMENU;if(!M)return;
@@ -3305,17 +3317,6 @@ document.addEventListener('contextmenu',function(e){
     items.push({label:'값 복사',act:()=>ctxCopy(ptd.textContent.trim())});
     e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
   }
-  // ①-b 목록 헤더 — 열 숨기기 / 숨긴 열 모두 표시
-  const hth=e.target.closest('.rl-table thead th');
-  if(hth&&window.__REC){
-    const R=window.__REC;
-    const idx=[...hth.parentNode.children].indexOf(hth);
-    const col=recVisCols()[idx];
-    const items=[];
-    if(col&&col.key!=='__no')items.push({label:`「${col.label}」 열 숨기기`,act:()=>{R.hidden.add(col.key);recRenderModalBody();toast(`「${col.label}」 열을 숨겼습니다 · 헤더 우클릭으로 복원`);}});
-    if(R.hidden&&R.hidden.size)items.push({label:`숨긴 열 모두 표시 (${R.hidden.size})`,act:()=>{R.hidden.clear();recRenderModalBody();}});
-    if(items.length){e.preventDefault();openCtx(e.clientX,e.clientY,items);return;}
-  }
   // ② 목록 셀 — 이 값으로 필터 / 제외 / 복사
   const rtd=e.target.closest('#rlBody td');
   if(rtd&&window.__REC){
@@ -3378,7 +3379,7 @@ async function openReadme(){
     await loadMarked();
     const html=DOMPurify.sanitize(marked.parse(md));
     document.getElementById('mt').textContent='사용 안내 (README)';
-    document.getElementById('mbody').innerHTML=`<div class="md-doc">${html}</div>`;
+    document.getElementById('mbody').innerHTML=`<div class="md-scroll"><div class="md-doc">${html}</div></div>`;
     document.getElementById('mf').innerHTML='';
     const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
     openMo();
