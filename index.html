@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-OK0aFRSy9tmUIiTiLkzgBnKCo/RtQv8TYX+rR1OAtGE=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-H5D+JhXRF9znoQgn7x7/MZefBl5QDM9hXu73YJkqRFU=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -179,7 +179,6 @@ svg{display:block;flex-shrink:0;}
 .set-h-sub{font-size:10px;font-weight:600;color:var(--lbl3);text-transform:none;letter-spacing:0;}
 .set-h-link{font-size:11px;color:var(--b600);font-weight:700;white-space:nowrap;text-transform:none;letter-spacing:0;}
 .set-col-stack{display:flex;flex-direction:column;gap:16px;}
-body.viewer .set-grid{grid-template-columns:1fr;}
 /* 공유 · 배포 카드 */
 .share-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .share-info{min-width:0;display:flex;flex-direction:column;gap:2px;}
@@ -543,6 +542,31 @@ table.dt-detail th{text-align:center!important;}
 .pv-table td.pv-rh,.pv-table thead th.pv-rh{text-align:left;color:var(--lbl);}
 .pv-table td.pv-tot{font-weight:700;color:var(--b800);background:#FAFBFC;}
 .pv-pct{font-size:10px;color:var(--lbl3);margin-left:4px;font-weight:400;}
+/* README(사용 안내) 문서 렌더 */
+.md-doc{font-size:13.5px;line-height:1.75;color:var(--lbl);max-width:820px;margin:0 auto;padding:4px 2px 12px;}
+.md-doc h1{font-size:20px;margin:6px 0 14px;letter-spacing:-.01em;}
+.md-doc h2{font-size:16px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--sep);}
+.md-doc h3{font-size:14px;margin:18px 0 8px;}
+.md-doc p{margin:8px 0;}
+.md-doc ul,.md-doc ol{margin:8px 0;padding-left:22px;}
+.md-doc li{margin:3px 0;}
+.md-doc code{background:var(--fill2);border-radius:5px;padding:1.5px 5px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+.md-doc pre{background:var(--fill2);border:1px solid var(--sep);border-radius:10px;padding:12px 14px;overflow:auto;font-size:12px;line-height:1.6;}
+.md-doc pre code{background:none;padding:0;}
+.md-doc table{border-collapse:collapse;width:100%;margin:10px 0;font-size:12.5px;}
+.md-doc th,.md-doc td{border:1px solid var(--sep);padding:6px 9px;text-align:left;vertical-align:top;}
+.md-doc th{background:var(--fill);font-weight:700;}
+.md-doc hr{border:none;border-top:1px solid var(--sep);margin:20px 0;}
+.md-doc blockquote{margin:10px 0;padding:6px 14px;border-left:3px solid var(--b200);color:var(--lbl2);}
+/* 우클릭 컨텍스트 메뉴 — 필터 메뉴와 동일 톤 */
+.ctxmenu{position:fixed;z-index:3000;min-width:172px;max-width:280px;background:#fff;border:1px solid var(--sep);border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.16);padding:5px;display:flex;flex-direction:column;}
+.ctx-it{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--lbl);padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ctx-it:hover{background:var(--b50);color:var(--b700);}
+.ctx-sep{height:1px;background:var(--sep);margin:4px 6px;}
+/* 목록 열 너비 조절 핸들 */
+.rl-table thead th{position:relative;}
+.rl-rz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2;touch-action:none;}
+.rl-rz:hover{background:linear-gradient(to right,transparent 3px,var(--b200) 3px,var(--b200) 5px,transparent 5px);}
 .pv-table thead th.pv-tot{background:#E6EBF1;color:var(--lbl);}
 .pv-table tbody .pv-grp>td{font-weight:700;background:#F4F6F9;}
 .pv-table tbody .pv-grp>td.pv-tot{background:#EDF1F6;}
@@ -1504,10 +1528,27 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
                 <button class="btn bo bsm" data-act="set.viewerMode">게시본 열람</button>
               </div>
             </div>
+            <div class="share-sep"></div>
+            <div class="share-row">
+              <div class="share-info"><b>사용 안내</b><span>README — 소개 · 사용법 · 운영 절차 · 문제 해결</span></div>
+              <button class="btn bo bsm" data-act="set.readme">열기</button>
+            </div>
           </div>
           <div class="card">
             <div class="set-h">AI 분석 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="set-h-link">Google AI Studio ↗</a></div>
             <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey">
+            <div class="share-sep"></div>
+            <div class="share-row" style="align-items:flex-start">
+              <div class="share-info" style="flex:1;min-width:0"><b>분석 추가 지침</b><span>기본 작성 규칙 위에 덧붙는 팀 지침 · 예: 공가세대 항목은 항상 포함할 것, 결로는 원인별로 구분해 분석할 것</span>
+                <textarea class="inp" id="cfgAiRules" rows="3" placeholder="비우면 기본 규칙만 사용" data-act="set.aiRules" style="margin-top:8px;resize:vertical;font-size:12.5px;line-height:1.55"></textarea>
+              </div>
+            </div>
+            <div class="share-row" style="align-items:flex-start">
+              <div class="share-info" style="flex:1;min-width:0"><b>중대하자 의심 키워드 추가</b><span>쉼표로 구분 · 기본 규칙(누수·침수, 엘리베이터, 퇴거, 언론, 피해보상, 장문민원 등)에 더해 의심 후보로 추출</span>
+                <input class="inp" id="cfgCritKw" placeholder="예: 화재, 감전, 석면" data-act="set.critKw" style="margin-top:8px;font-size:12.5px">
+              </div>
+              <button class="btn bo bsm" data-act="set.aiRulesReset" data-tt="추가 지침·키워드를 모두 비워 기본 규칙으로 되돌림">기본값</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1755,11 +1796,23 @@ registerActions('click', {
   'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
   'top.month':()=>openMP(), 'top.print':()=>doPrint(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
-  'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(),
+  'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
   'rec.pivotPct':()=>{const R=window.__REC;if(!R)return;R.showPct=!R.showPct;recRenderModalBody();},
+  'rec.copyTable':()=>{const R=window.__REC;if(!R)return;
+    if(R.pivotOn){ // 피벗: 렌더된 표를 그대로 탭 구분 텍스트로 (% 병기·정렬 화살표는 제거)
+      const t=document.querySelector('.pv-table');if(!t){toast('복사할 표가 없습니다');return;}
+      const cl=t.cloneNode(true);cl.querySelectorAll('.pv-pct').forEach(x=>x.remove());
+      const lines=[...cl.rows].map(r=>[...r.cells].map(c=>c.textContent.replace(/[▲▼]/g,'').trim()).join('\t'));
+      ctxCopy(lines.join('\n'),'피벗 표가 복사되었습니다 · 엑셀에 붙여넣기(Ctrl+V)');
+    }else{ // 목록: 현재 필터·정렬이 적용된 전체 결과 × 보이는 컬럼
+      const rows=R.view||[];if(!rows.length){toast('복사할 건이 없습니다');return;}
+      const cols=recVisCols();
+      const lines=[cols.map(c=>c.label).join('\t')].concat(rows.map((i,idx)=>cols.map(c=>String(c.key==='__no'?(idx+1):recCell(i,c.key)).replace(/[\t\n]+/g,' ')).join('\t')));
+      ctxCopy(lines.join('\n'),'목록 '+rows.length.toLocaleString()+'건이 복사되었습니다 · 엑셀에 붙여넣기(Ctrl+V)');
+    }},
   'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=recCols().map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>recCols().map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
   'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
   'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
@@ -1791,6 +1844,9 @@ registerActions('click', {
 // ── [전환 완료] input 액션 ──
 registerActions('input', {
   'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
+  'set.aiRules':(el)=>{S.aiRules=el.value;localStorage.setItem('aiRules',el.value);},
+  'set.critKw':(el)=>{S.critKw=el.value;localStorage.setItem('critKw',el.value);_calcCache.clear();if(S.view==='site'&&S.sid)rSite(S.sid);else if(S.view==='dashboard')rDash();}, // 의심 추출은 calc에 캐시됨 — 키워드 변경 시 재계산
+  'set.aiRulesReset':()=>{S.aiRules='';S.critKw='';localStorage.removeItem('aiRules');localStorage.removeItem('critKw');const a=document.getElementById('cfgAiRules'),b=document.getElementById('cfgCritKw');if(a)a.value='';if(b)b.value='';_calcCache.clear();toast('AI 분석 규칙을 기본값으로 되돌렸습니다');},
   'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
   'rec.qsearch':(el)=>{const R=window.__REC;if(!R)return;R.q=el.value;clearTimeout(R._qt);R._qt=setTimeout(recRenderModalBody,150);}, // 목록 내 통합 검색(디바운스) — 피벗 모드도 함께 갱신
   'rec.menuSearch':(el)=>{const M=window.__RECMENU;if(!M)return;M.q=el.value;const q=M.q.trim().toLowerCase();if(q)M.sel=new Set(M.all.filter(v=>String(v).toLowerCase().includes(q)));recMenuRenderList();},
@@ -2021,7 +2077,6 @@ function fbDecKey(k){try{return decodeURIComponent(String(k));}catch(e){return S
 function deepEncKeys(v){if(Array.isArray(v))return v.map(deepEncKeys);if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(function(k){o[fbEncKey(k)]=deepEncKeys(v[k]);});return o;}return v;}
 function deepDecKeys(v){if(Array.isArray(v))return v.map(deepDecKeys);if(v&&typeof v==='object'){const o={};Object.keys(v).forEach(function(k){o[fbDecKey(k)]=deepDecKeys(v[k]);});return o;}return v;}
 function fbDomainOk(email){return /@hdec\.co\.kr$/i.test(String(email||'').trim());}
-function fb2Wait(ms){return new Promise(r=>setTimeout(r,ms));}
 function fb2IsEditor(){return FB2.role==='editor';}
 
 // ----- 게이트 메시지/입력 -----
@@ -2773,6 +2828,8 @@ function recCell(r,k){if(k==='__no')return '';const v=r[k];return v==null?'':v;}
 // 팀 전체 목록(대시보드 진입)일 때만 No 옆에 '현장' 컬럼을 삽입 — 현장 단위 모달에선 기존 컬럼 그대로
 const REC_SITE_COL={key:'siteName',label:'현장',type:'str',w:152};
 function recCols(){const R=window.__REC;return (R&&R.withSite)?[REC_COLS[0],REC_SITE_COL].concat(REC_COLS.slice(1)):REC_COLS;}
+// 렌더 전용 가시 컬럼 — 숨긴 열(R.hidden)을 제외. 필터·정렬·엑셀 내보내기는 recCols()(전체) 유지.
+function recVisCols(){const R=window.__REC;const h=R&&R.hidden;return recCols().filter(c=>!(h&&h.has(c.key)));}
 // 지연구간(밴드) 판정 — calc의 KPI 지연구간(d0/d30/d60)과 동일한 역산(기준월 말일 − 접수일). 원본 지연일 컬럼과 별개.
 function recDelayDays(r,R){return Math.max(0,Math.round((new Date(R.rmEnd)-new Date(r.receiptDate))/86400000));}
 function recBandOf(dd){return dd>=60?'d60':dd>=30?'d30':'d0';}
@@ -2971,19 +3028,20 @@ function recPivotTableHTML(){
   if(D.hasCol)D.colsA.forEach(cv=>h+=`<th class="pv-th" data-act="rec.pivotSort" data-pk="c:${esc(cv)}">${cd(cv)}${arr('c:'+cv)}</th>`);
   h+=`<th class="pv-tot pv-th" data-act="rec.pivotSort" data-pk="__total">${D.val==='avgDelay'?'전체 평균':'합계'}${arr('__total')}</th></tr></thead>`;
   let b='<tbody>';
-  const emit=node=>{
+  const emit=(node,path)=>{
     const isLeaf=node.depth>=D.maxD-1||!Object.keys(node.children).length;
     const ind=8+node.depth*16;
-    b+=`<tr class="pv-row${isLeaf?'':' pv-grp'}"><td class="pv-rh" style="padding-left:${ind}px">${cd(node.value)}</td>`;
-    if(D.hasCol)D.colsA.forEach(cv=>{b+=`<td>${dsp(node.cells[cv]||0,(node.cellsS||{})[cv]||0)}</td>`;});
+    const rp=path.concat([node.value]); // 우클릭 드릴다운용 행경로 — P.rows의 각 차원 값
+    b+=`<tr class="pv-row${isLeaf?'':' pv-grp'}" data-rp="${esc(JSON.stringify(rp))}"><td class="pv-rh" style="padding-left:${ind}px">${cd(node.value)}</td>`;
+    if(D.hasCol)D.colsA.forEach(cv=>{b+=`<td data-cv="${esc(cv)}">${dsp(node.cells[cv]||0,(node.cellsS||{})[cv]||0)}</td>`;});
     b+=`<td class="pv-tot">${dsp(node.total,node.totalS||0)}</td></tr>`;
-    if(!isLeaf)pivotSortNodes(Object.values(node.children),D.sort).forEach(emit);
+    if(!isLeaf)pivotSortNodes(Object.values(node.children),D.sort).forEach(n=>emit(n,rp));
   };
   const top=pivotSortNodes(Object.values(D.root.children),D.sort);
   if(!top.length){b+=`<tr class="pv-row"><td class="pv-rh" style="padding-left:8px">전체</td>`;if(D.hasCol)D.colsA.forEach(cv=>{b+=`<td>${dsp(D.root.cells[cv]||0,D.root.cellsS[cv]||0)}</td>`;});b+=`<td class="pv-tot">${dsp(D.grand,D.grandS)}</td></tr>`;}
-  top.forEach(emit);
+  top.forEach(n=>emit(n,[]));
   b+=`<tr class="pv-totrow"><td class="pv-rh">${D.val==='avgDelay'?'전체 평균':'합계'}</td>`;
-  if(D.hasCol)D.colsA.forEach(cv=>b+=`<td>${dsp(D.colTot[cv]||0,D.colTotS[cv]||0)}</td>`);
+  if(D.hasCol)D.colsA.forEach(cv=>b+=`<td data-cv="${esc(cv)}">${dsp(D.colTot[cv]||0,D.colTotS[cv]||0)}</td>`);
   b+=`<td class="pv-tot">${dsp(D.grand,D.grandS)}</td></tr></tbody>`;
   return `<table class="pv-table pv-outline">${h}${b}</table>`;
 }
@@ -3082,19 +3140,19 @@ function recPivotValMenu(x,y){
 function recClosePvMenu(){const m=document.getElementById('pvMenu');if(m)m.style.display='none';window.__PVMENU=null;}
 function recHeadHTML(){
   const R=window.__REC;
-  const ths=recCols().map(c=>{
+  const ths=recVisCols().map(c=>{
     const sortable=c.key!=='__no';
     const arr=R.sort.key===c.key?(R.sort.dir>0?' ▲':' ▼'):'';
     const act=sortable?rawHTML(' tabindex="0" data-act="rec.sort"'):'';
-    return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}</th>`;
+    return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}${rawHTML(`<span class="rl-rz" data-rzk="${esc(c.key)}" data-tt="드래그로 열 너비 조절"></span>`)}</th>`;
   }).join('');
-  const fins=recCols().map(recFilterCellHTML).join('');
+  const fins=recVisCols().map(recFilterCellHTML).join('');
   return html`<thead><tr>${rawHTML(ths)}</tr><tr class="rl-frow${R.filterRow?' open':''}">${rawHTML(fins)}</tr></thead>`;
 }
 function recRowsHTML(rows){
-  if(!rows||!rows.length)return `<tr><td colspan="${recCols().length}" style="text-align:center;padding:20px;color:var(--lbl3)">해당 조건의 건이 없습니다</td></tr>`;
+  if(!rows||!rows.length)return `<tr><td colspan="${recVisCols().length}" style="text-align:center;padding:20px;color:var(--lbl3)">해당 조건의 건이 없습니다</td></tr>`;
   return rows.map((i,idx)=>{
-    const cells=recCols().map(c=>{
+    const cells=recVisCols().map(c=>{
       const v=c.key==='__no'?(idx+1):recCell(i,c.key);
       return html`<td class="${c.left?'rl-content':''}">${String(v)}</td>`;
     }).join('');
@@ -3114,7 +3172,7 @@ function recRenderHead(){
 }
 function recListBodyHTML(){
   const R=window.__REC;recComputeView();
-  const cols=recCols().map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
+  const cols=recVisCols().map(c=>{const w=(R.colW&&R.colW[c.key])||c.w;return `<col${w?` style="width:${w}px"`:''}>`;}).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
 }
 function openRecList(sid,scope,trade){
@@ -3142,11 +3200,11 @@ function openRecList(sid,scope,trade){
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team'};
+  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team',hidden:new Set(),colW:{}};
   {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
   const title=`${esc(dispName)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
-  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
+  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm no-print" data-act="rec.copyTable" data-tt="현재 표를 클립보드로 복사 — 엑셀·메일에 바로 붙여넣기(Ctrl+V)">표 복사</button><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
   recRenderModalBody();
   document.getElementById('mf').innerHTML='';
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
@@ -3158,6 +3216,177 @@ function openRecList(sid,scope,trade){
 // XLSX(SheetJS) 지연 로드 — 부팅엔 불필요(업로드·내보내기 시점에만 필요). 초기 로드에서 ~900KB 제거.
 //   같은 파서(0.18.5)·같은 SRI 해시 유지 → 포맷 지원 회귀 0. CSP의 script-src에 cdn.jsdelivr.net 이미 허용됨.
 let _xlsxPromise=null;
+// ── 사용 안내(README) 뷰어 — 설정 > 대시보드 공유 ──
+// 저장소의 README.md(동일 출처)를 fetch해 marked(SRI 고정, 지연 로드)로 렌더하고 DOMPurify로 살균해
+// 모달에 표시한다. 파일이 배포에 없으면(404) 안내 토스트. connect-src 'self' 라 CSP 추가 불필요.
+let _markedPromise=null;
+// ══ 우클릭 컨텍스트 메뉴 ══════════════════════════════════════════════
+// 원칙: ① 입력 요소·텍스트 선택 중에는 브라우저 기본 메뉴 유지 ② 기존 필터 메뉴와 동일한 시각 문법
+//       ③ 데스크톱 위주(모바일 롱프레스는 OS별 편차가 커서 개입하지 않음)
+let _ctxEl=null;
+let _ctxEsc=null;
+function closeCtx(){if(_ctxEl){_ctxEl.remove();_ctxEl=null;document.removeEventListener('click',closeCtx);document.removeEventListener('scroll',closeCtx,true);if(_ctxEsc){document.removeEventListener('keydown',_ctxEsc);_ctxEsc=null;}}}
+function openCtx(x,y,items){
+  closeCtx();
+  const el=document.createElement('div');el.className='ctxmenu';el.setAttribute('role','menu');
+  el.innerHTML=items.map((it,i)=>it.sep?'<div class="ctx-sep"></div>':`<button class="ctx-it" role="menuitem" data-ci="${i}">${esc(it.label)}</button>`).join('');
+  document.body.appendChild(el);
+  const r=el.getBoundingClientRect();
+  el.style.left=Math.max(6,Math.min(x,innerWidth-r.width-8))+'px';
+  el.style.top=Math.max(6,Math.min(y,innerHeight-r.height-8))+'px';
+  el.addEventListener('click',e=>{const b=e.target.closest('.ctx-it');if(!b)return;e.stopPropagation();const it=items[+b.dataset.ci];closeCtx();if(it&&it.act)it.act();});
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  _ctxEl=el;
+  setTimeout(()=>{document.addEventListener('click',closeCtx);document.addEventListener('scroll',closeCtx,true);},0);
+  _ctxEsc=function(e){if(e.key==='Escape')closeCtx();};
+  document.addEventListener('keydown',_ctxEsc);
+}
+function ctxCopy(t,msg){
+  const done=()=>toast(msg||('복사됨 · '+(String(t).length>24?String(t).slice(0,24)+'…':t)));
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(String(t)).then(done).catch(()=>toast('복사 실패'));
+  else{const ta=document.createElement('textarea');ta.value=String(t);document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('복사 실패');}ta.remove();}
+}
+function _canvasWhite(cv){const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(cv,0,0);return c;}
+function ctxCopyCanvas(cv){
+  const c=_canvasWhite(cv);
+  if(navigator.clipboard&&window.ClipboardItem){
+    c.toBlob(b=>{if(!b){toast('이미지 생성 실패');return;}
+      navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('차트 이미지가 복사되었습니다 · 보고서에 붙여넣기(Ctrl+V) 하세요')).catch(()=>{ctxSaveCanvas(cv);});
+    },'image/png');
+  }else ctxSaveCanvas(cv); // 클립보드 이미지 미지원 브라우저 — 저장으로 폴백
+}
+function ctxSaveCanvas(cv){
+  const a=document.createElement('a');a.href=_canvasWhite(cv).toDataURL('image/png');a.download='chart_'+S.rm+'.png';a.click();toast('PNG로 저장했습니다');
+}
+// 열 너비 드래그 조절 — colgroup(table-layout:fixed) 폭을 실시간 갱신, 재렌더 시 R.colW로 복원
+// 단축키: 목록 모달이 열려 있으면 Ctrl+F(또는 '/')가 브라우저 찾기 대신 통합검색으로
+document.addEventListener('keydown',function(e){
+  const mo=document.getElementById('mo');
+  if(!mo||!mo.classList.contains('open')||!window.__REC)return;
+  const inp=document.querySelector('.rl-qsrch input');if(!inp)return;
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName);
+  if((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F')){e.preventDefault();inp.focus();inp.select();return;}
+  if(e.key==='/'&&!typing){e.preventDefault();inp.focus();inp.select();}
+},true);
+document.addEventListener('pointerdown',function(e){
+  const h=e.target.closest('.rl-rz');if(!h||!window.__REC)return;
+  e.preventDefault();e.stopPropagation();
+  const R=window.__REC,key=h.dataset.rzk;
+  const th=h.closest('th'),table=th&&th.closest('table');if(!table)return;
+  const ix=[...th.parentNode.children].indexOf(th);
+  const colEl=table.querySelectorAll('colgroup col')[ix];
+  const startX=e.clientX,startW=th.getBoundingClientRect().width;
+  const mv=ev=>{const w=Math.max(44,Math.round(startW+(ev.clientX-startX)));R.colW[key]=w;if(colEl)colEl.style.width=w+'px';};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+});
+document.addEventListener('click',function(e){if(e.target.closest('.rl-rz')){e.stopPropagation();e.preventDefault();}},true); // 핸들 클릭이 헤더 정렬로 전파되는 것 차단
+document.addEventListener('contextmenu',function(e){
+  if(e.target.closest('input,textarea,select,[contenteditable="true"]'))return; // 입력 요소 — 기본 메뉴 유지(붙여넣기·맞춤법)
+  if(window.getSelection&&String(window.getSelection())!=='')return; // 텍스트 선택 중 — 기본 복사 메뉴 유지
+  // ① 피벗 셀 — 드릴다운(해당 조합의 원본 목록) + 값 복사
+  const ptd=e.target.closest('.pv-table td');
+  if(ptd&&window.__REC){
+    const R=window.__REC,P=R.pivot||{};
+    const tr=ptd.closest('tr');
+    const rp=(tr&&tr.dataset.rp)?(()=>{try{return JSON.parse(tr.dataset.rp);}catch(_){return null;}})():null;
+    const cvv=(ptd.dataset.cv!=null&&P.col)?ptd.dataset.cv:null;
+    const items=[];
+    if(rp||cvv!=null){
+      items.push({label:'해당 목록 보기',act:()=>{
+        R.pivotOn=false;R.filterRow=true;
+        if(rp)rp.forEach((v,i)=>{const k=(P.rows||[])[i];if(k)R.valueFilters[k]=new Set([v==='(빈값)'?'':String(v)]);});
+        if(cvv!=null)R.valueFilters[P.col]=new Set([cvv==='(빈값)'?'':String(cvv)]);
+        recRenderModalBody();
+        toast('피벗 조건으로 목록을 필터했습니다 · 헤더의 필터 표시에서 해제 가능');
+      }});
+      items.push({sep:true});
+    }
+    items.push({label:'값 복사',act:()=>ctxCopy(ptd.textContent.trim())});
+    e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
+  }
+  // ①-b 목록 헤더 — 열 숨기기 / 숨긴 열 모두 표시
+  const hth=e.target.closest('.rl-table thead th');
+  if(hth&&window.__REC){
+    const R=window.__REC;
+    const idx=[...hth.parentNode.children].indexOf(hth);
+    const col=recVisCols()[idx];
+    const items=[];
+    if(col&&col.key!=='__no')items.push({label:`「${col.label}」 열 숨기기`,act:()=>{R.hidden.add(col.key);recRenderModalBody();toast(`「${col.label}」 열을 숨겼습니다 · 헤더 우클릭으로 복원`);}});
+    if(R.hidden&&R.hidden.size)items.push({label:`숨긴 열 모두 표시 (${R.hidden.size})`,act:()=>{R.hidden.clear();recRenderModalBody();}});
+    if(items.length){e.preventDefault();openCtx(e.clientX,e.clientY,items);return;}
+  }
+  // ② 목록 셀 — 이 값으로 필터 / 제외 / 복사
+  const rtd=e.target.closest('#rlBody td');
+  if(rtd&&window.__REC){
+    const R=window.__REC,col=recVisCols()[rtd.cellIndex]||{};
+    const v=rtd.textContent;
+    const short=v.length>14?v.slice(0,14)+'…':(v||'(빈값)');
+    const items=[];
+    if(col.key&&col.key!=='__no'){
+      items.push({label:`"${short}" 값으로 필터`,act:()=>{R.valueFilters[col.key]=new Set([v]);R.filterRow=true;recRenderModalBody();}});
+      items.push({label:`"${short}" 제외`,act:()=>{let vf=R.valueFilters[col.key];if(!(vf instanceof Set))vf=new Set(recDistinct(col.key));vf.delete(v);R.valueFilters[col.key]=vf;R.filterRow=true;recRenderModalBody();}});
+      items.push({sep:true});
+    }
+    items.push({label:'셀 값 복사',act:()=>ctxCopy(v)});
+    e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
+  }
+  // ③ 대시보드 현장별 현황 행 — 현장 열기 / 목록 바로가기
+  const dtr=e.target.closest('#dtbody tr');
+  if(dtr){
+    const a=dtr.querySelector('[data-site]');
+    if(a){
+      const sid=a.dataset.site;
+      e.preventDefault();
+      openCtx(e.clientX,e.clientY,[
+        {label:'현장 화면 열기',act:()=>go('site',sid)},
+        {sep:true},
+        {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
+        {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
+      ]);return;
+    }
+  }
+  // ④ 차트 — 이미지 복사(보고서 붙여넣기용) / PNG 저장
+  const cnv=e.target.closest('canvas');
+  if(cnv){
+    e.preventDefault();
+    openCtx(e.clientX,e.clientY,[
+      {label:'차트 이미지 복사',act:()=>ctxCopyCanvas(cnv)},
+      {label:'PNG로 저장',act:()=>ctxSaveCanvas(cnv)},
+    ]);return;
+  }
+});
+function loadMarked(){
+  if(typeof marked!=='undefined')return Promise.resolve(true);
+  if(_markedPromise)return _markedPromise;
+  _markedPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js';
+    s.integrity='sha384-QsSpx6a0USazT7nK7w8qXDgpSAPhFsb2XtpoLFQ5+X2yFN6hvCKnwEzN8M5FWaJb';
+    s.crossOrigin='anonymous';
+    s.onload=()=>resolve(true);
+    s.onerror=()=>{_markedPromise=null;reject(new Error('marked load failed'));};
+    document.head.appendChild(s);
+  });
+  return _markedPromise;
+}
+async function openReadme(){
+  try{
+    const res=await fetch('README.md',{cache:'no-cache'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const md=await res.text();
+    await loadMarked();
+    const html=DOMPurify.sanitize(marked.parse(md));
+    document.getElementById('mt').textContent='사용 안내 (README)';
+    document.getElementById('mbody').innerHTML=`<div class="md-doc">${html}</div>`;
+    document.getElementById('mf').innerHTML='';
+    const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
+    openMo();
+  }catch(e){
+    console.warn('[README] 열기 실패',e);
+    toast('사용 안내를 불러오지 못했습니다 · 저장소에 README.md가 배포되어 있는지 확인하세요');
+  }
+}
 function loadXLSX(){
   if(typeof XLSX!=='undefined')return Promise.resolve(true);
   if(_xlsxPromise)return _xlsxPromise;
@@ -3211,6 +3440,7 @@ function calc(items,site,rm){
   // 캐시 무효화는 S.def Proxy가 자동 처리(set/delete). defVer·length는 키의 보조 식별자.
   const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(site.lastUploadedAt||'')+'|'+(items?items.length:0);
   const _hit=_calcCache.get(_ck);if(_hit)return _hit;
+  if(_calcCache.size>80)_calcCache.clear(); // 소프트 상한 — 월 전환 반복 열람 시 메모리 증식 방지
   const _res=_calcImpl(items,site,rm);
   _calcCache.set(_ck,_res);
   return _res;
@@ -3241,9 +3471,16 @@ function critReason(i){
   if(/언론|기자|방송|뉴스|제보|보도/.test(c))tags.push('언론리스크');
   if(/피해|보상|배상|변상|손해|소송|법무|내용증명|고소|고발/.test(c))tags.push('피해보상법적');
   if((i.receiptContent||'').replace(/\s+/g,'').length>=80)tags.push('장문민원');
+  {const uk=critUserKwRegex();if(uk&&hasHazard(uk,t+' '+c))tags.push('팀키워드');} // 설정에서 추가한 의심 키워드
   return tags;
 }
 function isCritCandidate(i){return critReason(i).length>0;}
+// ── AI 분석 규칙 사용자 설정 (설정 > AI 분석) ──
+// aiRules: 기본 시스템 지침 뒤에 덧붙는 팀 추가 지침(내용 규칙 우선, 출력 형식은 불변).
+// critKw: 중대하자 의심 추출에 더할 키워드(쉼표 구분) — 규칙 추출(critReason)과 접수내용 샘플 우선순위 양쪽에 반영.
+function aiUserKwList(){return String(S.critKw||'').split(',').map(x=>x.trim()).filter(Boolean);}
+function critUserKwRegex(){const l=aiUserKwList();if(!l.length)return null;try{return new RegExp(l.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'));}catch(e){return null;}}
+function aiCustomRulesBlock(){const r=String(S.aiRules||'').trim();return r?('\n\n**[TEAM CUSTOM RULES — 팀 추가 지침. 내용(CONTENT) 관련해서는 위 기본 규칙보다 우선 적용하되, OUTPUT FORMAT & STYLE 규칙은 절대 변경하지 말 것]**\n'+r):'';}
 function _calcImpl(items,site,rm){
   const pm=pM(rm),all=items.filter(i=>i.receiptDate);
   // 전월 말일 문자열 (ex. "2026-04-30") — 역산 기준일
@@ -3578,8 +3815,13 @@ function sortPanel(tableId,th){
 //   여기로 통합. 두 호출부는 이 함수들을 로컬 별칭으로 받아 쓴다(사용처 무변경 → 출력 동일, 드리프트 불가).
 //   tblMetrics는 ltRatio 포함 상위집합 — 월별표는 그 필드를 안 쓰므로 무해.
 const tblNF=n=>(n||0).toLocaleString();
-const tblDlt=(d,isFirst)=>{if(isFirst)return'<span class="na">—</span>';if(d===0)return'<span class="ba bgr">─ 0</span>';const cls=d>0?'brd':'bgn',sign=d>0?'+':'−',arrow=d>0?'▲':'▼';return`<span class="ba ${cls}">${arrow} ${sign}${Math.abs(d).toLocaleString()}</span>`;};
-const tblLtrCells=(d0,d30,d60,unr,ltDlt,isFirst)=>{const lt=d30+d60;const ltr=unr>0?(lt/unr*100):0;const p60=unr>0?Math.min(d60/unr*100,100):0,p30=unr>0?Math.min(d30/unr*100,100):0,p0=unr>0?Math.min(d0/unr*100,100):0;const dltCell=`<td class="cc">${tblDlt(ltDlt,isFirst)}</td>`;const barCell=`<td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar" data-tip="장기미처리|${unr}|${d60}|${d30}|${d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60.toFixed(1)}%"></div><div class="seg s30" style="width:${p30.toFixed(1)}%"></div><div class="seg s0" style="width:${p0.toFixed(1)}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`;return`<td class="cc ltr-red tl-grp-ltr">${tblNF(lt)}</td>${barCell}${dltCell}`;};
+const tblDlt=(d,isFirst,cur,u)=>{ // cur(현재값)·u('월'|'주')를 주면 이전→현재 비교 툴팁 부착 — 현장별 현황 배지와 동일 UX
+  if(isFirst)return'<span class="na">—</span>';
+  const tt=(typeof cur==='number')?` data-tt="전${u||'월'} ${(cur-d).toLocaleString()} → 금${u||'월'} ${cur.toLocaleString()}" aria-label="전${u||'월'} ${(cur-d).toLocaleString()} → 금${u||'월'} ${cur.toLocaleString()}"`:'';
+  if(d===0)return`<span class="ba bgr"${tt}>─ 0</span>`;
+  const cls=d>0?'brd':'bgn',sign=d>0?'+':'−',arrow=d>0?'▲':'▼';
+  return`<span class="ba ${cls}"${tt}>${arrow} ${sign}${Math.abs(d).toLocaleString()}</span>`;};
+const tblLtrCells=(d0,d30,d60,unr,ltDlt,isFirst,u)=>{const lt=d30+d60;const ltr=unr>0?(lt/unr*100):0;const p60=unr>0?Math.min(d60/unr*100,100):0,p30=unr>0?Math.min(d30/unr*100,100):0,p0=unr>0?Math.min(d0/unr*100,100):0;const dltCell=`<td class="cc">${tblDlt(ltDlt,isFirst,lt,u)}</td>`;const barCell=`<td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar" data-tip="장기미처리|${unr}|${d60}|${d30}|${d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60.toFixed(1)}%"></div><div class="seg s30" style="width:${p30.toFixed(1)}%"></div><div class="seg s0" style="width:${p0.toFixed(1)}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`;return`<td class="cc ltr-red tl-grp-ltr">${tblNF(lt)}</td>${barCell}${dltCell}`;};
 const tblMetrics=(cur,prev,prev2)=>{const tR=cur.r,cumRes=cur.res,unr=cur.u,d0=cur.d0,lt=cur.d30+cur.d60;const rate=tR>0?(cumRes/tR*100):0,ltRatio=unr>0?(lt/unr*100):0;const recvW=prev?cur.r-prev.r:cur.r;const resW=prev?cur.res-prev.res:cur.res;const prevResW=prev?(prev2?prev.res-prev2.res:prev.res):0;const prevLt=prev?(prev.d30+prev.d60):0,prevUnr=prev?prev.u:0;return{tR,cumRes,unr,d0,d30:cur.d30,d60:cur.d60,lt,rate,ltRatio,recvW,resW,resWDlt:resW-prevResW,ltDlt:lt-prevLt,unrDlt:unr-prevUnr};};
 const tblTh=(cls,txt)=>`<th class="cc ${cls}">${txt}</th>`;
 const tblThG=(cls,txt)=>`<th class="cc ${cls} tl-grp">${txt}</th>`;
@@ -3638,7 +3880,7 @@ function buildDashMonthTable(){
   // 파생 지표 (rSite와 동일 규칙)
   const nf=tblNF,dlt=tblDlt,ltrCells=tblLtrCells,metrics=tblMetrics; // 공유 헬퍼 별칭(단일 출처)
   const rows=moKeys.map((k,i)=>{const w=moMap[k],prev=i>0?moMap[moKeys[i-1]]:null,prev2=i>1?moMap[moKeys[i-2]]:null;return{w,k,m:metrics(w,prev,prev2),first:i===0,yr:k.slice(0,4),mo:Number(k.slice(5,7))};}).filter(x=>x.yr===curYear);
-  const body=rows.map((x,j)=>{const{w,m,first,mo}=x;return`<tr><td class="cc mcell">${mo}월</td><td class="cc recv-total tl-grp">${nf(m.tR)}</td><td class="cc recv-weekly">${nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${nf(m.cumRes)}</td><td class="rate-col proc-blue">${m.rate.toFixed(1)}%</td><td class="cc proc-blue">${nf(m.resW)}</td><td class="cc">${dlt(m.resWDlt,first)}</td><td class="cc unr-red tl-grp">${nf(m.unr)}</td><td class="cc">${dlt(m.unrDlt,first)}</td>${ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first)}</tr>`;}).join('');
+  const body=rows.map((x,j)=>{const{w,m,first,mo}=x;return`<tr><td class="cc mcell">${mo}월</td><td class="cc recv-total tl-grp">${nf(m.tR)}</td><td class="cc recv-weekly">${nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${nf(m.cumRes)}</td><td class="rate-col proc-blue">${m.rate.toFixed(1)}%</td><td class="cc proc-blue">${nf(m.resW)}</td><td class="cc">${dlt(m.resWDlt,first,m.resW,'월')}</td><td class="cc unr-red tl-grp">${nf(m.unr)}</td><td class="cc">${dlt(m.unrDlt,first,m.unr,'월')}</td>${ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first,'월')}</tr>`;}).join('');
   const eq='6.5%',ltrW='16%';
   const colgroup=`<colgroup><col style="width:9%"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${eq}"><col style="width:${ltrW}"><col style="width:${eq}"></colgroup>`;
   const th=tblTh,thG=tblThG; // 공유 헬퍼 별칭(단일 출처)
@@ -4203,7 +4445,7 @@ function rSite(sid){
     const firstOfMonth=j===0||arr[j-1].w.m!==w.m;
     const lastOfMonth=j===arr.length-1||arr[j+1].w.m!==w.m;
     const monthCell=firstOfMonth?`<td class="cc mcell">${w.m}월</td>`:'<td class="cc"></td>';
-    return`<tr class="${lastOfMonth?'mend':''}">${monthCell}<td class="cc">${w.wn}주</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first)}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first)}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first)}</tr>`;
+    return`<tr class="${lastOfMonth?'mend':''}">${monthCell}<td class="cc">${w.wn}주</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first,m.resW,'주')}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first,m.unr,'주')}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first,'주')}</tr>`;
   }).join('');
   // 월별 본문: 각 월의 마지막(월말) 누적 스냅샷
   const _moMapAll={};_wkAll.forEach(w=>{_moMapAll[w.week.slice(0,7)]=w;});
@@ -4214,7 +4456,7 @@ function rSite(sid){
   }).filter(x=>x.yr===_curYear&&x.k<=S.rm);
   const _moBody=_moRows.map((x,j)=>{
     const {w,m,first}=x;
-    return`<tr><td class="cc mcell">${w.m}월</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first)}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first)}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first)}</tr>`;
+    return`<tr><td class="cc mcell">${w.m}월</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first,m.resW,'월')}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first,m.unr,'월')}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first,'월')}</tr>`;
   }).join('');
   // 헤더 생성 헬퍼 — 정렬 기능 없음, 모두 중앙정렬
   const _th=tblTh;
@@ -4458,10 +4700,12 @@ const systemInstruction =
   "- \uc911\ub300\ud558\uc790 \ud604\ud669 \ubc0f \uc548\uc804\u00b7\ubc95\uc801 \ub9ac\uc2a4\ud06c (critical defects: types/counts/MoM, cause + manager-level priority action; if 0, one brief line per rule G)\n" +
   "- \ubbf8\ucc98\ub9ac\uac74 \uc811\uc218\ub0b4\uc6a9 \ud2b9\uc774\uc0ac\ud56d (only if the provided outstanding-case text reveals critical keywords: \ub204\uc218, \ubbfc\uc6d0, \ud488\uc758, \uc790\uc7ac, \ud53c\ud574\ubcf4\uc0c1 \ub4f1)\n" +
   "- \uacf5\uac00\uc138\ub300 \ud558\uc790\ucc98\ub9ac \ud604\ud669 (only if vacant-unit data is meaningful)\n" +
-  "- \ucc98\ub9ac \uc2e0\uc18d\ub3c4 \uac1c\uc120 \ubc29\uc548 / \uad04\ubaa9\ud560\ub9cc\ud55c \uc131\uacfc (manager-level concrete actions only)";
+  "- \ucc98\ub9ac \uc2e0\uc18d\ub3c4 \uac1c\uc120 \ubc29\uc548 / \uad04\ubaa9\ud560\ub9cc\ud55c \uc131\uacfc (manager-level concrete actions only)"
+  +aiCustomRulesBlock();
 const _ul=st.ul||[];
 // 키워드 포함건 우선 + 60일+ 장기미처리 우선으로 접수내용 샘플 추출 (최대 40건, 각 60자)
-const _kw=/누수|민원|품의|자재|피해|보상|결로|곰팡이|균열|파손|재시공|소송|법무|하자판정|중대/;
+const _ukw=aiUserKwList().map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+const _kw=new RegExp('누수|민원|품의|자재|피해|보상|결로|곰팡이|균열|파손|재시공|소송|법무|하자판정|중대'+(_ukw?'|'+_ukw:''));
 const _daysB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
 const _scored=_ul.map(i=>{const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;return{c,dd,co:i.complaint,t:i.trade||'',kw:_kw.test(c)||_kw.test(i.complaint||'')};}).filter(x=>x.c);
 _scored.sort((a,b)=>(b.kw-a.kw)||(b.dd-a.dd));
@@ -4496,7 +4740,8 @@ async function runDashAI(){
     "A. 개조식: end phrases with noun-style terminations such as '~함.', '~임.', '~음.' — never '~합니다.', '~입니다.'\n" +
     "B. LOGICAL REASONING in line2: do not merely restate status. Infer the likely cause and project the expected effect of a concrete action (cause → action → expected change).\n" +
     "C. SCOPE — STRICT: every action must be doable by a single field manager (담당자). NEVER mention 전담팀/태스크포스 운영, 경영진 결정, 공급망·구매 시스템 개선, 인력 충원, 신규 시스템 도입. Limit to: 특정 세대·공종 우선처리, 재방문 일정, 기존 협력업체 PM 호출·처리계획 요구, 품의·자재 지연 후속조치, 공가세대 출입 관리 등.\n" +
-    "D. SYMBOL SAFETY: never wrap words in quotation marks for emphasis; use <strong> only. No bullet characters or dashes inside text.";
+    "D. SYMBOL SAFETY: never wrap words in quotation marks for emphasis; use <strong> only. No bullet characters or dashes inside text."
+    +aiCustomRulesBlock();
   const dp=`아래 3개 카드의 각 2줄을 위 규칙에 따라 한국어 개조식으로 다시 작성하세요. 수치는 원문 그대로 유지할 것.\n\n${src}`;
   try{
     const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
@@ -4799,6 +5044,7 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
+  {const a=document.getElementById('cfgAiRules');if(a)a.value=S.aiRules||'';const b=document.getElementById('cfgCritKw');if(b)b.value=S.critKw||'';}
   const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
@@ -5320,6 +5566,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   {const miss=[];if(typeof Chart==='undefined')miss.push('차트');if(typeof LZString==='undefined')miss.push('데이터 압축');if(miss.length)setTimeout(()=>{try{toast('일부 기능 사용 불가('+miss.join('·')+') · 네트워크/CDN 차단 여부 확인',6000);}catch(_){}}, 500);}
   const ck=localStorage.getItem('ck'),exTk=localStorage.getItem('exTk');
   if(ck)S.ck=ck;
+  S.aiRules=localStorage.getItem('aiRules')||'';S.critKw=localStorage.getItem('critKw')||''; // AI 분석 사용자 규칙
   // 제외 키워드: localStorage 값이 있으면 (빈 문자열 포함) 그것을 사용, 없으면 기본값 'dummy' 유지
   if(exTk!==null)S.exTk=exTk;
   const ulex=document.getElementById('ulex');if(ulex)ulex.value=S.exTk;
