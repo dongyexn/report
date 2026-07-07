@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-sOvQu/d6GdaVBjmbiblD+9KagopU5/XVnVYsl7S+vyk=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-SzOQBHk+DSwgglI2KXOkBfl9snAqsQDiNoTpLM6441Y=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -549,6 +549,14 @@ table.dt-detail th{text-align:center!important;}
 .pv-table tbody .pv-row:hover>td{background:var(--b50);}
 .pv-table tbody .pv-row.pv-grp:hover>td{background:var(--b100);}
 .pv-table .pv-totrow td{font-weight:800;background:#E9EDF2;border-top:2px solid var(--sepo);position:sticky;bottom:0;z-index:1;}
+/* 좌(행 라벨)·우(합계) 열 고정 — 열이 많아도 라벨·합계는 제자리, 가운데 열만 가로 스크롤 */
+.pv-table td.pv-rh,.pv-table th.pv-rh{position:sticky;left:0;z-index:2;box-shadow:1px 0 0 var(--sep);}
+.pv-table td.pv-tot,.pv-table th.pv-tot{position:sticky;right:0;z-index:2;box-shadow:-1px 0 0 var(--sep);}
+.pv-table thead th.pv-rh,.pv-table thead th.pv-tot{z-index:4;}
+.pv-table .pv-totrow td.pv-rh,.pv-table .pv-totrow td.pv-tot{z-index:3;}
+/* 피벗 % 토글(건수 모드 전용) — 기본 OFF */
+.pv-pct-tg{cursor:pointer;padding:0 11px;font-weight:700;color:var(--lbl2);}
+.pv-pct-tg.on{background:var(--b600);color:#fff;border-color:var(--b600);}
 .pv-empty{padding:32px;text-align:center;color:var(--lbl3);font-size:13px;}
 .rl-link{cursor:pointer;color:var(--b700);}
 .rl-link:hover{text-decoration:underline;}
@@ -1750,6 +1758,7 @@ registerActions('click', {
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
+  'rec.pivotPct':()=>{const R=window.__REC;if(!R)return;R.showPct=!R.showPct;recRenderModalBody();},
   'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=recCols().map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>recCols().map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
   'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
   'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
@@ -2761,7 +2770,7 @@ const REC_COLS=[
 ];
 function recCell(r,k){if(k==='__no')return '';const v=r[k];return v==null?'':v;}
 // 팀 전체 목록(대시보드 진입)일 때만 No 옆에 '현장' 컬럼을 삽입 — 현장 단위 모달에선 기존 컬럼 그대로
-const REC_SITE_COL={key:'siteName',label:'현장',type:'str',w:118};
+const REC_SITE_COL={key:'siteName',label:'현장',type:'str',w:152};
 function recCols(){const R=window.__REC;return (R&&R.withSite)?[REC_COLS[0],REC_SITE_COL].concat(REC_COLS.slice(1)):REC_COLS;}
 // 지연구간(밴드) 판정 — calc의 KPI 지연구간(d0/d30/d60)과 동일한 역산(기준월 말일 − 접수일). 원본 지연일 컬럼과 별개.
 function recDelayDays(r,R){return Math.max(0,Math.round((new Date(R.rmEnd)-new Date(r.receiptDate))/86400000));}
@@ -2948,9 +2957,11 @@ function recPivotTableHTML(){
   const D=recPivotData();
   if(!D.grand)return '<div class="pv-empty">표시할 데이터가 없습니다</div>';
   const cd=cv=>cv==='(빈값)'?'(빈값)':esc(cv),arr=k=>D.sort.key===k?(D.sort.dir>0?' ▲':' ▼'):'';
-  const dsp=(c,sm)=>{ // 값 모드별 셀 표시 — 건수 모드는 전체(합계) 대비 비중 % 병기(팀장급 구성비 파악용)
+  const showPct=!!(window.__REC&&window.__REC.showPct); // % 병기 토글(피벗 바 우측) — 기본 OFF
+  const dsp=(c,sm)=>{ // 값 모드별 셀 표시 — 건수 모드는 토글 ON 시 전체(합계) 대비 비중 % 병기(구성비 파악용)
     if(D.val==='avgDelay')return c?Math.round(sm/c).toLocaleString():'·';
     if(!c)return '·';
+    if(!showPct)return c.toLocaleString();
     const pct=D.grand?c/D.grand*100:0;
     return c.toLocaleString()+`<span class="pv-pct">${pct>=9.95?pct.toFixed(0):pct.toFixed(1)}%</span>`;
   };
@@ -2998,7 +3009,7 @@ function pvChips(zone){
   return html;
 }
 function recPivotHTML(){
-  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><button class="pv-chip pv-val" data-act="rec.pivotVal"${(window.__REC.pivot.val||'count')==='avgDelay'?' data-tt="기준월 말일 − 접수일의 평균 (KPI 지연구간과 동일 기준)"':''}>${(window.__REC.pivot.val||'count')==='avgDelay'?'평균 지연일':'건수'} <span class="pv-caret">▾</span></button></div></div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
+  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><button class="pv-chip pv-val" data-act="rec.pivotVal"${(window.__REC.pivot.val||'count')==='avgDelay'?' data-tt="기준월 말일 − 접수일의 평균 (KPI 지연구간과 동일 기준)"':''}>${(window.__REC.pivot.val||'count')==='avgDelay'?'평균 지연일':'건수'} <span class="pv-caret">▾</span></button></div>${(window.__REC.pivot.val||'count')==='count'?`<div class="pv-zone" style="margin-left:auto"><button class="pv-chip pv-pct-tg${window.__REC.showPct?' on':''}" data-act="rec.pivotPct" data-tt="건수 옆에 전체 대비 비중(%) 표시" aria-pressed="${window.__REC.showPct?'true':'false'}">%</button></div>`:''}</div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
 }
 function recBandBarHTML(){
   const R=window.__REC;if(!R||!R.bandCnt)return'';
@@ -3117,7 +3128,8 @@ function openRecList(sid,scope,trade){
     dashSites().forEach(s2=>{
       const st2=calc(S.def[s2.id]||[],s2,S.rm);
       expCnt+=(scope==='lul'?st2.lt:st2.unr)||0;
-      ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:s2.name})));
+      const _sn=String(s2.name||'').replace(/힐스테이트/g,'HS').replace(/\s+/g,' ').trim(); // 목록·피벗 표시용 축약
+      ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:_sn})));
     });
   }else{
     const site=S.sites.find(s=>s.id===sid);if(!site)return;
@@ -3129,7 +3141,7 @@ function openRecList(sid,scope,trade){
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'},label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team'};
+  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team'};
   {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
   const title=`${esc(dispName)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
