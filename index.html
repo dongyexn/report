@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-uxY67BV+o9iSZOhiqjOMTuCz7UWI1qBUTvNNVl/k0d0=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-sOvQu/d6GdaVBjmbiblD+9KagopU5/XVnVYsl7S+vyk=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1332,7 +1332,7 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 .rl-qsrch input::placeholder{color:var(--lbl3);}
 .rl-qsrch svg{color:var(--lbl3);flex-shrink:0;}
 @media(max-width:768px){.rl-qsrch input{width:104px;}}
-.vrm-sel{margin-left:6px;}
+.vrm-sel{margin-left:0;min-width:0;padding:5px 30px 5px 12px;font-size:12px;font-weight:600;line-height:1.4;color:var(--b900);border:1px solid var(--b200);border-radius:var(--rp);background-color:var(--b50);background-position:right 11px center;} /* 기준월 칩과 동일 톤·높이 */
 .nvi:focus-visible,.sti:focus-visible,.rgh:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;border-radius:8px;}
 th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 </style>
@@ -1489,6 +1489,10 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
               <div class="share-row">
                 <div class="share-info"><b>사내 게시</b><span>Firebase 실시간 공유 · 최신 등록 <b id="fbPubAt">—</b></span></div>
                 <button class="btn bp bsm" id="fbPubBtn" data-act="set.publish">등록</button>
+              </div>
+              <div class="share-row">
+                <div class="share-info"><b>뷰어 시점으로 보기</b><span>사용자에게 보이는 최신 게시본 그대로 열람 · 새로고침(F5)으로 편집 모드 복귀</span></div>
+                <button class="btn bo bsm" data-act="set.viewerMode">게시본 열람</button>
               </div>
             </div>
           </div>
@@ -1688,7 +1692,7 @@ function safeHTML(dirty){
 }
 // 게시(Firebase)·스냅샷에 실리는 미처리 목록에서 입주민 자유텍스트(접수내용·민원)를 제거 — 외부 공유 시 개인정보 최소화.
 // 구조 필드(공종·하자유형·보수주체·일자 등)는 유지되어 집계/뷰어 표시에는 영향 없음.
-function redactUL(ul,all){const a=all?(ul||[]):(ul||[]).slice(0,300);return a.map(i=>Object.assign({},i,{receiptContent:'',complaint:''}));} // all=true: 캡 없이(압축 게시 전용)
+function redactUL(ul,all){const a=all?(ul||[]):(ul||[]).slice(0,300);return a.map(i=>Object.assign({},i,{receiptContent:maskPII(String(i.receiptContent||'')),complaint:''}));} // all=true: 캡 없이. 접수내용은 비우지 않고 PII(전화·이메일·인명)만 마스킹해 게시 — 뷰어도 내용 확인 가능
 
 // ===== 이벤트 위임 인프라 (인라인 핸들러 제거 기반) =====
 // 인라인 on*= 대신 요소에 data-act + 의미 data-* 속성을 부여하고, 문서 루트의 위임 리스너 1개가
@@ -1742,7 +1746,7 @@ registerActions('click', {
   'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
   'top.month':()=>openMP(), 'top.print':()=>doPrint(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
-  'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(),
+  'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(),
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
@@ -2309,7 +2313,6 @@ async function fb2Enter(user){
       const su=document.getElementById('set-users');if(su)su.style.display='';
       fb2SubUsers();
       fb2RefreshMeta();
-      fb2OfferSnapshotIfNewer(); // 다른 PC에서 업로드·게시했을 수 있음 — 로컬 원본보다 최신 게시본이면 열람 제안
       if(S.view==='settings')loadSettings();
     }else{
       await fb2EnterViewer();
@@ -2327,35 +2330,27 @@ async function fb2EnterViewer(){
     fb2InitViewerRmSel(rep.rm); // 기준월 아카이브 선택기 (게시월 2개 이상일 때 표시)
   }catch(e){console.error('[FB2] viewer 진입 실패',e);fb2ViewerEmpty();}
 }
-// ── 편집자 게시본 열람 제안 ──
-// 원본 하자 행은 업로드한 브라우저의 IndexedDB에만 있다. 다른 PC에서 업로드·게시하면 뷰어는
-// 게시본을 보므로 최신이 반영되지만, 편집자 화면은 항상 '이 PC의 로컬 원본'으로 계산하므로
-// 반영되지 않는다(정상 동작). 로컬에 원본이 없거나 게시 시각이 로컬 최종 업로드보다 최신이면
-// 뷰어와 동일한 스냅샷 배선(fb2ApplyReport)으로 게시본 열람을 제안한다. 열람 중에는 편집
-// 기능이 숨겨지며(뷰어 UI), 새로고침(F5)하면 로컬 편집 모드로 복귀한다(원본 IndexedDB 불변).
-async function fb2OfferSnapshotIfNewer(){
+// ── 편집자 '뷰어 시점으로 보기' (설정 > 사내 게시) ──
+// 원본 하자 행은 업로드한 브라우저의 IndexedDB에만 있어, 다른 PC에서 업로드·게시한 내용은
+// 이 PC의 편집자 화면(로컬 계산)에 반영되지 않는다(뷰어는 게시본을 보므로 정상 반영).
+// 이 기능은 뷰어와 동일한 스냅샷 배선(fb2ApplyReport)으로 최신 게시본을 그대로 열람한다.
+// 열람 중에는 편집 UI가 숨겨지며, 새로고침(F5)하면 로컬 편집 모드로 복귀(원본 IndexedDB 불변).
+async function fb2ViewAsViewer(){
   try{
-    if(!FB2.ready||!FB2.db||window.__SNAP__)return;
+    if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다');return;}
     const idxSnap=await FB2.db.ref('reportIndex').once('value');
     const idx=idxSnap.val()||{};
     const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
-    if(!months.length)return;
-    const rm=months.reduce((a,b)=>(idx[a]>=idx[b]?a:b)); // 마지막으로 게시한 월
-    const pubAt=+idx[rm]||0;
-    const localUp=(S.sites||[]).reduce((m,s)=>Math.max(m,Date.parse(s.lastUploadedAt||'')||0),0);
-    const noLocal=!Object.keys(S.def||{}).length;
-    if(!(noLocal||pubAt>localUp))return; // 이 PC 원본이 게시본 이후에 갱신됐으면 제안 불필요
-    toastAction(noLocal?('이 PC에는 원본 데이터가 없습니다 · 최신 게시본('+rm+')을 열람할 수 있습니다')
-                       :('이 PC의 원본보다 최신 게시본('+rm+')이 있습니다'),'게시본 보기',async function(){
-      try{
-        const snap=await FB2.db.ref('report/'+rm).once('value');
-        const data=snap.val();
-        if(!data){toast('게시본을 불러오지 못했습니다');return;}
-        fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);
-        toast('게시본 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
-      }catch(e){console.error('[FB2] 게시본 열람 실패',e);toast('게시본 열람 실패');}
-    },15000);
-  }catch(e){console.warn('[FB2] 게시본 확인 실패',e);}
+    let rm=months.length?months.reduce((a,b)=>(idx[a]>=idx[b]?a:b)):null; // 마지막으로 게시한 월
+    let data=rm?(await FB2.db.ref('report/'+rm).once('value')).val():null;
+    if(!data){ // 인덱스 도입 전 게시분 폴백
+      const snap=await FB2.db.ref('report').orderByKey().limitToLast(1).once('value');
+      const v=snap.val();if(v){rm=Object.keys(v)[0];data=v[rm];}
+    }
+    if(!rm||!data){toast('아직 게시된 집계가 없습니다');return;}
+    fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);
+    toast('뷰어 시점으로 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
+  }catch(e){console.error('[FB2] 뷰어 시점 열람 실패',e);toast('게시본 열람 실패');}
 }
 function fb2ViewerEmpty(){
   document.body.classList.add('viewer');
@@ -2449,9 +2444,12 @@ async function fb2InitViewerRmSel(curRm){
     months.sort().reverse();
     const mc=document.querySelector('.mc');if(!mc)return;
     let sel=document.getElementById('vrm');
-    if(!sel){sel=document.createElement('select');sel.id='vrm';sel.className='fbu-sel vrm-sel';sel.setAttribute('data-act','viewer.rm');sel.setAttribute('aria-label','열람할 기준월 선택');mc.appendChild(sel);}
+    if(sel&&sel.parentNode===mc){mc.removeChild(sel);sel=null;} // 구버전 배치(칩 내부에 중첩) 정리
+    if(!sel){sel=document.createElement('select');sel.id='vrm';sel.className='fbu-sel vrm-sel';sel.setAttribute('data-act','viewer.rm');sel.setAttribute('aria-label','열람할 기준월 선택');mc.parentNode.insertBefore(sel,mc.nextSibling);} // 칩과 나란히 — 칩 안에 넣으면 이중 캡슐이 됨
     sel.innerHTML=months.map(m=>`<option value="${m}" ${m===curRm?'selected':''}>${m}</option>`).join('');
-    sel.style.display=months.length>1?'':'none'; // 게시월이 1개면 숨김
+    const _show=months.length>1;
+    sel.style.display=_show?'':'none'; // 게시월이 1개면 숨김
+    mc.style.display=_show?'none':''; // 선택기가 보이면 기준월 칩은 중복 정보 — 숨김
   }catch(e){console.warn('[FB2] reportIndex',e);}
 }
 async function fb2SwitchReportMonth(rm){
@@ -2635,7 +2633,7 @@ async function fb2Publish(){
       let ulz='';
       try{
         if(typeof LZString!=='undefined'){
-          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
+          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,receiptContent:maskPII(String(i.receiptContent||'')),repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
           ulz=LZString.compressToBase64(JSON.stringify(slim));
         }
       }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
@@ -3109,6 +3107,7 @@ function recListBodyHTML(){
 }
 function openRecList(sid,scope,trade){
   let base,dispName;
+  let expCnt=0; // 게시 KPI상 기대 건수 — 구게시본(전체 목록 미포함, 300건 캡)일 때 목록 축소 안내용
   if(sid==='__team'){
     // 팀 전체 목록 — 대시보드 KPI에서 진입. 현장별 목록을 병합하고 각 행에 현장명을 부착.
     // 편집자는 calc(로컬 원본), 뷰어는 calc의 스냅샷 조기반환(게시 kpi.ul — ulz 전체본)이라 양쪽 동일 경로.
@@ -3117,12 +3116,14 @@ function openRecList(sid,scope,trade){
     base=[];
     dashSites().forEach(s2=>{
       const st2=calc(S.def[s2.id]||[],s2,S.rm);
+      expCnt+=(scope==='lul'?st2.lt:st2.unr)||0;
       ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:s2.name})));
     });
   }else{
     const site=S.sites.find(s=>s.id===sid);if(!site)return;
     const st=calc(S.def[sid]||[],site,S.rm);
     base=(scope==='lul'?st.lul:st.ul)||[];
+    expCnt=(scope==='lul'?st.lt:st.unr)||0;
     dispName=site.name||'';
   }
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
@@ -3137,6 +3138,8 @@ function openRecList(sid,scope,trade){
   document.getElementById('mf').innerHTML='';
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
   openMo();
+  // 구게시본(전체 목록 미포함) 안내 — KPI 건수와 목록 행수 불일치 혼선 방지. 최신 빌드로 재게시하면 전체 포함.
+  if(window.__SNAP__&&expCnt>base.length)toast(`이 게시본에는 목록이 ${base.length.toLocaleString()}건까지만 포함되어 있습니다 (전체 ${expCnt.toLocaleString()}건) · 최신 게시본으로 재게시하면 전체가 표시됩니다`,8000);
 }
 // ── 표 내보내기 (xlsx · SheetJS) ──
 // XLSX(SheetJS) 지연 로드 — 부팅엔 불필요(업로드·내보내기 시점에만 필요). 초기 로드에서 ~900KB 제거.
