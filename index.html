@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-SzOQBHk+DSwgglI2KXOkBfl9snAqsQDiNoTpLM6441Y=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-OK0aFRSy9tmUIiTiLkzgBnKCo/RtQv8TYX+rR1OAtGE=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1498,6 +1498,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
                 <div class="share-info"><b>사내 게시</b><span>Firebase 실시간 공유 · 최신 등록 <b id="fbPubAt">—</b></span></div>
                 <button class="btn bp bsm" id="fbPubBtn" data-act="set.publish">등록</button>
               </div>
+              <div class="share-sep"></div>
               <div class="share-row">
                 <div class="share-info"><b>뷰어 시점으로 보기</b><span>사용자에게 보이는 최신 게시본 그대로 열람 · 새로고침(F5)으로 편집 모드 복귀</span></div>
                 <button class="btn bo bsm" data-act="set.viewerMode">게시본 열람</button>
@@ -1821,7 +1822,7 @@ registerActions('dragover',  {'uz':(el,e)=>{e.preventDefault();el.classList.add(
 registerActions('dragleave', {'uz':(el)=>el.classList.remove('drag')});
 registerActions('drop',      {'uz':(el,e)=>{e.preventDefault();el.classList.remove('drag');const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)onFile(f);}});
 // 처리계획 textarea 자동 높이 확장 — 엔터로 줄바꿈하면 즉시 키워지고, 내용 줄어들면 다시 축소.
-function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function autoResize(el){if(el.offsetParent===null)return;el.style.height='auto';el.style.height=el.scrollHeight+'px';} // 숨김(display:none) 상태면 측정 불가 — 붕괴 방지 위해 생략
 // 준공일 등 date 입력 — 연도가 4자리를 넘으면 4자리로 절삭
 function clampYear(el){const v=el.value;if(!v)return;const m=v.match(/^(\d+)(-\d{2}-\d{2})$/);if(m&&m[1].length>4){el.value=m[1].slice(0,4)+m[2];}}
 function autoSizeAll(root){(root||document).querySelectorAll('textarea.plan-ta').forEach(autoResize);}
@@ -1843,7 +1844,7 @@ function setTab(t){S.tab=t;document.querySelectorAll('.tnav-i').forEach(b=>b.cla
   // pane이 display:block이 된 직후 동기 측정 → display:none일 때 scrollHeight=0으로 잘못 잡혔던
   // textarea 높이를 페인트 전에 즉시 교정 (첫 진입 시 "작았다 커지는" 깜빡임 방지).
   autoSizeAll(document.querySelector('.tpane.act'));
-  setTimeout(()=>{if(S.sid)renderTabCharts(S.sid,S.lastSt);},30);}
+  setTimeout(()=>{if(S.sid)renderTabCharts(S.sid,S.lastSt);autoSizeAll(document.querySelector('.tpane.act'));},30);} // 차트 렌더로 폭이 바뀐 뒤 같은 프레임에서 재측정 — 높이 점프 방지
 function setDetailYear(y){S.detailYear=y;if(S.sid)rSite(S.sid);}
 // 추이차트 표시연도 — 데이터에 존재하는 접수연도 + 기준월 연도(+최소 2026). 누계값은 cutoff 시점 전체 기준이라
 // 시작연도만 바꿔도 전년도 이월 미처리가 그대로 반영된다.
@@ -2633,7 +2634,7 @@ async function fb2Publish(){
     const rm=S.rm;
     const upd={};
     upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
-    dashSites().forEach(function(s2){
+    teamSites().forEach(function(s2){ // 인수 전 현장 포함 — '대시보드 집계 제외'는 유지되나 현장 개별 게시본은 전 현장에 제공
       const r=calc(S.def[s2.id]||[],s2,rm);
       const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // 캡(300) 목록 — ulz 해제 실패 시 폴백
       // 전체 미처리 목록(압축) — 만건 이상 현장도 뷰어가 편집자와 동일한 목록·피벗을 보도록
@@ -2658,7 +2659,7 @@ async function fb2Publish(){
     // 편집자가 로컬에만 갖고 있던 처리계획·분석의견을 리프로 시드(실시간 협업 시작점) — 실패해도 게시 자체는 완료.
     try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
     fb2RefreshMeta();
-    toast('등록 완료 · '+rm+' · 현장 '+dashSites().length+'개');
+    toast('등록 완료 · '+rm+' · 현장 '+teamSites().length+'개');
     // 잔존 미래 게시월 정리: 기준월이 잘못 설정된 채 게시된 노드(예: 2026-07)가 남아 있으면
     // 뷰어 기준월 선택기에 계속 노출되고 과거엔 '최신'으로 오판되던 원인이므로 삭제를 제안한다.
     try{
@@ -3151,7 +3152,7 @@ function openRecList(sid,scope,trade){
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
   openMo();
   // 구게시본(전체 목록 미포함) 안내 — KPI 건수와 목록 행수 불일치 혼선 방지. 최신 빌드로 재게시하면 전체 포함.
-  if(window.__SNAP__&&expCnt>base.length)toast(`이 게시본에는 목록이 ${base.length.toLocaleString()}건까지만 포함되어 있습니다 (전체 ${expCnt.toLocaleString()}건) · 최신 게시본으로 재게시하면 전체가 표시됩니다`,8000);
+  if(window.__SNAP__&&expCnt>base.length)toast(`목록 ${base.length.toLocaleString()}건 / 집계 ${expCnt.toLocaleString()}건 — 이 게시본에는 전체 목록이 포함되어 있지 않아 일부만 표시됩니다`,8000);
 }
 // ── 표 내보내기 (xlsx · SheetJS) ──
 // XLSX(SheetJS) 지연 로드 — 부팅엔 불필요(업로드·내보내기 시점에만 필요). 초기 로드에서 ~900KB 제거.
@@ -3906,7 +3907,7 @@ function capAll(){
   const allDefRaw=dashSites().flatMap(s=>S.def[s.id]||[]);
   const allDef=allDefRaw.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
   const cap={wks:capWks(allDef,S.rm,trendYearInfo(allDef,'trendYear').year),am:capAm(allDefRaw,S.rm),siteWks:{},siteAm:{}};
-  for(const s of dashSites()){
+  for(const s of teamSites()){ // 현장별 캡처는 인수 전 현장 포함 — 대시보드 합산(wks/am)만 dashSites로 집계 제외
     const defs=S.def[s.id]||[];
     const sd=defs.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
     cap.siteWks[s.id]=capWks(sd,S.rm,trendYearInfo(sd,'siteTrendYear').year);
@@ -5154,7 +5155,7 @@ async function exportSnapshot(){
     await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
-    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 스냅샷 파일은 캡 불필요 — 전체 임베드
+    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 // 스냅샷 파일은 캡 불필요 — 전체 임베드
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
     const json=JSON.stringify(payload).replace(/<\//g,'<\\/').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');   // 종료태그·줄종료자(U+2028/9) 차단
     const keep=window.__SNAP__; window.__SNAP__=null;
