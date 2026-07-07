@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-MS4z84YFm9p90rOCH1/KgPA2SIOHOWOzewCQpUP5rwQ=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-uxY67BV+o9iSZOhiqjOMTuCz7UWI1qBUTvNNVl/k0d0=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -2309,6 +2309,7 @@ async function fb2Enter(user){
       const su=document.getElementById('set-users');if(su)su.style.display='';
       fb2SubUsers();
       fb2RefreshMeta();
+      fb2OfferSnapshotIfNewer(); // 다른 PC에서 업로드·게시했을 수 있음 — 로컬 원본보다 최신 게시본이면 열람 제안
       if(S.view==='settings')loadSettings();
     }else{
       await fb2EnterViewer();
@@ -2325,6 +2326,36 @@ async function fb2EnterViewer(){
     fb2SubReport(rep.rm);
     fb2InitViewerRmSel(rep.rm); // 기준월 아카이브 선택기 (게시월 2개 이상일 때 표시)
   }catch(e){console.error('[FB2] viewer 진입 실패',e);fb2ViewerEmpty();}
+}
+// ── 편집자 게시본 열람 제안 ──
+// 원본 하자 행은 업로드한 브라우저의 IndexedDB에만 있다. 다른 PC에서 업로드·게시하면 뷰어는
+// 게시본을 보므로 최신이 반영되지만, 편집자 화면은 항상 '이 PC의 로컬 원본'으로 계산하므로
+// 반영되지 않는다(정상 동작). 로컬에 원본이 없거나 게시 시각이 로컬 최종 업로드보다 최신이면
+// 뷰어와 동일한 스냅샷 배선(fb2ApplyReport)으로 게시본 열람을 제안한다. 열람 중에는 편집
+// 기능이 숨겨지며(뷰어 UI), 새로고침(F5)하면 로컬 편집 모드로 복귀한다(원본 IndexedDB 불변).
+async function fb2OfferSnapshotIfNewer(){
+  try{
+    if(!FB2.ready||!FB2.db||window.__SNAP__)return;
+    const idxSnap=await FB2.db.ref('reportIndex').once('value');
+    const idx=idxSnap.val()||{};
+    const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
+    if(!months.length)return;
+    const rm=months.reduce((a,b)=>(idx[a]>=idx[b]?a:b)); // 마지막으로 게시한 월
+    const pubAt=+idx[rm]||0;
+    const localUp=(S.sites||[]).reduce((m,s)=>Math.max(m,Date.parse(s.lastUploadedAt||'')||0),0);
+    const noLocal=!Object.keys(S.def||{}).length;
+    if(!(noLocal||pubAt>localUp))return; // 이 PC 원본이 게시본 이후에 갱신됐으면 제안 불필요
+    toastAction(noLocal?('이 PC에는 원본 데이터가 없습니다 · 최신 게시본('+rm+')을 열람할 수 있습니다')
+                       :('이 PC의 원본보다 최신 게시본('+rm+')이 있습니다'),'게시본 보기',async function(){
+      try{
+        const snap=await FB2.db.ref('report/'+rm).once('value');
+        const data=snap.val();
+        if(!data){toast('게시본을 불러오지 못했습니다');return;}
+        fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);
+        toast('게시본 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
+      }catch(e){console.error('[FB2] 게시본 열람 실패',e);toast('게시본 열람 실패');}
+    },15000);
+  }catch(e){console.warn('[FB2] 게시본 확인 실패',e);}
 }
 function fb2ViewerEmpty(){
   document.body.classList.add('viewer');
@@ -2893,10 +2924,18 @@ function recPivotData(){
       ch.total++;ch.cells[cv]=(ch.cells[cv]||0)+1;ch.totalS+=dd;ch.cellsS[cv]=(ch.cellsS[cv]||0)+dd;cur=ch;
     }
   }
-  const colsA=ck?[...cset].sort((a,b)=>String(a).localeCompare(String(b),'ko')):['__all'];
+  const val=P.val||'count';
+  // 열 정렬: 행처럼 값이 큰 열이 앞으로(건수=합계 내림차순, 평균지연=평균 내림차순). 동률은 가나다.
+  // 예외: 접수월(__month) 열은 값순으로 섞으면 시간축이 깨지므로 시간순(가나다=연월순) 유지.
+  const colsA=ck?[...cset].sort((a,b)=>{
+    if(ck==='__month')return String(a).localeCompare(String(b),'ko');
+    const ca=root.cells[a]||0,cb=root.cells[b]||0;
+    const va=val==='avgDelay'?(ca?(root.cellsS[a]||0)/ca:0):ca;
+    const vb=val==='avgDelay'?(cb?(root.cellsS[b]||0)/cb:0):cb;
+    return (vb-va)||String(a).localeCompare(String(b),'ko');
+  }):['__all'];
   const colTot={};colsA.forEach(cv=>colTot[cv]=root.cells[cv]||0);
   const colTotS={};colsA.forEach(cv=>colTotS[cv]=root.cellsS[cv]||0);
-  const val=P.val||'count';
   return {root,colsA,colTot,colTotS,grand:root.total,grandS:root.totalS,hasCol:!!ck,rks,maxD:rks.length,val,sort:Object.assign({},P.sort||{key:'__total',dir:-1},{vm:val})};
 }
 function pivotSortNodes(nodes,sort){
