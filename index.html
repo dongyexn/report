@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-FmoLAnHS1G0rrk++uBN0xyKbG0un69P7DSkO1Rfck3o=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-olLhZikH3KIo3XdoAM5VnDAEevUTMe0tAN0bOfDSlwk=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -2328,6 +2328,21 @@ function fb2ViewerEmpty(){
 
 // ----- report/{기준월} 로드 → __SNAP__ 배선 재사용 -----
 async function fb2LoadReportLatest(){
+  // '최신' = 마지막으로 게시한 월(reportIndex의 값=게시시각이 최대인 키).
+  // 구버전의 키 사전순(orderByKey.limitToLast)은 잘못 게시된 미래 월 노드가 남아 있으면
+  // (예: 기준월 07 상태로 게시 → 06으로 재게시해도 report/07 잔존) 뷰어가 옛 07 게시본에
+  // 고착되는 문제가 있어 게시 행위 시각 기준으로 판정한다. 인덱스가 비면 키순 폴백.
+  try{
+    const idxSnap=await FB2.db.ref('reportIndex').once('value');
+    const idx=idxSnap.val()||{};
+    const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
+    if(months.length){
+      const rm=months.reduce((a,b)=>(idx[a]>=idx[b]?a:b));
+      const snap0=await FB2.db.ref('report/'+rm).once('value');
+      const data=snap0.val();
+      if(data)return{rm:rm,data:data};
+    }
+  }catch(e){console.warn('[FB2] reportIndex 최신월 판정 실패 — 키순 폴백',e);}
   const snap=await FB2.db.ref('report').orderByKey().limitToLast(1).once('value');
   const v=snap.val();if(!v)return null;
   const rm=Object.keys(v)[0];
@@ -2345,6 +2360,13 @@ function fb2ApplyReport(rm,rep){
     if(sid==='_dash'||sid==='_meta')continue;
     const n=rep[sid]||{};
     st[sid]=n.kpi||{};
+    // 구버전 게시본 호환: lul을 빈 배열로 게시하던 시기의 노드는 ul(30일 미만 포함)에서
+    // 지연 30일+ 필터로 파생해 채운다(_calcImpl의 lul 산식과 동일). 신버전 게시본은 그대로 통과.
+    {const k=st[sid];
+     if((!Array.isArray(k.lul)||!k.lul.length)&&Array.isArray(k.ul)&&k.ul.length&&k.rmEnd){
+       const _dB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
+       k.lul=k.ul.filter(i=>_dB(i.receiptDate,k.rmEnd)>=30);
+     }}
     siteWks[sid]=n.siteWks||[];
     siteAm[sid]=n.siteAm||{};
     if(n.vac){ // 공가/상가 상태(미분양·미키불출)는 게시 데이터 — S.cmt에 병합(실시간 plans와 충돌 없음)
@@ -2564,7 +2586,7 @@ async function fb2Publish(){
     upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
     dashSites().forEach(function(s2){
       const r=calc(S.def[s2.id]||[],s2,rm);
-      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:[],critUl:redactUL(r.critUl)});
+      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // lul 포함 — 빈 배열로 게시하면 뷰어 장기미처리 목록이 항상 빈 화면
       const cm=S.cmt[s2.id]||{},vac={};
       if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
       if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
@@ -2578,6 +2600,19 @@ async function fb2Publish(){
     try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
     fb2RefreshMeta();
     toast('등록 완료 · '+rm+' · 현장 '+dashSites().length+'개');
+    // 잔존 미래 게시월 정리: 기준월이 잘못 설정된 채 게시된 노드(예: 2026-07)가 남아 있으면
+    // 뷰어 기준월 선택기에 계속 노출되고 과거엔 '최신'으로 오판되던 원인이므로 삭제를 제안한다.
+    try{
+      const _idxSnap=await FB2.db.ref('reportIndex').once('value');
+      const _stale=Object.keys(_idxSnap.val()||{}).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k>rm);
+      if(_stale.length){
+        toastAction('기준월('+rm+')보다 미래인 게시월 발견: '+_stale.join(', ')+' — 잘못 게시된 월이면 삭제하세요','삭제',async()=>{
+          const del={};_stale.forEach(m=>{del['report/'+m]=null;del['reportIndex/'+m]=null;});
+          try{await FB2.db.ref().update(del);toast('게시월 삭제 완료 · '+_stale.join(', '));}
+          catch(e2){console.error('[FB2] 게시월 삭제 실패',e2);toast('삭제 실패: '+((e2&&e2.message)||e2));}
+        },15000);
+      }
+    }catch(e){console.warn('[FB2] 미래 게시월 감지 실패',e);}
   }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
   finally{if(btn)btn.disabled=false;}
 }
@@ -4574,7 +4609,12 @@ async function doSaveUL(byName,allItems){
   const dates=allItems.map(i=>i.receiptDate).filter(Boolean).sort();
   const maxDate=dates[dates.length-1]||'';
   const autoRm=maxDate.slice(0,7);
-  if(autoRm){S.rm=autoRm;lsSave();}
+  // 기준월 자동값 상한 = 전월. 월간보고는 '전월 말일까지' 기준인데, 월초 HCS 추출본에는
+  // 당월 접수분이 몇 건 섞여 들어와 기준월이 당월로 튀고, 그 상태로 게시하면 미래 월
+  // 게시본이 생겨 뷰어 전원이 잘못된 기준월을 보게 된다. 수동 변경(기준월 칩)은 그대로 가능.
+  const _capRm=pM(todayYM());
+  const effRm=(autoRm&&autoRm>_capRm)?_capRm:autoRm;
+  if(effRm){S.rm=effRm;lsSave();}
   // 현장별 저장 (메모리 + IndexedDB 압축). 순차 처리로 진행률 표시.
   let savedCount=0,savedSites=0,firstSid=null;
   const entries=Object.entries(byName).filter(([name])=>name!=='(미지정)');
@@ -5016,7 +5056,7 @@ async function exportSnapshot(){
     await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
-    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:[],critUl:redactUL(r.critUl)});});
+    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)});});
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
     const json=JSON.stringify(payload).replace(/<\//g,'<\\/').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');   // 종료태그·줄종료자(U+2028/9) 차단
     const keep=window.__SNAP__; window.__SNAP__=null;
