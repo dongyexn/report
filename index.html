@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-olLhZikH3KIo3XdoAM5VnDAEevUTMe0tAN0bOfDSlwk=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-1ZECl4QnpuMnFCb81K+yoALy5ML7ZfWNXV2Ur/Nm4jc=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -542,6 +542,7 @@ table.dt-detail th{text-align:center!important;}
 .pv-table th.pv-th:hover{background:#E1E7EF;}
 .pv-table td.pv-rh,.pv-table thead th.pv-rh{text-align:left;color:var(--lbl);}
 .pv-table td.pv-tot{font-weight:700;color:var(--b800);background:#FAFBFC;}
+.pv-pct{font-size:10px;color:var(--lbl3);margin-left:4px;font-weight:400;}
 .pv-table thead th.pv-tot{background:#E6EBF1;color:var(--lbl);}
 .pv-table tbody .pv-grp>td{font-weight:700;background:#F4F6F9;}
 .pv-table tbody .pv-grp>td.pv-tot{background:#EDF1F6;}
@@ -1687,7 +1688,7 @@ function safeHTML(dirty){
 }
 // 게시(Firebase)·스냅샷에 실리는 미처리 목록에서 입주민 자유텍스트(접수내용·민원)를 제거 — 외부 공유 시 개인정보 최소화.
 // 구조 필드(공종·하자유형·보수주체·일자 등)는 유지되어 집계/뷰어 표시에는 영향 없음.
-function redactUL(ul){return (ul||[]).slice(0,300).map(i=>Object.assign({},i,{receiptContent:'',complaint:''}));}
+function redactUL(ul,all){const a=all?(ul||[]):(ul||[]).slice(0,300);return a.map(i=>Object.assign({},i,{receiptContent:'',complaint:''}));} // all=true: 캡 없이(압축 게시 전용)
 
 // ===== 이벤트 위임 인프라 (인라인 핸들러 제거 기반) =====
 // 인라인 on*= 대신 요소에 data-act + 의미 data-* 속성을 부여하고, 문서 루트의 위임 리스너 1개가
@@ -1745,7 +1746,7 @@ registerActions('click', {
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
-  'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=REC_COLS.map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>REC_COLS.map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
+  'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=recCols().map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>recCols().map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
   'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
   'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
   'rec.pivotVal':(el)=>{const r=el.getBoundingClientRect();recPivotValMenu(r.left,r.bottom+4);},
@@ -2360,9 +2361,14 @@ function fb2ApplyReport(rm,rep){
     if(sid==='_dash'||sid==='_meta')continue;
     const n=rep[sid]||{};
     st[sid]=n.kpi||{};
-    // 구버전 게시본 호환: lul을 빈 배열로 게시하던 시기의 노드는 ul(30일 미만 포함)에서
-    // 지연 30일+ 필터로 파생해 채운다(_calcImpl의 lul 산식과 동일). 신버전 게시본은 그대로 통과.
     {const k=st[sid];
+     // 전체 목록(압축 게시) 우선: ulz가 있으면 캡(300건) 배열을 대체해 편집자와 동일한 목록·피벗 제공.
+     // 해제 실패 시 기존 캡 목록으로 폴백(표시 축소일 뿐 KPI 숫자는 게시값 그대로).
+     if(typeof n.ulz==='string'&&n.ulz&&typeof LZString!=='undefined'){
+       try{const full=JSON.parse(LZString.decompressFromBase64(n.ulz)||'null');if(Array.isArray(full)){k.ul=full;k.lul=null;}}
+       catch(e){console.warn('[FB2] ulz 해제 실패 — 캡 목록 폴백',sid,e);}
+     }
+     // lul 파생: ulz 대체 후 또는 구버전 게시본(lul 빈 배열)에서 ul의 지연 30일+ 필터로 산출(_calcImpl과 동일 산식)
      if((!Array.isArray(k.lul)||!k.lul.length)&&Array.isArray(k.ul)&&k.ul.length&&k.rmEnd){
        const _dB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
        k.lul=k.ul.filter(i=>_dB(i.receiptDate,k.rmEnd)>=30);
@@ -2586,11 +2592,21 @@ async function fb2Publish(){
     upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
     dashSites().forEach(function(s2){
       const r=calc(S.def[s2.id]||[],s2,rm);
-      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // lul 포함 — 빈 배열로 게시하면 뷰어 장기미처리 목록이 항상 빈 화면
+      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // 캡(300) 목록 — ulz 해제 실패 시 폴백
+      // 전체 미처리 목록(압축) — 만건 이상 현장도 뷰어가 편집자와 동일한 목록·피벗을 보도록
+      // 표시·피벗에 쓰는 필드만 담아 LZ+Base64로 게시한다(접수내용·민원은 기존 정책대로 제외).
+      // 규모 감: 1만건 ≈ JSON 1.5MB → 압축 후 수백KB (RTDB 문자열 한도 10MB 대비 여유).
+      let ulz='';
+      try{
+        if(typeof LZString!=='undefined'){
+          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
+          ulz=LZString.compressToBase64(JSON.stringify(slim));
+        }
+      }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
       const cm=S.cmt[s2.id]||{},vac={};
       if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
       if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
-      upd['report/'+rm+'/'+s2.id]={kpi:kpi,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
+      upd['report/'+rm+'/'+s2.id]={kpi:kpi,ulz:ulz,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
     });
     upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
     upd['reportIndex/'+rm]=Date.now(); // 게시월 인덱스 — 뷰어 기준월 선택기가 이 노드만 읽어 목록 구성(전체 report 다운로드 방지)
@@ -2710,6 +2726,9 @@ const REC_COLS=[
   {key:'delayDays',label:'지연일',type:'num',w:78,filter:'numRange'}
 ];
 function recCell(r,k){if(k==='__no')return '';const v=r[k];return v==null?'':v;}
+// 팀 전체 목록(대시보드 진입)일 때만 No 옆에 '현장' 컬럼을 삽입 — 현장 단위 모달에선 기존 컬럼 그대로
+const REC_SITE_COL={key:'siteName',label:'현장',type:'str',w:118};
+function recCols(){const R=window.__REC;return (R&&R.withSite)?[REC_COLS[0],REC_SITE_COL].concat(REC_COLS.slice(1)):REC_COLS;}
 // 지연구간(밴드) 판정 — calc의 KPI 지연구간(d0/d30/d60)과 동일한 역산(기준월 말일 − 접수일). 원본 지연일 컬럼과 별개.
 function recDelayDays(r,R){return Math.max(0,Math.round((new Date(R.rmEnd)-new Date(r.receiptDate))/86400000));}
 function recBandOf(dd){return dd>=60?'d60':dd>=30?'d30':'d0';}
@@ -2723,11 +2742,11 @@ function recComputeView(){
       let m;
       if((m=t.match(/^(.+)동$/)))return String(r.building||'')===m[1]||String(r.building||'')===t;
       if((m=t.match(/^(.+)호$/)))return String(r.unit||'')===m[1]||String(r.unit||'')===t;
-      const blob=(String(r.building||'')+'|'+String(r.unit||'')+'|'+String(r.trade||'')+'|'+String(r.defectType||'')+'|'+String(r.space||'')+'|'+String(r.contractor||'')+'|'+String(r.receiptContent||'')+'|'+String(r.complaint||'')).toLowerCase();
+      const blob=(String(r.siteName||'')+'|'+String(r.building||'')+'|'+String(r.unit||'')+'|'+String(r.trade||'')+'|'+String(r.defectType||'')+'|'+String(r.space||'')+'|'+String(r.contractor||'')+'|'+String(r.receiptContent||'')+'|'+String(r.complaint||'')).toLowerCase();
       return blob.includes(t.toLowerCase());
     }));
   }
-  for(const c of REC_COLS){
+  for(const c of recCols()){
     if(c.key==='__no')continue;
     const raw=R.filters[c.key];
     if(raw!=null&&String(raw).trim()){
@@ -2750,7 +2769,7 @@ function recComputeView(){
     if(vf instanceof Set)rows=rows.filter(r=>vf.has(String(recCell(r,c.key))));
   }
   if(R.sort.key&&R.sort.key!=='__no'){
-    const col=REC_COLS.find(c=>c.key===R.sort.key),dir=R.sort.dir;
+    const col=recCols().find(c=>c.key===R.sort.key),dir=R.sort.dir;
     rows.sort((a,b)=>{const va=recCell(a,R.sort.key),vb=recCell(b,R.sort.key);
       if(col&&col.type==='num')return((+va||0)-(+vb||0))*dir;
       return String(va).localeCompare(String(vb),'ko')*dir;});
@@ -2764,7 +2783,7 @@ function recFilterCellHTML(c){
 }
 // ── 헤더 우클릭 팝업(엑셀식 값 선택 필터 + 필터행 토글) ──
 function recDistinct(key){
-  const R=window.__REC,col=REC_COLS.find(c=>c.key===key);
+  const R=window.__REC,col=recCols().find(c=>c.key===key);
   const arr=[...new Set(R.all.map(r=>String(recCell(r,key))))];
   if(col&&col.type==='num')arr.sort((a,b)=>(+a||0)-(+b||0));else arr.sort((a,b)=>String(a).localeCompare(String(b),'ko'));
   return arr;
@@ -2814,7 +2833,7 @@ function recMenuListHTML(){
   return head+items+(more?`<div class="rl-menu-note">상위 ${CAP}개 표시 · 검색으로 좁히세요</div>`:'');
 }
 function recMenuHTML(){
-  const M=window.__RECMENU,col=REC_COLS.find(c=>c.key===M.key);
+  const M=window.__RECMENU,col=recCols().find(c=>c.key===M.key);
   return `<div class="rl-menu-hd">${esc(col?col.label:'')} 필터</div><button class="rl-menu-row" data-act="rec.menuToggleRow">${window.__REC.filterRow?'필터행 숨기기':'필터행 표시'}</button><div class="rl-menu-sep"></div><input class="rl-menu-q" placeholder="검색" data-act="rec.menuSearch" value="${esc(M.q||'')}" autocomplete="off"><div class="rl-menu-list" id="rlMenuList">${recMenuListHTML()}</div><div class="rl-menu-foot"><button class="btn bg2 bsm" data-act="rec.menuClear">필터 해제</button><button class="btn bo bsm" data-act="rec.menuApply">적용</button></div>`;
 }
 function recMenuSyncAll(){
@@ -2841,6 +2860,7 @@ function recOpenMenu(key,x,y){
 function recCloseMenu(){const m=document.getElementById('rlMenu');if(m)m.style.display='none';window.__RECMENU=null;}
 // ── 피벗 테이블 (행 × 열 × 집계) ──
 const PIVOT_FIELDS=[
+  {key:'siteName',label:'현장'},
   {key:'__month',label:'접수월'},
   {key:'trade',label:'공종'},
   {key:'defectClass',label:'하자구분'},
@@ -2886,7 +2906,12 @@ function recPivotTableHTML(){
   const D=recPivotData();
   if(!D.grand)return '<div class="pv-empty">표시할 데이터가 없습니다</div>';
   const cd=cv=>cv==='(빈값)'?'(빈값)':esc(cv),arr=k=>D.sort.key===k?(D.sort.dir>0?' ▲':' ▼'):'';
-  const dsp=(c,sm)=>D.val==='avgDelay'?(c?Math.round(sm/c).toLocaleString():'·'):(c?c.toLocaleString():'·'); // 값 모드별 셀 표시
+  const dsp=(c,sm)=>{ // 값 모드별 셀 표시 — 건수 모드는 전체(합계) 대비 비중 % 병기(팀장급 구성비 파악용)
+    if(D.val==='avgDelay')return c?Math.round(sm/c).toLocaleString():'·';
+    if(!c)return '·';
+    const pct=D.grand?c/D.grand*100:0;
+    return c.toLocaleString()+`<span class="pv-pct">${pct>=9.95?pct.toFixed(0):pct.toFixed(1)}%</span>`;
+  };
   const lblHead=D.rks.length?D.rks.map(pivotFieldLabel).join(' › '):'전체';
   let h=`<thead><tr><th class="pv-rh pv-th" data-act="rec.pivotSort" data-pk="__label">${esc(lblHead)}${arr('__label')}</th>`;
   if(D.hasCol)D.colsA.forEach(cv=>h+=`<th class="pv-th" data-act="rec.pivotSort" data-pk="c:${esc(cv)}">${cd(cv)}${arr('c:'+cv)}</th>`);
@@ -2977,7 +3002,7 @@ function recPivotExport(){
 function recPivotAddMenu(zone,x,y){
   const R=window.__REC,P=R.pivot;
   const used=zone==='rows'?P.rows:(P.col?[P.col]:[]);
-  const avail=PIVOT_FIELDS.filter(f=>!used.includes(f.key));
+  const avail=PIVOT_FIELDS.filter(f=>!used.includes(f.key)&&(f.key!=='siteName'||(R&&R.withSite)));
   if(!avail.length){toast('추가할 필드가 없습니다');return;}
   window.__PVMENU={zone};
   let m=document.getElementById('pvMenu');
@@ -3003,19 +3028,19 @@ function recPivotValMenu(x,y){
 function recClosePvMenu(){const m=document.getElementById('pvMenu');if(m)m.style.display='none';window.__PVMENU=null;}
 function recHeadHTML(){
   const R=window.__REC;
-  const ths=REC_COLS.map(c=>{
+  const ths=recCols().map(c=>{
     const sortable=c.key!=='__no';
     const arr=R.sort.key===c.key?(R.sort.dir>0?' ▲':' ▼'):'';
     const act=sortable?rawHTML(' tabindex="0" data-act="rec.sort"'):'';
     return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}</th>`;
   }).join('');
-  const fins=REC_COLS.map(recFilterCellHTML).join('');
+  const fins=recCols().map(recFilterCellHTML).join('');
   return html`<thead><tr>${rawHTML(ths)}</tr><tr class="rl-frow${R.filterRow?' open':''}">${rawHTML(fins)}</tr></thead>`;
 }
 function recRowsHTML(rows){
-  if(!rows||!rows.length)return `<tr><td colspan="${REC_COLS.length}" style="text-align:center;padding:20px;color:var(--lbl3)">해당 조건의 건이 없습니다</td></tr>`;
+  if(!rows||!rows.length)return `<tr><td colspan="${recCols().length}" style="text-align:center;padding:20px;color:var(--lbl3)">해당 조건의 건이 없습니다</td></tr>`;
   return rows.map((i,idx)=>{
-    const cells=REC_COLS.map(c=>{
+    const cells=recCols().map(c=>{
       const v=c.key==='__no'?(idx+1):recCell(i,c.key);
       return html`<td class="${c.left?'rl-content':''}">${String(v)}</td>`;
     }).join('');
@@ -3035,20 +3060,34 @@ function recRenderHead(){
 }
 function recListBodyHTML(){
   const R=window.__REC;recComputeView();
-  const cols=REC_COLS.map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
+  const cols=recCols().map(c=>`<col${c.w?` style="width:${c.w}px"`:''}>`).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
 }
 function openRecList(sid,scope,trade){
-  const site=S.sites.find(s=>s.id===sid);if(!site)return;
-  const st=calc(S.def[sid]||[],site,S.rm);
-  const base=(scope==='lul'?st.lul:st.ul)||[];
+  let base,dispName;
+  if(sid==='__team'){
+    // 팀 전체 목록 — 대시보드 KPI에서 진입. 현장별 목록을 병합하고 각 행에 현장명을 부착.
+    // 편집자는 calc(로컬 원본), 뷰어는 calc의 스냅샷 조기반환(게시 kpi.ul — ulz 전체본)이라 양쪽 동일 경로.
+    const t=(S.teams||[]).find(x=>x.id===S.teamId)||(S.teams||[])[0]||{};
+    dispName=(t.name||'전체')+' 전체현장';
+    base=[];
+    dashSites().forEach(s2=>{
+      const st2=calc(S.def[s2.id]||[],s2,S.rm);
+      ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:s2.name})));
+    });
+  }else{
+    const site=S.sites.find(s=>s.id===sid);if(!site)return;
+    const st=calc(S.def[sid]||[],site,S.rm);
+    base=(scope==='lul'?st.lul:st.ul)||[];
+    dispName=site.name||'';
+  }
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'},label:(site.name||'')+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500};
+  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'},label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team'};
   {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
-  const title=`${esc(site.name)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
+  const title=`${esc(dispName)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
   document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
   recRenderModalBody();
   document.getElementById('mf').innerHTML='';
@@ -3558,9 +3597,9 @@ function rDash(){
     {cls:'bl',label:'관리대상현장',valHTML:`<span class="kpi-pc">${tUnits.toLocaleString()}<span class="u">세대</span></span><span class="kpi-mo kpi-team">${esc((((S.teams||[]).find(t=>t.id===S.teamId)||(S.teams||[])[0])||{}).name||'전체')}</span>`,meta:`<span class="kpi-pc">${dashSites().length.toLocaleString()}개 현장</span><span class="kpi-mo">${dashSites().length}개 현장 ${tUnits.toLocaleString()}세대</span>`},
     {cls:'sk',label:'전체 접수',val:tR,unit:'건',meta:`세대당 ${tUnits>0?(tR/tUnits).toFixed(1):'0.0'}건`},
     {cls:'ms',label:'처리 완료',val:tRes,unit:'건',meta:`처리율 ${rate.toFixed(1)}%`},
-    {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`},
-    {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`},
-  ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div></div>`).join('');
+    {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`,act:'ul',tt:'팀 전체 미처리 목록 보기'},
+    {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`,act:'lul',tt:'팀 전체 장기미처리 목록 보기'},
+  ].map(k=>`<div class="kc ${k.cls}${k.act?' kc-click':''}"${k.act?` data-act="rec.list" data-sid="__team" data-scope="${k.act}"`:''}${k.tt?` data-tt="${esc(k.tt)}"`:''}><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div>${k.act?`<span class="kc-cta">목록 보기 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>`:''}</div>`).join('');
   document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const ld=st.lt-st.prev.lt,isUp=ld>0,isFlat=ld===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--b700);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}" aria-label="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
   // 합계 행 — sortDT에도 위치 고정 (tfoot에 별도 배치). 데이터 0건일 땐 비움.
   const ft=document.getElementById('dtfoot');
@@ -5056,7 +5095,7 @@ async function exportSnapshot(){
     await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
     const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
     const st={};
-    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)});});
+    dashSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 스냅샷 파일은 캡 불필요 — 전체 임베드
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
     const json=JSON.stringify(payload).replace(/<\//g,'<\\/').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');   // 종료태그·줄종료자(U+2028/9) 차단
     const keep=window.__SNAP__; window.__SNAP__=null;
