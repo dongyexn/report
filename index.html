@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-IsJYzy5qOvyIO4DnVnNHryFY1opvprQqtD0Fbxea644=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-dUgFEW+URNQUDCN9so8cyHPSC0VvD18wpwKaDVEuVlM=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -515,6 +515,7 @@ table.dt-detail th{text-align:center!important;}
 .rl-band b{font-weight:700;color:var(--lbl);font-variant-numeric:tabular-nums;}
 @media(hover:hover){.rl-band:hover{border-color:var(--b300);}}
 .rl-band.on{background:var(--b600);border-color:var(--b600);color:#fff;}
+.rl-vsep{width:1px;height:16px;background:var(--sepo);margin:0 3px;flex:none;} /* 지연구간 칩과 공가 칩 사이 구분선 */
 .rl-band.on b{color:#fff;}
 .rl-band.d60.on{background:#DA6A60;border-color:#DA6A60;}
 .rl-band.d30.on{background:#E89C9A;border-color:#E89C9A;color:#6e2b27;}
@@ -564,8 +565,7 @@ table.dt-detail th{text-align:center!important;}
 .ctx-it{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--lbl);padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ctx-it:hover{background:var(--b50);color:var(--b700);}
 .ctx-sep{height:1px;background:var(--sep);margin:4px 6px;}
-/* 목록 열 너비 조절 핸들 */
-.rl-table thead th{position:relative;}
+/* 목록 열 너비 조절 핸들 — th는 기존 sticky 유지(sticky도 absolute 자식의 기준이 됨. relative로 덮으면 헤더 고정이 풀림) */
 .rl-rz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2;touch-action:none;}
 .rl-rz:hover{background:linear-gradient(to right,transparent 3px,var(--b200) 3px,var(--b200) 5px,transparent 5px);}
 .pv-table thead th.pv-tot{background:#E6EBF1;color:var(--lbl);}
@@ -1808,7 +1808,7 @@ registerActions('click', {
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
-  'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||''),
+  'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||'', el.dataset.vac||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
   'rec.pivotPct':()=>{const R=window.__REC;if(!R)return;R.showPct=!R.showPct;recRenderModalBody();},
   'rec.copyTable':()=>{const R=window.__REC;if(!R)return;
@@ -1826,6 +1826,7 @@ registerActions('click', {
   'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=recCols().map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>recCols().map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
   'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
   'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
+  'rec.vac':(el)=>{const R=window.__REC;if(!R)return;const v=el.dataset.vac||'';R.vac=(R.vac===v||!v)?null:v;recRenderModalBody();},
   'rec.pivotVal':(el)=>{const r=el.getBoundingClientRect();recPivotValMenu(r.left,r.bottom+4);},
   'rec.pivotValPick':(el)=>{const R=window.__REC;if(!R)return;R.pivot.val=el.dataset.val;recClosePvMenu();recRenderModalBody();},
   'rec.sort':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.key;if(R.sort.key===k){if(R.sort.dir===1){R.sort.key=null;R.sort.dir=-1;}else R.sort.dir=1;}else{R.sort.key=k;R.sort.dir=-1;}recRenderHead();recRenderBody();},
@@ -2710,7 +2711,7 @@ async function fb2Publish(){
       let ulz='';
       try{
         if(typeof LZString!=='undefined'){
-          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,receiptContent:maskPII(String(i.receiptContent||'')),repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
+          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,receiptContent:maskPII(String(i.receiptContent||'')),saleStatus:i.saleStatus,repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
           ulz=LZString.compressToBase64(JSON.stringify(slim));
         }
       }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
@@ -2849,6 +2850,7 @@ function recComputeView(){
   const R=window.__REC;if(!R)return [];
   let rows=R.all.slice();
   if(R.band)rows=rows.filter(r=>recBandOf(recDelayDays(r,R))===R.band); // 지연구간 칩 필터 (KPI와 동일 기준)
+  if(R.vac)rows=rows.filter(r=>R.vac==='unit'?isVacUnit(r):isVacStore(r,{hasCommercial:(r.__hc!==undefined?r.__hc:R.vacHC)})); // 공가세대·공가상가 칩 필터
   if(R.q&&R.q.trim()){ // 통합 검색: 공백=AND, 'N동'/'N호'는 정밀, 그 외는 주요 필드 부분매치
     const toks=R.q.trim().split(/\s+/).filter(Boolean);
     rows=rows.filter(r=>toks.every(t=>{
@@ -3089,7 +3091,9 @@ function recBandBarHTML(){
   const lims=[[500,'500건'],[1000,'1,000건'],[5000,'5,000건'],[0,'전체']]; // 0=Infinity
   const cur=(R.limit===Infinity||!R.limit)?0:R.limit;
   const limHTML=R.pivotOn?'':`<span class="rl-lim-lbl">표시</span><span class="rl-lim">${lims.map(([n,l])=>`<button class="${cur===n?'on':''}" data-act="rec.limit" data-n="${n}">${l}</button>`).join('')}</span>`; // 피벗은 집계라 표시건수 무의미 — 숨김
-  return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+limHTML+`</div>`;
+  const vc=R.vacCnt||{unit:0,store:0};
+  const vacHTML=`<span class="rl-vsep"></span><button class="rl-band${R.vac==='unit'?' on':''}" data-act="rec.vac" data-vac="unit" data-tt="공가세대(미분양·미납)만 표시">공가세대 <b>${vc.unit.toLocaleString()}</b></button>`+(R.hasHC?`<button class="rl-band${R.vac==='store'?' on':''}" data-act="rec.vac" data-vac="store" data-tt="공가상가만 표시">공가상가 <b>${vc.store.toLocaleString()}</b></button>`:'');
+  return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+vacHTML+limHTML+`</div>`;
 }
 function recRowsCapped(R){
   return recRowsHTML(R.view.slice(0,R.limit||Infinity)); // 표시 건수는 밴드 바 우측 필터로 제어
@@ -3187,9 +3191,10 @@ function recListBodyHTML(){
   const cols=recVisCols().map(c=>{const w=(R.colW&&R.colW[c.key])||c.w;return `<col${w?` style="width:${w}px"`:''}>`;}).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
 }
-function openRecList(sid,scope,trade){
+function openRecList(sid,scope,trade,vac){
   let base,dispName;
   let expCnt=0; // 게시 KPI상 기대 건수 — 구게시본(전체 목록 미포함, 300건 캡)일 때 목록 축소 안내용
+  let vacHC=false,hasHC=false; // 공가상가 판별용 — 단일 현장은 현장 플래그, 팀 병합은 행별 __hc 사용
   if(sid==='__team'){
     // 팀 전체 목록 — 대시보드 KPI에서 진입. 현장별 목록을 병합하고 각 행에 현장명을 부착.
     // 편집자는 calc(로컬 원본), 뷰어는 calc의 스냅샷 조기반환(게시 kpi.ul — ulz 전체본)이라 양쪽 동일 경로.
@@ -3200,7 +3205,8 @@ function openRecList(sid,scope,trade){
       const st2=calc(S.def[s2.id]||[],s2,S.rm);
       expCnt+=(scope==='lul'?st2.lt:st2.unr)||0;
       const _sn=String(s2.name||'').replace(/힐스테이트/g,'HS').replace(/\s+/g,' ').trim(); // 목록·피벗 표시용 축약
-      ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:_sn})));
+      if(s2.hasCommercial)hasHC=true;
+      ((scope==='lul'?st2.lul:st2.ul)||[]).forEach(i=>base.push(Object.assign({},i,{siteName:_sn,__hc:!!s2.hasCommercial})));
     });
   }else{
     const site=S.sites.find(s=>s.id===sid);if(!site)return;
@@ -3208,12 +3214,15 @@ function openRecList(sid,scope,trade){
     base=(scope==='lul'?st.lul:st.ul)||[];
     expCnt=(scope==='lul'?st.lt:st.unr)||0;
     dispName=site.name||'';
+    vacHC=hasHC=!!site.hasCommercial;
   }
   const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team',hidden:new Set(),colW:{}};
-  {const R=window.__REC,bc={d0:0,d30:0,d60:0};rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;});R.bandCnt=bc;}
+  window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team',hidden:new Set(),colW:{},vac:(vac==='unit'||vac==='store')?vac:null,vacHC:vacHC,hasHC:hasHC};
+  {const R=window.__REC,bc={d0:0,d30:0,d60:0},vc={unit:0,store:0};
+   rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;if(isVacUnit(r))vc.unit++;if(isVacStore(r,{hasCommercial:(r.__hc!==undefined?r.__hc:R.vacHC)}))vc.store++;});
+   R.bandCnt=bc;R.vacCnt=vc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
   const title=`${esc(dispName)} · ${scopeLabel}${trade?(' · '+esc(trade)):''}`;
   document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm no-print" data-act="rec.copyTable" data-tt="현재 표를 클립보드로 복사 — 엑셀·메일에 바로 붙여넣기(Ctrl+V)">표 복사</button><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
@@ -3558,7 +3567,26 @@ function _calcImpl(items,site,rm){
   const critUl=_critAll.filter(i=>!isDone(i,rmEnd));
   const critUnr=critUl.length;
   const critPrevUnr=prev.filter(i=>isCritCandidate(i)&&!isDone(i,pmEnd)).length;
-  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul};
+  // 공종별 전체 처리현황 집계(trAgg) — 현장 화면 표의 단일 출처. 게시 kpi에 실려 뷰어·스냅샷도 동일 표를 본다.
+  //   (기존에는 rSite가 로컬 원본으로 직접 재계산 → 원본이 없는 뷰어에서 표가 비는 문제)
+  const _trm={};
+  for(const i of all){
+    if(i.receiptDate>rmEnd)continue;
+    const t=i.trade||'기타';
+    const o=_trm[t]||(_trm[t]={t,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,co:{},pu:0,plt:0});
+    o.r++;
+    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=rmEnd;
+    if(done)o.res++;else{o.u++;const dd=daysBetween(i.receiptDate,rmEnd);if(dd>=60){o.d60++;o.lt++;}else if(dd>=30){o.d30++;o.lt++;}else o.d0++;}
+    if(i.contractor)o.co[i.contractor]=(o.co[i.contractor]||0)+1;
+  }
+  for(const i of all){ // 전월 기준 역산(증감용) — rmEnd 범위가 pmEnd를 포함하므로 _trm에 항목 존재 보장
+    if(i.receiptDate>pmEnd)continue;
+    const o=_trm[i.trade||'기타'];if(!o)continue;
+    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=pmEnd;
+    if(!done){o.pu++;if(daysBetween(i.receiptDate,pmEnd)>=30)o.plt++;}
+  }
+  const trAgg=Object.values(_trm).sort((a,b)=>b.u-a.u).map(o=>({t:o.t,r:o.r,res:o.res,u:o.u,lt:o.lt,d0:o.d0,d30:o.d30,d60:o.d60,coTop:Object.entries(o.co).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-',coN:Object.keys(o.co).length,pu:o.pu,plt:o.plt}));
+  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul,trAgg};
 }
 function topT(items,n){
   const m={};
@@ -4281,6 +4309,7 @@ function shortName(name){if(!name)return'-';const stripped=String(name).replace(
 // 공가 미처리 상위 공종 표 (세대/상가 공용)
 function vacRowsHTML(sid,stat,cm,planField){
   const unr=stat.Unr,topPrev=stat.TopPrev||{};
+  const _vk=planField==='commercialProcessingPlan'?'store':'unit'; // 목록 진입 시 공가 칩 사전 선택용
   const rowFn=(t,i)=>{
     const plan=cm[planField]?.[S.rm+'@'+t.t]||'';
     const ratio=unr>0?(t.c/unr*100).toFixed(1):'0.0';
@@ -4288,7 +4317,7 @@ function vacRowsHTML(sid,stat,cm,planField){
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
     const coCell=esc(t.co||'-');
-    return`<tr><td class="cc"><b>${i+1}</b></td><td><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(t.t)}" data-vac="${_vk}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   const etcFn=(etc)=>{
     if(!etc)return'';
@@ -4298,13 +4327,13 @@ function vacRowsHTML(sid,stat,cm,planField){
     const ratio=unr>0?(etc.c/unr*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planE=cm[planField]?.[S.rm+'@기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></td></tr>`;
   };
   const totFn=(tot,prevTot)=>{
     if(!tot)return'';
     const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
   };
   const base=(stat.Top||[]).filter(t=>!t.isT&&!t.isO);
   const etc=(stat.Top||[]).find(t=>t.isO),tot=(stat.Top||[]).find(t=>t.isT);
@@ -4392,7 +4421,7 @@ function rSite(sid){
     const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
     const coCell=esc(t.co||'-');
-    return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="lul" data-trade="${esc(t.t)}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="lul" data-trade="${esc(t.t)}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   // 기타 행 — 순위 없음, 시공업체는 외 N개 업체, 전월=기타 묶음 공종들의 전월 합
   const trEtcFn=(etc,prevMap)=>{
@@ -4403,14 +4432,14 @@ function rSite(sid){
     const ratio=st.lt>0?(etc.c/st.lt*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planEtc=cm.processingPlan?.[S.rm+'@기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--b600);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
   };
   // 합계 행
   const trTotFn=(tot,prevTot)=>{
     if(!tot)return'';
     const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--b600)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
   };
   const trBase=st.topLt.filter(t=>!t.isT&&!t.isO);
   const trEtc=st.topLt.find(t=>t.isO),trTot=st.topLt.find(t=>t.isT);
@@ -4470,15 +4499,12 @@ function rSite(sid){
   // All-trade table for trade tab — 시공업체 최다 사용 1개 + 추가 N
   // 공종별 전체 처리 현황 — 현장별 하자처리 현황과 동일 구성
   // NO/공종/시공업체/전체접수/처리/처리율/미처리/장기미처리/장기미처리비율(바)/전월대비
-  const allTrade={};const daysBet2=(a,b)=>{return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));};
-  filtered.forEach(i=>{const t=i.trade||'기타';if(!allTrade[t])allTrade[t]={t,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,co:{}};if(!i.receiptDate||i.receiptDate>st.rmEnd)return;allTrade[t].r++;const done=i.status==='처리'&&i.completionDate&&i.completionDate<=st.rmEnd;if(done){allTrade[t].res++;}else{allTrade[t].u++;const dd=daysBet2(i.receiptDate,st.rmEnd);if(dd>=60){allTrade[t].d60++;allTrade[t].lt++;}else if(dd>=30){allTrade[t].d30++;allTrade[t].lt++;}else allTrade[t].d0++;}const co=i.contractor||'';if(co)allTrade[t].co[co]=(allTrade[t].co[co]||0)+1;});
-  // 전월(st.pmEnd) 기준 공종별 장기미처리 비율 역산 — 증감 계산용
-  const _pmTrade={};filtered.forEach(i=>{if(!i.receiptDate||i.receiptDate>st.pmEnd)return;const t=i.trade||'기타';if(!_pmTrade[t])_pmTrade[t]={u:0,lt:0};const done=i.status==='처리'&&i.completionDate&&i.completionDate<=st.pmEnd;if(!done){_pmTrade[t].u++;if(daysBet2(i.receiptDate,st.pmEnd)>=30)_pmTrade[t].lt++;}});
-  const allTradeRows=Object.values(allTrade).sort((a,b)=>b.u-a.u).map((x,i)=>{
+  // 공종별 전체 처리현황 — calc의 trAgg(단일 출처)를 사용. 뷰어는 게시 kpi에 실린 trAgg를 그대로 받는다.
+  const allTradeRows=(st.trAgg||[]).map((x,i)=>{
     const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
-    const coE=Object.entries(x.co).sort((a,b)=>b[1]-a[1]);const coTop=coE[0]?.[0]||'-';
+    const coTop=x.coTop||'-';
     const ltr=x.u>0?(x.lt/x.u*100):0;
-    const p=_pmTrade[x.t]||{u:0,lt:0},pLtr=p.u>0?(p.lt/p.u*100):0;
+    const p={u:x.pu||0,lt:x.plt||0},pLtr=p.u>0?(p.lt/p.u*100):0;
     const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';
     const p60=x.u>0?Math.min(x.d60/x.u*100,100):0,p30=x.u>0?Math.min(x.d30/x.u*100,100):0,p0=x.u>0?Math.min(x.d0/x.u*100,100):0;
     const uD=x.u-p.u,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';
