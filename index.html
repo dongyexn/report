@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-BWmudgve0FyNndGqMbecDf8oylWjrkk3QlkjSc7MPSc=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-7S7GCleo6cmdTGHEAYhhfSuoclUvpH/r0QuaygoJ4Js=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1385,6 +1385,24 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .rz-tabs .tnav-i{padding:7px 10px;font-size:12.5px;}
 .rz-sec{display:none;}
 .rz-sec.act{display:block;}
+/* 주요 이슈 카드 확장 — 클릭 시 컨테이너를 덮는 오버레이, 다시 클릭 시 복귀 */
+.ins-grid{position:relative;}
+.ic[data-act="dash.insToggle"]{cursor:pointer;}
+.ins-grid .ic.exp{position:absolute;inset:0;z-index:6;overflow:auto;cursor:default;box-shadow:0 10px 30px rgba(0,0,0,.14);}
+.insd{margin-top:10px;border-top:1px dashed rgba(0,0,0,.16);padding-top:10px;font-size:12px;cursor:default;}
+.insd-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:12.5px;}
+.insd-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.insd-cols{display:flex;gap:18px;flex-wrap:wrap;}
+.insd-b{flex:1 1 150px;min-width:140px;}
+.insd-bt{font-weight:700;margin-bottom:5px;color:var(--lbl);}
+.insd-r{display:flex;align-items:center;gap:6px;padding:2px 0;}
+.insd-r>b{margin-left:auto;}
+.insd-l{cursor:pointer;color:var(--b700);}
+.insd-l:hover{text-decoration:underline;}
+.insd-p{width:34px;text-align:right;color:var(--lbl3);font-size:11px;}
+.insd-tip{margin-top:8px;font-size:11px;color:var(--lbl3);}
+.insd-empty{color:var(--lbl3);}
+@media print{.ins-grid .ic.exp{position:static;box-shadow:none;}.insd{display:none;}}
 </style>
 </head>
 <body>
@@ -1818,6 +1836,8 @@ registerActions('click', {
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'set.rulesAll':()=>openRulesModal(), 'modal.rulesSave':()=>rulesModalSave(), 'modal.rulesResetAll':()=>rulesModalResetAll(), 'modal.ruleReset':(el)=>rulesModalResetOne(el.dataset.rid),
+  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',safeHTML(insDetailHTML(el.dataset.instt||'')));el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
+  'dash.insList':(el)=>{openRecList('__team',el.dataset.scope||'ul','','');const R=window.__REC;if(!R)return;const k=el.dataset.fk,v=el.dataset.fv;if(k&&v!=null){R.valueFilters[k]=new Set([v]);R.filterRow=true;recRenderModalBody();}}, // 팀 목록 열고 카드 주제(보수주체·유형·업체) 필터 적용
   'modal.rulesTab':(el)=>{const t=el.dataset.rztab;document.querySelectorAll('#mbody .rz-tab').forEach(b=>b.classList.toggle('act',b.dataset.rztab===t));document.querySelectorAll('#mbody .rz-sec').forEach(p=>p.classList.toggle('act',p.dataset.rzsec===t));const sc=document.querySelector('#mbody .md-scroll');if(sc)sc.scrollTop=0;}, // 규칙 모달 탭 전환 — 섹션 show/hide만, 입력값은 DOM에 유지
   'set.aiRulesReset':()=>{if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}S.aiRules='';S.critKw='';S.rulesOvr={};localStorage.removeItem('aiRules');localStorage.removeItem('critKw');localStorage.removeItem('rulesOvr');_critRxCache={};_calcCache.clear();fb2RulesWrite();toast('AI 분석 규칙을 기본값으로 되돌렸습니다 · 팀 전체 적용');}, // 규칙 수정본(rulesOvr)까지 일괄 초기화 · 팀 공유 반영 · click맵 등록(기존 input맵 등록은 버튼 클릭에 반응하지 않던 버그 수정)
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
@@ -2746,12 +2766,12 @@ async function fb2Publish(){
     toast('등록 준비 중…');
     const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3): 느린 기기·백그라운드 탭 캡처 누락 불가
     if(S.view==='dashboard'&&rDash._flush)rDash._flush(); // 대시보드에 있으면 인사이트를 동기 최신화 후 캡처
-    let insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
+    let insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
     if(!insightsHTML.replace(/\s/g,'')){
       // 이 세션에서 대시보드를 열지 않고 설정에서 바로 게시한 경우 — 인사이트 지연 렌더(_late)는
       // 대시보드 뷰가 아니면 스킵하므로 DOM이 비어 있다. 스냅샷 내보내기와 동일하게 대시보드로
       // 이동해 동기 렌더 후 캡처한다(게시 직후 결과 확인 동선과도 자연스럽게 일치).
-      try{go('dashboard');if(rDash._flush)rDash._flush();insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';}
+      try{go('dashboard');if(rDash._flush)rDash._flush();insightsHTML=insCleanHTML();}
       catch(e){console.warn('[FB2] 주요 이슈 사전 렌더 실패',e);}
     }
     const rm=S.rm;
@@ -3357,6 +3377,24 @@ document.addEventListener('pointerdown',function(e){
   document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
 });
 document.addEventListener('click',function(e){if(e.target.closest('.rl-rz')){e.stopPropagation();e.preventDefault();}},true); // 핸들 클릭이 헤더 정렬로 전파되는 것 차단
+// 화면 표를 탭 구분 텍스트로 복사(엑셀·메일 Ctrl+V) — 정렬 화살표·버튼 등 화면전용 요소 제외, 처리계획 등 입력칸은 입력값 사용
+function ctxCopyTable(tbl){
+  if(!tbl)return;
+  const rows=[];
+  tbl.querySelectorAll('tr').forEach(tr=>{
+    if(tr.closest('table')!==tbl)return; // 중첩 표 방어
+    const cells=[...tr.children].filter(c=>c.tagName==='TD'||c.tagName==='TH');
+    if(!cells.length)return;
+    rows.push(cells.map(c=>{
+      const f=c.querySelector('textarea,input');
+      let t;
+      if(f)t=String(f.value||'');
+      else{const cl=c.cloneNode(true);cl.querySelectorAll('.sortmk,.no-print,button,svg').forEach(x=>x.remove());t=cl.textContent;}
+      return t.replace(/\s+/g,' ').trim();
+    }).join('\t'));
+  });
+  ctxCopy(rows.join('\n'),'표를 복사했습니다 · 엑셀·메일에 붙여넣기(Ctrl+V)');
+}
 document.addEventListener('contextmenu',function(e){
   if(e.target.closest('input,textarea,select,[contenteditable="true"]'))return; // 입력 요소 — 기본 메뉴 유지(붙여넣기·맞춤법)
   if(window.getSelection&&String(window.getSelection())!=='')return; // 텍스트 선택 중 — 기본 복사 메뉴 유지
@@ -3408,8 +3446,73 @@ document.addEventListener('contextmenu',function(e){
         {sep:true},
         {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
         {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
+        {sep:true},
+        {label:'셀 값 복사',act:()=>ctxCopy((e.target.closest('td')||dtr).textContent.trim())},
+        {label:'표 복사',act:()=>ctxCopyTable(dtr.closest('table'))},
       ]);return;
     }
+  }
+  // ⑤ 사이드바 현장 항목 — 현장 열기/목록 바로가기(+편집자: 현장 정보 수정) · 대시보드 행 메뉴(③)와 대칭
+  const sti=e.target.closest('.sti[data-site]');
+  if(sti){
+    const sid=sti.dataset.site;
+    const items=[
+      {label:'현장 화면 열기',act:()=>go('site',sid)},
+      {sep:true},
+      {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
+      {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
+    ];
+    if(!manageLocked()){items.push({sep:true});items.push({label:'현장 정보 수정',act:()=>openSM(sid)});}
+    e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
+  }
+  // ⑥ 현장 종합 분석(AI) 영역 — 텍스트 복사/재생성
+  const ait=e.target.closest('.ait[id^="ait-"]');
+  if(ait){
+    const sid=ait.id.slice(4);
+    e.preventDefault();openCtx(e.clientX,e.clientY,[
+      {label:'분석 텍스트 복사',act:()=>ctxCopy(ait.innerText.trim())},
+      {sep:true},
+      {label:'AI 분석 재생성',act:()=>runAI(sid)},
+    ]);return;
+  }
+  // ⑦ 대시보드 주요 이슈 카드 — 텍스트 복사/AI 재작성
+  const ins=e.target.closest('#d-insight');
+  if(ins){
+    e.preventDefault();openCtx(e.clientX,e.clientY,[
+      {label:'이슈 텍스트 복사',act:()=>ctxCopy(ins.innerText.trim())},
+      {sep:true},
+      {label:'AI로 재작성',act:()=>runDashAI()},
+    ]);return;
+  }
+  // ⑧ 현장 화면 공종 표 행 — 공종 필터 드릴다운(미처리/장기미처리) + 복사. 기존 공종 셀 클릭(rl-link)은 한 종류 고정이라 우클릭이 보완
+  const ttr=e.target.closest('table[id^="trade-"] tbody tr, table[id^="ttop-"] tbody tr, table[id^="vtop-"] tbody tr');
+  if(ttr&&ttr.cells&&ttr.cells.length>2){
+    const tbl=ttr.closest('table'),parts=tbl.id.split('-');
+    const isV=parts[0]==='vtop';
+    const sid=isV?parts.slice(2).join('-'):parts.slice(1).join('-');
+    const link=ttr.querySelector('.rl-link');
+    const trade=(link&&link.dataset.trade)||(ttr.cells[1]?ttr.cells[1].textContent.trim():'');
+    const vac=isV?((link&&link.dataset.vac)||parts[1]):''; // 공가 표는 공가 필터 유지
+    const items=[];
+    if(trade&&trade!=='합계'){
+      const short=trade.length>10?trade.slice(0,10)+'…':trade;
+      items.push({label:`"${short}" 미처리 목록`,act:()=>openRecList(sid,'ul',trade,vac)});
+      items.push({label:`"${short}" 장기미처리 목록`,act:()=>openRecList(sid,'lul',trade,vac)});
+      items.push({sep:true});
+    }
+    const cell=e.target.closest('td');
+    if(cell)items.push({label:'셀 값 복사',act:()=>ctxCopy(cell.textContent.trim())});
+    items.push({label:'표 복사',act:()=>ctxCopyTable(tbl)});
+    e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
+  }
+  // ⑨ 일반 표(.dt) — 표 복사(엑셀 붙여넣기)/셀 값 복사. 목록(rl-table)·피벗(pv-table)은 전용 메뉴(①②·헤더)가 담당
+  const gt=e.target.closest('table.dt');
+  if(gt&&!gt.classList.contains('rl-table')&&!gt.classList.contains('pv-table')){
+    const cell=e.target.closest('td,th');
+    const items=[];
+    if(cell)items.push({label:'셀 값 복사',act:()=>ctxCopy(cell.textContent.trim())});
+    items.push({label:'표 복사',act:()=>ctxCopyTable(gt)});
+    e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
   }
   // ④ 차트 — 이미지 복사(보고서 붙여넣기용) / PNG 저장
   const cnv=e.target.closest('canvas');
@@ -4070,6 +4173,40 @@ function rDash(){
 // 주요 이슈 — 11종 후보 점수화 → 상위 3개 노출.
 // 점수 = 전월대비 변화 점수×0.6 + 현장 간 z-score×0.4 (월간회의: 전월대비 우선, 튀는 현장 가중).
 // 카드당 2줄: 1줄=핵심수치(전월대비), 2줄=진단·조치. 제목은 후보별 자동.
+// ── 주요 이슈 카드 확장 상세 ──
+// 카드 제목(ttl) 프리셋으로 관련 미처리 건을 필터해 현장별·공종·유형·지연구간 분해와 목록 바로가기를 생성.
+// 데이터는 확장 시점에 calc로 재계산 — 편집자(로컬 원본)·뷰어(게시 kpi 조기반환) 동일 경로, AI 재작성 후에도 제목이 유지되므로 유효.
+function insDetailHTML(ttl){
+  const list=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));
+  if(!list.length)return '<div class="insd"><div class="insd-empty">데이터 없음</div></div>';
+  const t=String(ttl||'');
+  const lul=/장기미처리/.test(t);
+  let rows=list.flatMap(x=>((lul?x.st.lul:x.st.ul)||[]).map(i=>({i,s:x.s})));
+  const aggr=key=>{const m={};rows.forEach(r=>{const k=r.i[key]||'기타';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);};
+  let filtLbl='',listBtns='';
+  const scopeLbl=lul?'장기미처리(30일+)':'미처리',sc=lul?'lul':'ul';
+  const teamBtn=(lb,extra)=>`<button class="btn bo bsm" data-act="${extra&&extra.indexOf('data-fk')>=0?'dash.insList':'rec.list'}" data-sid="__team" data-scope="${sc}"${extra||''}>${lb}</button>`;
+  if(/품의/.test(t)){rows=rows.filter(r=>r.i.repairParty==='품의(대기)');filtLbl='품의(대기)';listBtns=teamBtn('품의(대기) 목록',' data-fk="repairParty" data-fv="품의(대기)"');}
+  else if(/공가/.test(t)){rows=rows.filter(r=>isVacUnit(r.i));filtLbl='공가세대';listBtns=teamBtn('공가세대 목록',' data-vac="unit"');}
+  else if(/하자유형/.test(t)){const top=aggr('defectType')[0];if(top){rows=rows.filter(r=>(r.i.defectType||'기타')===top[0]);filtLbl=top[0]+' 유형';listBtns=teamBtn(esc(top[0])+' 목록',` data-fk="defectType" data-fv="${esc(top[0])}"`);}}
+  else if(/협력사|업체/.test(t)){const m={};rows.forEach(r=>{const k=r.i.contractor||'';if(!k||k==='미지정')return;m[k]=(m[k]||0)+1;});const top=Object.entries(m).sort((a,b)=>b[1]-a[1])[0];if(top){rows=rows.filter(r=>(r.i.contractor||'')===top[0]);filtLbl=top[0];listBtns=teamBtn(esc(top[0])+' 목록',` data-fk="contractor" data-fv="${esc(top[0])}"`);}}
+  else listBtns=teamBtn(lul?'팀 장기미처리 목록':'팀 미처리 목록','');
+  if(!rows.length)return '<div class="insd" data-act="modal.stop"><div class="insd-empty">해당 조건의 '+scopeLbl+' 건이 없습니다</div></div>';
+  // 지연구간 분해(기준월 말일 역산 — 대시보드 지연 기준과 동일)
+  const _p=S.rm.split('-').map(Number),_end=new Date(_p[0],_p[1],0);
+  const bands=[0,0,0];rows.forEach(r=>{const d=r.i.receiptDate?Math.max(0,Math.round((_end-new Date(r.i.receiptDate))/86400000)):0;bands[d>=60?2:d>=30?1:0]++;});
+  const sm={};rows.forEach(r=>{sm[r.s.id]=(sm[r.s.id]||0)+1;});
+  const siteRows=Object.entries(sm).map(([id,v])=>({s:list.find(x=>x.s.id===id).s,v})).sort((a,b)=>b.v-a.v).slice(0,6);
+  const tot=rows.length;
+  const mini=(bt,pairs)=>`<div class="insd-b"><div class="insd-bt">${bt}</div>${pairs.map(p=>`<div class="insd-r">${p.h}<b>${p.v.toLocaleString()}</b><span class="insd-p">${Math.round(p.v/tot*100)}%</span></div>`).join('')||'<div class="insd-r insd-empty">없음</div>'}</div>`;
+  const bSite=mini('현장별 상위',siteRows.map(r=>({h:`<span class="insd-l" data-act="nav.site" data-site="${esc(r.s.id)}">${esc(shortName(r.s.name))}</span>`,v:r.v})));
+  const bTr=mini('공종 상위',aggr('trade').slice(0,5).map(([k,v])=>({h:`<span>${esc(k)}</span>`,v})));
+  const bDt=mini('하자유형 상위',aggr('defectType').slice(0,5).map(([k,v])=>({h:`<span>${esc(k)}</span>`,v})));
+  const bBand=mini('지연구간',[['~29일',bands[0]],['30~59일',bands[1]],['60일+',bands[2]]].map(([k,v])=>({h:`<span>${k}</span>`,v})));
+  return `<div class="insd" data-act="modal.stop"><div class="insd-h"><span>${esc(filtLbl||scopeLbl)} <b>${tot.toLocaleString()}건</b> 기준 상세</span><span class="insd-btns">${listBtns}</span></div><div class="insd-cols">${bSite}${bTr}${bDt}${bBand}</div><div class="insd-tip">현장명 클릭 → 현장 화면 · 카드를 다시 클릭하면 접힙니다</div></div>`;
+}
+// 게시·스냅샷 캡처용 — 확장 상태(.exp)·상세(.insd)를 제거한 정적 HTML
+function insCleanHTML(){const el=document.getElementById('d-insight');if(!el)return '';const c=el.cloneNode(true);c.querySelectorAll('.insd').forEach(x=>x.remove());c.querySelectorAll('.ic.exp').forEach(x=>{x.classList.remove('exp');x.setAttribute('aria-expanded','false');});c.classList.remove('ins-open');return c.innerHTML;}
 function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
   const el=document.getElementById('d-insight');if(!el)return;
   if(window.__SNAP__){ // 스냅샷: 임베드 인사이트(살균) — 비어 있으면(구게시본·대시보드 미방문 게시) 안내 표시
@@ -4247,7 +4384,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     // 그냥 점수순 상위 3
     for(const c of allItems){items.push(c);if(items.length===3)break;}
   }
-  el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
+  el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}" data-act="dash.insToggle" data-instt="${esc(x.ttl)}" role="button" tabindex="0" aria-expanded="false"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
   // AI 재작성 입력용으로 선정 결과 보관 (수치·맥락은 규칙기반 결과를 그대로 사용)
   S._dashIns=items.map(x=>({cls:x.cls,icon:x.icon,ttl:x.ttl,sub:x.sub}));
 }
@@ -4850,11 +4987,11 @@ async function runDashAI(){
     let txt=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```$/,'').trim();
     const arr=JSON.parse(txt);
     if(!Array.isArray(arr)||arr.length<items.length)throw new Error('형식 오류');
-    el.innerHTML=items.map((x,i)=>{const a=arr[i]||{};const l1=safeHTML(a.line1||''),l2=safeHTML(a.line2||'');return `<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${l1}<br>${l2}</div></div></div>`;}).join('');
+    el.innerHTML=items.map((x,i)=>{const a=arr[i]||{};const l1=safeHTML(a.line1||''),l2=safeHTML(a.line2||'');return `<div class="ic ${x.cls}" data-act="dash.insToggle" data-instt="${esc(x.ttl)}" role="button" tabindex="0" aria-expanded="false"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${l1}<br>${l2}</div></div></div>`;}).join('');
     toast('AI 분석 완료');
   }catch(e){
     // 실패 시 규칙기반 원본 복원
-    el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
+    el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}" data-act="dash.insToggle" data-instt="${esc(x.ttl)}" role="button" tabindex="0" aria-expanded="false"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
     toast('AI 분석 실패: '+e.message);
   }
 }
@@ -5546,7 +5683,7 @@ async function exportSnapshot(){
     const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
     go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화(스냅샷은 문서 자체를 내보내므로 대시보드 상태 필요)
     await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
-    const insightsHTML=document.getElementById('d-insight')?document.getElementById('d-insight').innerHTML:'';
+    const insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
     const st={};
     teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 // 스냅샷 파일은 캡 불필요 — 전체 임베드
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
