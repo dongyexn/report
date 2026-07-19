@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-Qoa9S54revXVgyvtZ1CgipVj9Y2ne2BSe3lJs6v1VXA=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-vkSWU/0zf2VPR0Fg3LumxlgTP/9cNaWELsRdlYWZS7g=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1368,6 +1368,19 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 .vrm-sel{margin-left:0;min-width:0;padding:5px 30px 5px 12px;font-size:12px;font-weight:600;line-height:1.4;color:var(--b900);border:1px solid var(--b200);border-radius:var(--rp);background-color:var(--b50);background-position:right 11px center;} /* 기준월 칩과 동일 톤·높이 */
 .nvi:focus-visible,.sti:focus-visible,.rgh:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;border-radius:8px;}
 th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
+/* 분석 규칙 전체 편집 모달 */
+.rz-wrap{padding-bottom:10px;}
+.rz-note{font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 12px;}
+.rz-warn{color:var(--rd);font-weight:600;}
+.rz-gh{font-size:13px;font-weight:700;color:var(--lbl);margin:18px 0 8px;padding-bottom:6px;border-bottom:1.5px solid var(--sepo);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rz-badge{font-size:10.5px;font-weight:700;color:#B45309;background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;padding:2px 7px;}
+.rz-hint{font-size:11px;font-weight:500;color:var(--lbl3);}
+.rz-mod{font-size:10.5px;font-weight:700;color:#1D4ED8;background:#DBEAFE;border-radius:6px;padding:2px 7px;}
+.rz-it{margin:0 0 10px;}
+.rz-t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;color:var(--lbl);margin-bottom:4px;}
+.rz-t>span{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;}
+.rz-ta{width:100%;resize:vertical;font-size:12px;line-height:1.55;font-family:inherit;}
+.rz-in{width:100%;font-size:12.5px;}
 </style>
 </head>
 <body>
@@ -1544,19 +1557,24 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
             </div>
             <div class="share-sep"></div>
             <div class="share-row" style="align-items:flex-start">
-              <div class="share-info" style="flex:1;min-width:0"><b>분석 추가 지침</b><span>기본 작성 규칙 위에 덧붙는 팀 지침 · 예: 공가세대 항목은 항상 포함할 것, 결로는 원인별로 구분해 분석할 것</span>
+              <div class="share-info" style="flex:1;min-width:0"><b>분석 추가 지침</b><span>기본 작성 규칙 위에 덧붙는 팀 지침 · 팀 전체 공유(편집자만 수정) · 예: 공가세대 항목은 항상 포함할 것</span>
                 <textarea class="inp" id="cfgAiRules" rows="3" placeholder="비우면 기본 규칙만 사용" data-act="set.aiRules" style="margin-top:8px;resize:vertical;font-size:12.5px;line-height:1.55"></textarea>
               </div>
             </div>
             <div class="share-sep"></div>
             <div class="share-row" style="align-items:flex-start">
-              <div class="share-info" style="flex:1;min-width:0"><b>중대하자 의심 키워드 추가</b><span>쉼표로 구분 · 기본 규칙(누수·침수, 엘리베이터, 퇴거, 언론, 피해보상, 장문민원 등)에 더해 의심 후보로 추출</span>
+              <div class="share-info" style="flex:1;min-width:0"><b>중대하자 의심 키워드 추가</b><span>쉼표로 구분 · 팀 전체 공유(편집자만 수정) · 기본 규칙(누수·침수, 엘리베이터, 퇴거, 언론, 피해보상, 장문민원 등)에 더해 추출</span>
                 <input class="inp" id="cfgCritKw" placeholder="예: 화재, 감전, 석면" data-act="set.critKw" style="margin-top:8px;font-size:12.5px">
               </div>
             </div>
             <div class="share-sep"></div>
             <div class="share-row">
-              <div class="share-info"><b>기본값 복원</b><span>추가 지침·키워드를 모두 비우고 기본 규칙으로 되돌림</span></div>
+              <div class="share-info"><b>기본 규칙 전체 보기·편집</b><span>현장 분석·대시보드 작성 규칙과 중대하자 의심 추출 규칙을 항목별로 확인·수정 · 팀 전체 공유(편집자만 수정) · 비운 항목은 기본값 사용</span></div>
+              <button class="btn bo bsm" data-act="set.rulesAll">편집</button>
+            </div>
+            <div class="share-sep"></div>
+            <div class="share-row">
+              <div class="share-info"><b>기본값 복원</b><span>추가 지침·키워드·기본 규칙 수정본을 모두 비우고 되돌림</span></div>
               <button class="btn bo bsm" data-act="set.aiRulesReset">복원</button>
             </div>
           </div>
@@ -1574,7 +1592,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" data-act="modal.close" class=""><div id="mb" data-act="modal.stop"><div class="mt2" id="mt"></div><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>
 <script>
-const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,teams:[],teamId:null};
+const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',rulesOvr:{},smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,teams:[],teamId:null};
 // calc() 메모이즈 캐시. 키 = 현장id|기준월|defVer|필터서명.
 // 캐시 무효화는 자동: S.def를 Proxy로 감싸 set/delete 시 bumpDef() 호출 → defVer↑ + 캐시 비움.
 // (S.def는 전부 통째 교체/삭제만 — 깊은 in-place 편집(push/splice/필드수정)은 트랩 미포착이라 금지: 항상 통째 교체)
@@ -1807,6 +1825,8 @@ registerActions('click', {
   'top.month':()=>openMP(), 'top.print':()=>doPrint(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
+  'set.rulesAll':()=>openRulesModal(), 'modal.rulesSave':()=>rulesModalSave(), 'modal.rulesResetAll':()=>rulesModalResetAll(), 'modal.ruleReset':(el)=>rulesModalResetOne(el.dataset.rid),
+  'set.aiRulesReset':()=>{if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}S.aiRules='';S.critKw='';S.rulesOvr={};localStorage.removeItem('aiRules');localStorage.removeItem('critKw');localStorage.removeItem('rulesOvr');const a=document.getElementById('cfgAiRules'),b=document.getElementById('cfgCritKw');if(a)a.value='';if(b)b.value='';_critRxCache={};_calcCache.clear();fb2RulesWrite();toast('AI 분석 규칙을 기본값으로 되돌렸습니다 · 팀 전체 적용');}, // 규칙 수정본(rulesOvr)까지 일괄 초기화 · 팀 공유 반영 · click맵 등록(기존 input맵 등록은 버튼 클릭에 반응하지 않던 버그 수정)
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||'', el.dataset.vac||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
@@ -1857,9 +1877,8 @@ registerActions('click', {
 // ── [전환 완료] input 액션 ──
 registerActions('input', {
   'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
-  'set.aiRules':(el)=>{S.aiRules=el.value;localStorage.setItem('aiRules',el.value);},
-  'set.critKw':(el)=>{S.critKw=el.value;localStorage.setItem('critKw',el.value);_calcCache.clear();if(S.view==='site'&&S.sid)rSite(S.sid);else if(S.view==='dashboard')rDash();}, // 의심 추출은 calc에 캐시됨 — 키워드 변경 시 재계산
-  'set.aiRulesReset':()=>{S.aiRules='';S.critKw='';localStorage.removeItem('aiRules');localStorage.removeItem('critKw');const a=document.getElementById('cfgAiRules'),b=document.getElementById('cfgCritKw');if(a)a.value='';if(b)b.value='';_calcCache.clear();toast('AI 분석 규칙을 기본값으로 되돌렸습니다');},
+  'set.aiRules':(el)=>{if(manageLocked())return;S.aiRules=el.value;localStorage.setItem('aiRules',el.value);clearTimeout(FB2._rulesWT);FB2._rulesWT=setTimeout(fb2RulesWrite,600);}, // 규칙 변경은 편집자 전용 · 팀 공유(입력 디바운스)
+  'set.critKw':(el)=>{if(manageLocked())return;S.critKw=el.value;localStorage.setItem('critKw',el.value);clearTimeout(FB2._rulesWT);FB2._rulesWT=setTimeout(fb2RulesWrite,600);_calcCache.clear();if(S.view==='site'&&S.sid)rSite(S.sid);else if(S.view==='dashboard')rDash();}, // 의심 추출은 calc에 캐시됨 — 키워드 변경 시 재계산
   'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
   'rec.qsearch':(el)=>{const R=window.__REC;if(!R)return;R.q=el.value;clearTimeout(R._qt);R._qt=setTimeout(recRenderModalBody,150);}, // 목록 내 통합 검색(디바운스) — 피벗 모드도 함께 갱신
   'rec.menuSearch':(el)=>{const M=window.__RECMENU;if(!M)return;M.q=el.value;const q=M.q.trim().toLowerCase();if(q)M.sel=new Set(M.all.filter(v=>String(v).toLowerCase().includes(q)));recMenuRenderList();},
@@ -2230,6 +2249,7 @@ function fb2Cleanup(){
   if(FB2._reportOff){try{FB2._reportOff();}catch(_){}FB2._reportOff=null;}
   FB2._usersBound=false;
   FB2._siteCfgBound=false;
+  FB2._rulesBound=false;
   FB2.users={};FB2._siteCfg={};
 }
 
@@ -2385,6 +2405,7 @@ async function fb2Enter(user){
     fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
     if(S.view==='site'&&S.sid)fb2ScopeSiteSubs(S.sid);
     fb2SubSiteConfig();
+    fb2SubRules(); // 규칙 팀 공유 — 뷰어 포함 전 사용자 구독
     if(role==='editor'){
       document.body.classList.remove('viewer');
       const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
@@ -2638,6 +2659,43 @@ function fb2SubSiteConfig(){
     if(changed){lsSave();fb2Rerender();} // 자기 토글 에코는 값이 같아 changed=false → 깜빡임 없음
   });
   FB2.subs.push(function(){ref.off('value',h);});
+}
+// ----- AI 분석 규칙 팀 공유 동기화 -----
+// 규칙(추가 지침·중대하자 키워드·기본 규칙 override)을 DB 최상위 aiRules 노드에 저장 → 전 사용자 실시간 공유.
+// 쓰기는 편집자 전용(클라이언트 게이트 + DB 보안규칙으로 강제 — siteConfig와 동일하게 aiRules 노드 규칙 추가 필요).
+// localStorage(aiRules/critKw/rulesOvr)는 부팅 캐시로 유지 — 구독 수신 시 최신값으로 갱신.
+function fb2ApplyRules(v){
+  v=v||{};
+  const nc=typeof v.custom==='string'?v.custom:'';
+  const nk=typeof v.critKw==='string'?v.critKw:'';
+  const no=(v.ovr&&typeof v.ovr==='object')?v.ovr:{};
+  const changed=(S.aiRules!==nc)||(S.critKw!==nk)||(JSON.stringify(S.rulesOvr||{})!==JSON.stringify(no));
+  if(!changed)return false;
+  S.aiRules=nc;S.critKw=nk;S.rulesOvr=no;
+  try{localStorage.setItem('aiRules',nc);localStorage.setItem('critKw',nk);if(Object.keys(no).length)localStorage.setItem('rulesOvr',JSON.stringify(no));else localStorage.removeItem('rulesOvr');}catch(_){}
+  _critRxCache={};_calcCache.clear();
+  return true;
+}
+function fb2SubRules(){
+  if(FB2._rulesBound)return;FB2._rulesBound=true;
+  const ref=FB2.db.ref('aiRules');
+  const h=ref.on('value',function(snap){
+    const v=snap.val();
+    if(v==null)return; // 서버에 규칙 미설정 — 로컬 캐시/기본값 유지
+    if(fb2ApplyRules(v)){ // 자기 저장 에코는 changed=false → 재렌더 생략(깜빡임 방지)
+      if(S.view==='settings'){const a=document.getElementById('cfgAiRules');if(a)a.value=S.aiRules;const b=document.getElementById('cfgCritKw');if(b)b.value=S.critKw;}
+      fb2Rerender();
+    }
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
+}
+function fb2RulesWrite(){
+  if(!FB2.ready||!FB2.db)return;
+  if(!fb2IsEditor())return; // 규칙 변경은 편집자 전용
+  const ovr=S.rulesOvr||{};
+  try{FB2.db.ref('aiRules').set({custom:S.aiRules||'',critKw:S.critKw||'',ovr:Object.keys(ovr).length?ovr:null,updatedAt:Date.now(),updatedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120)})
+    .catch(function(e){console.warn('[FB2] rulesWrite',e);toast('규칙 서버 저장 실패 · DB 보안규칙에 aiRules 노드 쓰기 허용(편집자) 필요');});}
+  catch(e){console.warn('[FB2] rulesWrite',e);}
 }
 function fb2Rerender(){
   if(shEditing()){FB2._pendRerender=true;return;}
@@ -3482,12 +3540,12 @@ function critReason(i){
     return false;
   };
   if(i.criticalType&&String(i.criticalType).trim())tags.push('유형기재');
-  if(hasHazard(/누수|침수|누유|역류/,t+' '+c))tags.push('누수침수');
-  if(/엘리베이터|엘베|승강기|EV/i.test(c)&&/갇힘|갇혔|멈춤|정지|고장|추락/.test(c))tags.push('엘리베이터');
-  if(hasHazard(/퇴거|이주|이사|숙박|호텔|거주\s*불가|입주\s*불가/,c))tags.push('퇴거거주불가');
-  if(/언론|기자|방송|뉴스|제보|보도/.test(c))tags.push('언론리스크');
-  if(/피해|보상|배상|변상|손해|소송|법무|내용증명|고소|고발/.test(c))tags.push('피해보상법적');
-  if((i.receiptContent||'').replace(/\s+/g,'').length>=80)tags.push('장문민원');
+  {const rx=critKwRegex('c_leak');if(rx&&hasHazard(rx,t+' '+c))tags.push('누수침수');}
+  {const r1=critKwRegex('c_ev1','i'),r2=critKwRegex('c_ev2');if(r1&&r2&&r1.test(c)&&r2.test(c))tags.push('엘리베이터');}
+  {const rx=critKwRegex('c_evict');if(rx&&hasHazard(rx,c))tags.push('퇴거거주불가');}
+  {const rx=critKwRegex('c_media');if(rx&&rx.test(c))tags.push('언론리스크');}
+  {const rx=critKwRegex('c_legal');if(rx&&rx.test(c))tags.push('피해보상법적');}
+  if((i.receiptContent||'').replace(/\s+/g,'').length>=critLongLen())tags.push('장문민원');
   {const uk=critUserKwRegex();if(uk&&hasHazard(uk,t+' '+c))tags.push('팀키워드');} // 설정에서 추가한 의심 키워드
   return tags;
 }
@@ -3498,6 +3556,60 @@ function isCritCandidate(i){return critReason(i).length>0;}
 function aiUserKwList(){return String(S.critKw||'').split(',').map(x=>x.trim()).filter(Boolean);}
 function critUserKwRegex(){const l=aiUserKwList();if(!l.length)return null;try{return new RegExp(l.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'));}catch(e){return null;}}
 function aiCustomRulesBlock(){const r=String(S.aiRules||'').trim();return r?('\n\n**[TEAM CUSTOM RULES — 팀 추가 지침. 내용(CONTENT) 관련해서는 위 기본 규칙보다 우선 적용하되, OUTPUT FORMAT & STYLE 규칙은 절대 변경하지 말 것]**\n'+r):'';}
+// ── 분석 규칙 레지스트리 — 기본 규칙 전체를 항목화. 설정>AI 분석>기본 규칙 편집에서 항목별 override(S.rulesOvr, localStorage rulesOvr) 가능. ──
+//    비운 항목은 기본값 사용. 프롬프트는 buildRules(scope)가 (override ?? 기본값)으로 재조립 — 미수정 시 종전 하드코딩 문자열과 바이트 동일.
+const RULE_DEF=[
+ {scope:"site",label:"역할",hdr:null,fmt:false,rules:[
+  {id:"s_role",t:"역할 정의",d:"You are a senior housing defect maintenance manager at a construction company, writing the analysis section of a monthly executive meeting report. Analyze the provided defect data and write a concise, insightful Korean analysis."}]},
+ {scope:"site",label:"출력 형식·스타일",hdr:"**[OUTPUT FORMAT & STYLE RULES]**",fmt:true,rules:[
+  {id:"s_f1",t:"1. HTML 출력만",d:"1. Return the output ONLY in raw HTML using elements like <div>, <p>, <ul>, <li>, <strong>, <span>. Do NOT wrap the response in markdown code blocks like ```html. Just return raw HTML text."},
+  {id:"s_f2",t:"2. 마크다운 금지",d:"2. NO MARKDOWN SYMBOLS: Absolutely DO NOT include markdown header tags like '###' or '#' in the text. Subtitles must be styled purely with HTML (e.g., <div style='font-size: 16px; font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #333;'>Subtitle Name</div>)."},
+  {id:"s_f3",t:"3. 서두 문장 금지",d:"3. NO INTRO PARAGRAPH: Do NOT write any introductory sentence summarizing what the report covers (e.g., do NOT write '본 보고서는 ...을 제시함.'). Start directly with the first subtitle and its content."},
+  {id:"s_f4",t:"4. 개조식 어미",d:"4. TONE & ENDING (개조식): Use a concise, professional, bullet-point reporting style. Every sentence MUST end with short noun-style terminations such as '~함.', '~임.', '~음.' instead of full polite sentences like '~합니다.', '~입니다.'"},
+  {id:"s_f5",t:"5. 본문 폰트",d:"5. FONT SIZE: Apply font size 14px to all body text (<p>, <li>) using inline styles (e.g., style='font-size: 14px; line-height: 1.6; color: #444;'). Subtitles use 16px bold as shown above."},
+  {id:"s_f6",t:"6. 숫자 천단위",d:"6. FORMAT NUMBERS: Always apply thousands separators (e.g., 1,234)."},
+  {id:"s_f7",t:"7. 강조 색상",d:"7. TEXT HIGHLIGHTING: Emphasize key metrics with bold + color inline styles (e.g., <strong style='color: #d9534f;'>text</strong> for negative/critical/delay issues, <strong style='color: #0275d8;'>text</strong> for achievements/positive metrics)."}]},
+ {scope:"site",label:"내용 규칙",hdr:"**[CONTENT RULES — IMPORTANT]**",fmt:false,rules:[
+  {id:"s_cA",t:"A. 소제목 최대 6개",d:"A. Write a MAXIMUM of 6 subtitled sections. Do NOT force all topics. Select only meaningful sections and order them by importance."},
+  {id:"s_cB",t:"B. 무의미 항목 생략",d:"B. OMIT any section with no data or nothing noteworthy. If vacant-unit (공가세대) count is 0 or negligible, skip it. If the outstanding-case contents reveal no special issue, skip that section."},
+  {id:"s_cC",t:"C. 논리적 인과(핵심)",d:"C. ANALYTICAL & LOGICAL REASONING (MOST IMPORTANT): Never write a sentence that only reports a current number or status. The dashboard already shows the figures. EVERY bullet must contain reasoning: (1) briefly state the fact, (2) explain WHY it happened by inferring the cause from the trade/type/delay/content data given, (3) project the expected outcome IF a specific concrete action is taken (e.g., '~에 우선 재방문을 집중하면 60일+ 장기미처리가 다음 달 X건 수준으로 감소할 것으로 판단됨'). A bullet without cause OR projection is unacceptable."},
+  {id:"s_cD",t:"D. 성과·리스크 우선",d:"D. Lead with the two most important things first: notable month-over-month achievements, and worsened/risk points (each with reasoning). Then structural analysis, then concrete improvements."},
+  {id:"s_cE",t:"E. 조치 범위 제한",d:"E. SCOPE OF IMPROVEMENTS — STRICT: Every suggested action must be executable by a single field maintenance manager (담당자) at the site level. ABSOLUTELY NEVER mention or propose company-level or organizational changes: dedicated team / task force operation (전담팀 운영), executive or management decisions (경영진), supply-chain / procurement-system reform (공급망, 구매 시스템 개선), hiring more staff (인력 충원), or introducing new IT/approval systems (시스템 도입). These are impossible at the manager level and must not appear at all. Limit advice strictly to: prioritizing specific units/trades, scheduling re-visits (재방문), coordinating with specific subcontractors already contracted, following up on pending 품의/자재 지연, managing 공가세대 access, etc."},
+  {id:"s_cF",t:"F. 기호 안전",d:"F. SYMBOL SAFETY (CRITICAL): For emphasis use ONLY <strong> tags. NEVER wrap any word in single or double quotation marks (e.g., do NOT write '민원', '품의'). Stray quotes collide with the HTML inline-style quotes and break the layout, causing symbols to overlap with text. Always refer to keywords plainly inside tags, e.g., <strong style='color: #d9534f;'>누수</strong>. Do not place bullet characters or markdown dashes inside the text; the <li> element already provides the bullet."},
+  {id:"s_cG",t:"G. 중대하자 판정·서술",d:"G. CRITICAL DEFECTS (중대하자) — HIGH PRIORITY + JUDGMENT REQUIRED: The [중대하자 의심 후보] block lists items rule-extracted from receipt content/type (keywords, 피해보상, long complaints) each with a 의심 reason tag. These are CANDIDATES, NOT confirmed. Apply the COMPANY MANUAL and CONFIRM only those that genuinely qualify, EXCLUDING keyword false-positives (e.g., a passing mention of 보상 with no real damage, or a long but trivial complaint). Manual 중대하자 = 누수, a defect forcing residents to vacate the unit for 2+ weeks, 엘리베이터 갇힘·멈춤, 침수, or 언론보도 리스크; also confirm severe 피해보상/강성민원 when the content shows real severity. If 1 or more candidates genuinely qualify, you MUST add a dedicated subtitled section near the TOP: state how many qualify and of what kind, cite the specific 동/호 of the most serious ones, infer the cause, and give manager-level priority actions ONLY (prioritized re-visit to that 동/호, calling the already-contracted subcontractor first, accelerating the pending 품의) — NEVER executives (경영진), task forces (전담팀), hiring, or new systems. If NONE genuinely qualify (or the block shows 의심 0건), include ONE brief line: 중대하자 의심 해당 없음. This is an EXCEPTION to rule B's omit policy."}]},
+ {scope:"site",label:"후보 주제",hdr:"**[CANDIDATE TOPICS — pick the most relevant, up to 5]**",fmt:false,rules:[
+  {id:"s_topics",t:"후보 주제 6종",d:"- 현황 분석 및 전월대비 추이 (analytical interpretation with cause and projection)\n- 공종별/유형별 특이사항 및 장기미처리 리스크 (infer delay causes, project effect of targeted follow-up)\n- 중대하자 현황 및 안전·법적 리스크 (critical defects: types/counts/MoM, cause + manager-level priority action; if 0, one brief line per rule G)\n- 미처리건 접수내용 특이사항 (only if the provided outstanding-case text reveals critical keywords: 누수, 민원, 품의, 자재, 피해보상 등)\n- 공가세대 하자처리 현황 (only if vacant-unit data is meaningful)\n- 처리 신속도 개선 방안 / 괄목할만한 성과 (manager-level concrete actions only)"}]},
+ {scope:"dash",label:"역할",hdr:null,fmt:false,rules:[
+  {id:"d_role",t:"역할 정의",d:"You are a senior housing defect maintenance manager writing the '주요 이슈 및 분석 의견' callouts on a monthly dashboard. You are given 3 pre-selected issue cards, each with a title, grade, and two raw lines (key metrics, diagnosis/action). Rewrite each card's TWO lines in Korean following the rules below. Keep the exact numbers from the source — do NOT invent or change any figure."}]},
+ {scope:"dash",label:"출력 형식",hdr:"**[OUTPUT FORMAT]**",fmt:true,rules:[
+  {id:"d_f1",t:"1. JSON 배열 출력",d:"1. Return ONLY a raw JSON array of exactly 3 objects, no markdown fences, no commentary. Each object: {\"line1\":\"...\",\"line2\":\"...\"}. Output order must match the input card order (card1, card2, card3)."},
+  {id:"d_f2",t:"2. 줄 구성",d:"2. line1 = key metrics line (state the figures and month-over-month change concisely). line2 = diagnosis + action line."},
+  {id:"d_f3",t:"3. HTML 강조",d:"3. Each line is ONE line of raw HTML. Use <strong style='color:#C0392B'>...</strong> for negative/risk figures and <strong style='color:#1A7A3C'>...</strong> for positive/achievement figures. Do NOT use <br> inside a line."},
+  {id:"d_f4",t:"4. 길이 제한",d:"4. Keep each line SHORT (fits one dashboard line, roughly under 60 Korean chars)."}]},
+ {scope:"dash",label:"스타일·내용",hdr:"**[STYLE & CONTENT RULES]**",fmt:false,rules:[
+  {id:"d_cA",t:"A. 개조식",d:"A. 개조식: end phrases with noun-style terminations such as '~함.', '~임.', '~음.' — never '~합니다.', '~입니다.'"},
+  {id:"d_cB",t:"B. 논리적 인과",d:"B. LOGICAL REASONING in line2: do not merely restate status. Infer the likely cause and project the expected effect of a concrete action (cause → action → expected change)."},
+  {id:"d_cC",t:"C. 조치 범위 제한",d:"C. SCOPE — STRICT: every action must be doable by a single field manager (담당자). NEVER mention 전담팀/태스크포스 운영, 경영진 결정, 공급망·구매 시스템 개선, 인력 충원, 신규 시스템 도입. Limit to: 특정 세대·공종 우선처리, 재방문 일정, 기존 협력업체 PM 호출·처리계획 요구, 품의·자재 지연 후속조치, 공가세대 출입 관리 등."},
+  {id:"d_cD",t:"D. 기호 안전",d:"D. SYMBOL SAFETY: never wrap words in quotation marks for emphasis; use <strong> only. No bullet characters or dashes inside text."}]}
+];
+// 중대하자 의심 추출 규칙 기본값 — critReason이 critKwRegex/critLongLen으로 참조. 쉼표 구분, 키워드 내 공백은 \s*로 완화(띄어쓰기 유무 모두 매칭).
+const CRIT_DEF=[
+ {id:'c_leak',t:'누수·침수 키워드',d:'누수, 침수, 누유, 역류',hint:'하자유형+접수내용 대상 · 부정문맥 필터 적용'},
+ {id:'c_ev1',t:'엘리베이터 대상어',d:'엘리베이터, 엘베, 승강기, EV',hint:'아래 상태어와 접수내용에 함께 있을 때만 의심'},
+ {id:'c_ev2',t:'엘리베이터 상태어',d:'갇힘, 갇혔, 멈춤, 정지, 고장, 추락'},
+ {id:'c_evict',t:'퇴거·거주불가 키워드',d:'퇴거, 이주, 이사, 숙박, 호텔, 거주 불가, 입주 불가',hint:'부정문맥 필터 적용'},
+ {id:'c_media',t:'언론리스크 키워드',d:'언론, 기자, 방송, 뉴스, 제보, 보도'},
+ {id:'c_legal',t:'피해보상·법적 키워드',d:'피해, 보상, 배상, 변상, 손해, 소송, 법무, 내용증명, 고소, 고발'},
+ {id:'c_long',t:'장문민원 기준(공백 제외 글자수)',d:'80',num:true},
+];
+function _ruleFind(id){for(const g of RULE_DEF)for(const r of g.rules)if(r.id===id)return r;for(const r of CRIT_DEF)if(r.id===id)return r;return null;}
+function ruleDefault(id){const r=_ruleFind(id);return r?r.d:'';}
+function ruleVal(id){const o=S.rulesOvr?S.rulesOvr[id]:undefined;return (o!==undefined&&String(o).trim()!=='')?String(o):ruleDefault(id);}
+function ruleIsOvr(id){const o=S.rulesOvr?S.rulesOvr[id]:undefined;return o!==undefined&&String(o).trim()!==''&&String(o)!==ruleDefault(id);}
+function buildRules(scope){let out='';for(const g of RULE_DEF){if(g.scope!==scope)continue;const body=g.rules.map(r=>String(ruleVal(r.id)).trim()).filter(Boolean).join('\n');if(!body)continue;out+=(out?'\n\n':'')+(g.hdr?g.hdr+'\n':'')+body;}return out;}
+let _critRxCache={}; // 규칙 저장·복원 시 초기화
+function critKwRegex(id,flags){const k=id+'|'+(flags||'');if(k in _critRxCache)return _critRxCache[k];const v=String(ruleVal(id)||'').split(',').map(x=>x.trim()).filter(Boolean);let rx=null;if(v.length){try{rx=new RegExp(v.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s*')).join('|'),flags||'');}catch(e){rx=null;}}_critRxCache[k]=rx;return rx;}
+function critLongLen(){const n=parseInt(ruleVal('c_long'),10);return (isFinite(n)&&n>0)?n:80;}
 function _calcImpl(items,site,rm){
   const pm=pM(rm),all=items.filter(i=>i.receiptDate);
   // 전월 말일 문자열 (ex. "2026-04-30") — 역산 기준일
@@ -4712,33 +4824,7 @@ function maskPII(s){
   // 일반 어휘 오탐이 발생). 인명 마스킹은 best-effort이며 고위험 PII(전화·이메일)는 위 규칙이 전담.
 }
 async function runAI(sid){if(!S.ck){toast('설정에서 Gemini API 키를 입력하세요');return;}const site=S.sites.find(s=>s.id===sid);if(!site)return;const st=calc(S.def[sid]||[],site,S.rm),el=document.getElementById(`ait-${sid}`);if(el)el.innerHTML='<p style="color:var(--lbl3)">AI 분석 생성 중…</p>';
-const systemInstruction = 
-  "You are a senior housing defect maintenance manager at a construction company, writing the analysis section of a monthly executive meeting report. " +
-  "Analyze the provided defect data and write a concise, insightful Korean analysis.\n\n" +
-  "**[OUTPUT FORMAT & STYLE RULES]**\n" +
-  "1. Return the output ONLY in raw HTML using elements like <div>, <p>, <ul>, <li>, <strong>, <span>. Do NOT wrap the response in markdown code blocks like ```html. Just return raw HTML text.\n" +
-  "2. NO MARKDOWN SYMBOLS: Absolutely DO NOT include markdown header tags like '###' or '#' in the text. Subtitles must be styled purely with HTML (e.g., <div style='font-size: 16px; font-weight: bold; margin-top: 16px; margin-bottom: 8px; color: #333;'>Subtitle Name</div>).\n" +
-  "3. NO INTRO PARAGRAPH: Do NOT write any introductory sentence summarizing what the report covers (e.g., do NOT write '\ubcf8 \ubcf4\uace0\uc11c\ub294 ...\uc744 \uc81c\uc2dc\ud568.'). Start directly with the first subtitle and its content.\n" +
-  "4. TONE & ENDING (\uac1c\uc870\uc2dd): Use a concise, professional, bullet-point reporting style. Every sentence MUST end with short noun-style terminations such as '~\ud568.', '~\uc784.', '~\uc74c.' instead of full polite sentences like '~\ud569\ub2c8\ub2e4.', '~\uc785\ub2c8\ub2e4.'\n" +
-  "5. FONT SIZE: Apply font size 14px to all body text (<p>, <li>) using inline styles (e.g., style='font-size: 14px; line-height: 1.6; color: #444;'). Subtitles use 16px bold as shown above.\n" +
-  "6. FORMAT NUMBERS: Always apply thousands separators (e.g., 1,234).\n" +
-  "7. TEXT HIGHLIGHTING: Emphasize key metrics with bold + color inline styles (e.g., <strong style='color: #d9534f;'>text</strong> for negative/critical/delay issues, <strong style='color: #0275d8;'>text</strong> for achievements/positive metrics).\n\n" +
-    "**[CONTENT RULES — IMPORTANT]**\n" +
-  "A. Write a MAXIMUM of 6 subtitled sections. Do NOT force all topics. Select only meaningful sections and order them by importance.\n" +
-  "B. OMIT any section with no data or nothing noteworthy. If vacant-unit (\uacf5\uac00\uc138\ub300) count is 0 or negligible, skip it. If the outstanding-case contents reveal no special issue, skip that section.\n" +
-  "C. ANALYTICAL & LOGICAL REASONING (MOST IMPORTANT): Never write a sentence that only reports a current number or status. The dashboard already shows the figures. EVERY bullet must contain reasoning: (1) briefly state the fact, (2) explain WHY it happened by inferring the cause from the trade/type/delay/content data given, (3) project the expected outcome IF a specific concrete action is taken (e.g., '~\uc5d0 \uc6b0\uc120 \uc7ac\ubc29\ubb38\uc744 \uc9d1\uc911\ud558\uba74 60\uc77c+ \uc7a5\uae30\ubbf8\ucc98\ub9ac\uac00 \ub2e4\uc74c \ub2ec X\uac74 \uc218\uc900\uc73c\ub85c \uac10\uc18c\ud560 \uac83\uc73c\ub85c \ud310\ub2e8\ub428'). A bullet without cause OR projection is unacceptable.\n" +
-  "D. Lead with the two most important things first: notable month-over-month achievements, and worsened/risk points (each with reasoning). Then structural analysis, then concrete improvements.\n" +
-  "E. SCOPE OF IMPROVEMENTS — STRICT: Every suggested action must be executable by a single field maintenance manager (\ub2f4\ub2f9\uc790) at the site level. ABSOLUTELY NEVER mention or propose company-level or organizational changes: dedicated team / task force operation (\uc804\ub2f4\ud300 \uc6b4\uc601), executive or management decisions (\uacbd\uc601\uc9c4), supply-chain / procurement-system reform (\uacf5\uae09\ub9dd, \uad6c\ub9e4 \uc2dc\uc2a4\ud15c \uac1c\uc120), hiring more staff (\uc778\ub825 \ucda9\uc6d0), or introducing new IT/approval systems (\uc2dc\uc2a4\ud15c \ub3c4\uc785). These are impossible at the manager level and must not appear at all. Limit advice strictly to: prioritizing specific units/trades, scheduling re-visits (\uc7ac\ubc29\ubb38), coordinating with specific subcontractors already contracted, following up on pending \ud488\uc758/\uc790\uc7ac \uc9c0\uc5f0, managing \uacf5\uac00\uc138\ub300 access, etc.\n" +
-  "F. SYMBOL SAFETY (CRITICAL): For emphasis use ONLY <strong> tags. NEVER wrap any word in single or double quotation marks (e.g., do NOT write '\ubbfc\uc6d0', '\ud488\uc758'). Stray quotes collide with the HTML inline-style quotes and break the layout, causing symbols to overlap with text. Always refer to keywords plainly inside tags, e.g., <strong style='color: #d9534f;'>\ub204\uc218</strong>. Do not place bullet characters or markdown dashes inside the text; the <li> element already provides the bullet.\n" +
-  "G. CRITICAL DEFECTS (중대하자) — HIGH PRIORITY + JUDGMENT REQUIRED: The [중대하자 의심 후보] block lists items rule-extracted from receipt content/type (keywords, 피해보상, long complaints) each with a 의심 reason tag. These are CANDIDATES, NOT confirmed. Apply the COMPANY MANUAL and CONFIRM only those that genuinely qualify, EXCLUDING keyword false-positives (e.g., a passing mention of 보상 with no real damage, or a long but trivial complaint). Manual 중대하자 = 누수, a defect forcing residents to vacate the unit for 2+ weeks, 엘리베이터 갇힘·멈춤, 침수, or 언론보도 리스크; also confirm severe 피해보상/강성민원 when the content shows real severity. If 1 or more candidates genuinely qualify, you MUST add a dedicated subtitled section near the TOP: state how many qualify and of what kind, cite the specific 동/호 of the most serious ones, infer the cause, and give manager-level priority actions ONLY (prioritized re-visit to that 동/호, calling the already-contracted subcontractor first, accelerating the pending 품의) — NEVER executives (경영진), task forces (전담팀), hiring, or new systems. If NONE genuinely qualify (or the block shows 의심 0건), include ONE brief line: 중대하자 의심 해당 없음. This is an EXCEPTION to rule B's omit policy.\n\n" +
-  "**[CANDIDATE TOPICS — pick the most relevant, up to 5]**\n" +
-  "- \ud604\ud669 \ubd84\uc11d \ubc0f \uc804\uc6d4\ub300\ube44 \ucd94\uc774 (analytical interpretation with cause and projection)\n" +
-  "- \uacf5\uc885\ubcc4/\uc720\ud615\ubcc4 \ud2b9\uc774\uc0ac\ud56d \ubc0f \uc7a5\uae30\ubbf8\ucc98\ub9ac \ub9ac\uc2a4\ud06c (infer delay causes, project effect of targeted follow-up)\n" +
-  "- \uc911\ub300\ud558\uc790 \ud604\ud669 \ubc0f \uc548\uc804\u00b7\ubc95\uc801 \ub9ac\uc2a4\ud06c (critical defects: types/counts/MoM, cause + manager-level priority action; if 0, one brief line per rule G)\n" +
-  "- \ubbf8\ucc98\ub9ac\uac74 \uc811\uc218\ub0b4\uc6a9 \ud2b9\uc774\uc0ac\ud56d (only if the provided outstanding-case text reveals critical keywords: \ub204\uc218, \ubbfc\uc6d0, \ud488\uc758, \uc790\uc7ac, \ud53c\ud574\ubcf4\uc0c1 \ub4f1)\n" +
-  "- \uacf5\uac00\uc138\ub300 \ud558\uc790\ucc98\ub9ac \ud604\ud669 (only if vacant-unit data is meaningful)\n" +
-  "- \ucc98\ub9ac \uc2e0\uc18d\ub3c4 \uac1c\uc120 \ubc29\uc548 / \uad04\ubaa9\ud560\ub9cc\ud55c \uc131\uacfc (manager-level concrete actions only)"
-  +aiCustomRulesBlock();
+const systemInstruction = buildRules('site') + aiCustomRulesBlock(); // 기본 규칙 레지스트리(RULE_DEF)에서 조립 — 설정>기본 규칙 편집의 override 반영, 미수정 시 종전 문자열과 동일
 const _ul=st.ul||[];
 // 키워드 포함건 우선 + 60일+ 장기미처리 우선으로 접수내용 샘플 추출 (최대 40건, 각 60자)
 const _ukw=aiUserKwList().map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
@@ -4764,21 +4850,7 @@ async function runDashAI(){
   if(el)el.innerHTML='<div class="ic"><div class="ic-t"><div class="ic-sub" style="color:var(--lbl3)">AI 분석 생성 중…</div></div></div>';
   const stripTags=h=>String(h).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
   const src=items.map((x,i)=>{const parts=String(x.sub).split('<br>');return `[카드${i+1}] 제목:${x.ttl} | 등급:${x.cls}\n  핵심수치(원문):${stripTags(parts[0]||'')}\n  진단·조치(원문):${stripTags(parts[1]||'')}`;}).join('\n');
-  const dashSystem =
-    "You are a senior housing defect maintenance manager writing the '주요 이슈 및 분석 의견' callouts on a monthly dashboard. " +
-    "You are given 3 pre-selected issue cards, each with a title, grade, and two raw lines (key metrics, diagnosis/action). " +
-    "Rewrite each card's TWO lines in Korean following the rules below. Keep the exact numbers from the source — do NOT invent or change any figure.\n\n" +
-    "**[OUTPUT FORMAT]**\n" +
-    "1. Return ONLY a raw JSON array of exactly 3 objects, no markdown fences, no commentary. Each object: {\"line1\":\"...\",\"line2\":\"...\"}. Output order must match the input card order (card1, card2, card3).\n" +
-    "2. line1 = key metrics line (state the figures and month-over-month change concisely). line2 = diagnosis + action line.\n" +
-    "3. Each line is ONE line of raw HTML. Use <strong style='color:#C0392B'>...</strong> for negative/risk figures and <strong style='color:#1A7A3C'>...</strong> for positive/achievement figures. Do NOT use <br> inside a line.\n" +
-    "4. Keep each line SHORT (fits one dashboard line, roughly under 60 Korean chars).\n\n" +
-    "**[STYLE & CONTENT RULES]**\n" +
-    "A. 개조식: end phrases with noun-style terminations such as '~함.', '~임.', '~음.' — never '~합니다.', '~입니다.'\n" +
-    "B. LOGICAL REASONING in line2: do not merely restate status. Infer the likely cause and project the expected effect of a concrete action (cause → action → expected change).\n" +
-    "C. SCOPE — STRICT: every action must be doable by a single field manager (담당자). NEVER mention 전담팀/태스크포스 운영, 경영진 결정, 공급망·구매 시스템 개선, 인력 충원, 신규 시스템 도입. Limit to: 특정 세대·공종 우선처리, 재방문 일정, 기존 협력업체 PM 호출·처리계획 요구, 품의·자재 지연 후속조치, 공가세대 출입 관리 등.\n" +
-    "D. SYMBOL SAFETY: never wrap words in quotation marks for emphasis; use <strong> only. No bullet characters or dashes inside text."
-    +aiCustomRulesBlock();
+  const dashSystem = buildRules('dash') + aiCustomRulesBlock(); // RULE_DEF 조립 — 기본 규칙 편집 override 반영
   const dp=`아래 3개 카드의 각 2줄을 위 규칙에 따라 한국어 개조식으로 다시 작성하세요. 수치는 원문 그대로 유지할 것.\n\n${src}`;
   try{
     const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
@@ -5081,10 +5153,46 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
-  {const a=document.getElementById('cfgAiRules');if(a)a.value=S.aiRules||'';const b=document.getElementById('cfgCritKw');if(b)b.value=S.critKw||'';}
+  {const ro=manageLocked();const a=document.getElementById('cfgAiRules');if(a){a.value=S.aiRules||'';a.disabled=ro;}const b=document.getElementById('cfgCritKw');if(b){b.value=S.critKw||'';b.disabled=ro;}const e=document.querySelector('[data-act="set.rulesAll"]');if(e)e.textContent=ro?'열람':'편집';const rs=document.querySelector('[data-act="set.aiRulesReset"]');if(rs)rs.disabled=ro;} // 규칙 편집 UI — 뷰어는 열람만
   const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
+}
+// ── 분석 규칙 전체 보기·편집 모달 (설정 > AI 분석 > 기본 규칙 편집) ──
+function openRulesModal(){
+  const ro=manageLocked(); // 뷰어는 읽기 전용 열람 — 규칙 수정은 편집자 전용
+  document.getElementById('mt').textContent=ro?'분석 규칙 전체 보기 (보기 전용)':'분석 규칙 전체 보기·편집';
+  const scopeLbl={site:'현장 분석',dash:'대시보드 이슈'};
+  let h='<div class="md-scroll rz-wrap"><p class="rz-note">'+(ro?'보기 전용입니다 · 규칙 수정은 편집자만 할 수 있습니다.':'각 항목은 <b>비우면 기본값</b>이 사용됩니다. <span class="rz-warn">형식 규칙(HTML·JSON 출력)을 수정하면 분석 결과 표시가 깨질 수 있으니 주의하세요.</span> 저장 시 <b>팀 전체에 적용</b>됩니다.')+'</p>';
+  for(const g of RULE_DEF){
+    h+=`<div class="rz-gh">${esc(scopeLbl[g.scope]+' · '+g.label)}${g.fmt?'<span class="rz-badge">형식 규칙 — 수정 주의</span>':''}</div>`;
+    for(const r of g.rules){
+      h+=`<div class="rz-it"><div class="rz-t"><span>${esc(r.t)}${ruleIsOvr(r.id)?'<span class="rz-mod">수정됨</span>':''}</span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="${r.id}">기본값</button>`}</div><textarea class="inp rz-ta" data-rid="${r.id}"${ro?' disabled':''} rows="${Math.min(9,Math.max(2,Math.ceil(String(ruleVal(r.id)).length/95)))}">${esc(ruleVal(r.id))}</textarea></div>`;
+    }
+  }
+  h+='<div class="rz-gh">중대하자 의심 추출<span class="rz-hint">쉼표로 구분 · 키워드 내 공백은 띄어쓰기 유무 모두 매칭 · 부정문맥 필터와 AI 최종 판정은 유지됨</span></div>';
+  for(const r of CRIT_DEF){
+    h+=`<div class="rz-it"><div class="rz-t"><span>${esc(r.t)}${ruleIsOvr(r.id)?'<span class="rz-mod">수정됨</span>':''}${r.hint?`<span class="rz-hint">${esc(r.hint)}</span>`:''}</span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="${r.id}">기본값</button>`}</div><input class="inp rz-in" data-rid="${r.id}"${ro?' disabled':''}${r.num?' type="number" min="1" style="max-width:140px"':''} value="${esc(ruleVal(r.id))}"></div>`;
+  }
+  h+='</div>';
+  document.getElementById('mbody').innerHTML=h;
+  document.getElementById('mf').innerHTML=ro?'<button class="btn bg2 bsm" data-act="modal.close">닫기</button>':'<button class="btn bo bsm" data-act="modal.rulesResetAll">전체 기본값</button><div style="flex:1"></div><button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.rulesSave">저장</button>';
+  const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
+  openMo();
+}
+function rulesModalResetOne(rid){if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}const el=document.querySelector(`#mbody .rz-ta[data-rid="${rid}"], #mbody .rz-in[data-rid="${rid}"]`);if(el)el.value=ruleDefault(rid);}
+function rulesModalResetAll(){if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}document.querySelectorAll('#mbody .rz-ta[data-rid], #mbody .rz-in[data-rid]').forEach(el=>{el.value=ruleDefault(el.dataset.rid);});toast('모든 항목을 기본값으로 채웠습니다 · 저장을 눌러야 반영됩니다');}
+function rulesModalSave(){
+  if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}
+  const ovr={};
+  document.querySelectorAll('#mbody .rz-ta[data-rid], #mbody .rz-in[data-rid]').forEach(el=>{const rid=el.dataset.rid,v=String(el.value);if(v.trim()!==''&&v!==ruleDefault(rid))ovr[rid]=v;}); // 기본값과 동일·공백은 저장하지 않음 → 앱 업데이트로 기본 규칙이 바뀌어도 미수정 항목은 자동 반영
+  S.rulesOvr=ovr;
+  const n=Object.keys(ovr).length;
+  if(n)localStorage.setItem('rulesOvr',JSON.stringify(ovr));else localStorage.removeItem('rulesOvr');
+  _critRxCache={};_calcCache.clear(); // 의심 추출 규칙 변경 반영 — calc 캐시 무효화
+  fb2RulesWrite(); // 팀 전체 공유 저장
+  closeMo();toast(n?('분석 규칙 저장됨 · 팀 전체 적용 · 수정 '+n+'개 항목'):'분석 규칙 저장됨 · 팀 전체 적용 · 모두 기본값');
+  if(S.view==='site'&&S.sid)rSite(S.sid);else if(S.view==='dashboard')rDash();
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option ${site?.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${esc(site?.name||'')}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2"><label class="il" for="mcu">상가수</label><input class="inp" id="mcu" type="number" value="${site?.commercialUnits||''}"></div><div class="ig2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" max="9999-12-31" data-act="util.clampYear" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''} aria-label="공가상가 포함 현장"> 공가상가 포함 현장</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px"><input type="checkbox" id="mcv" ${site?.showVacant!==false?'checked':''} aria-label="공가세대 탭 표시"> 공가세대 탭 표시</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.confirmSM" data-sid="${esc(sid||'')}">저장</button>`;openMo();}
 function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
@@ -5604,6 +5712,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const ck=localStorage.getItem('ck'),exTk=localStorage.getItem('exTk');
   if(ck)S.ck=ck;
   S.aiRules=localStorage.getItem('aiRules')||'';S.critKw=localStorage.getItem('critKw')||''; // AI 분석 사용자 규칙
+  try{S.rulesOvr=JSON.parse(localStorage.getItem('rulesOvr')||'{}')||{};}catch(_){S.rulesOvr={};} // 기본 규칙 항목별 override
   // 제외 키워드: localStorage 값이 있으면 (빈 문자열 포함) 그것을 사용, 없으면 기본값 'dummy' 유지
   if(exTk!==null)S.exTk=exTk;
   const ulex=document.getElementById('ulex');if(ulex)ulex.value=S.exTk;
