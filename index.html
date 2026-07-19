@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
-<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-D4KD4ien3TKaBVdcwaGbJPdftgM2PQKRuGm2H9rfU3s=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta charset="UTF-8"><!-- 주의: 하단 인라인 자바스크립트 블록 본문을 수정하면 아래 script-src의 sha256 해시를 반드시 재계산해 교체할 것. 미갱신 시 CSP가 스크립트 전체를 차단함. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' 'sha256-9saBZd7KcpkXq3Oc5onnmW1JP7YNWA00Orn+u5g3i0U=' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -1388,8 +1388,13 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 /* 주요 이슈 카드 확장 — 클릭 시 컨테이너를 덮는 오버레이, 다시 클릭 시 복귀 */
 .ins-grid{position:relative;}
 .ic[data-act="dash.insToggle"]{cursor:pointer;}
-.ins-grid .ic.exp{position:absolute;inset:0;z-index:6;overflow:auto;cursor:default;box-shadow:0 10px 30px rgba(0,0,0,.14);}
-.ins-grid.ins-open .ic:not(.exp){visibility:hidden;} /* 나머지 카드는 자리만 유지 — 레이아웃 높이 불변 */
+.ins-grid .ic{transition:opacity .18s ease;}
+.ins-grid .ic.exp{position:absolute;inset:0;z-index:6;overflow:auto;cursor:default;box-shadow:0 10px 30px rgba(0,0,0,.14);animation:insExpand .2s ease;}
+.ins-grid.ins-open .ic:not(.exp){opacity:0;pointer-events:none;} /* 나머지 카드는 자리만 유지(레이아웃 높이 불변) · 페이드로 사라짐 */
+.ic .insd{display:none;} /* 상세는 확장 상태에서만 표시 — 접으면 원래 크기로 복귀 */
+.ic.exp .insd{display:block;animation:insdIn .24s ease;}
+@keyframes insExpand{from{opacity:.55;transform:translateY(5px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes insdIn{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:none;}}
 .insd{margin-top:10px;border-top:1px dashed rgba(0,0,0,.16);padding-top:10px;font-size:12px;cursor:default;}
 .insd-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:12.5px;}
 .insd-btns{display:flex;gap:6px;flex-wrap:wrap;}
@@ -1401,7 +1406,6 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .insd-l{cursor:pointer;color:var(--b700);}
 .insd-l:hover{text-decoration:underline;}
 .insd-p{width:34px;text-align:right;color:var(--lbl3);font-size:11px;}
-.insd-tip{margin-top:8px;font-size:11px;color:var(--lbl3);}
 .insd-empty{color:var(--lbl3);}
 @media print{.ins-grid .ic.exp{position:static;box-shadow:none;}.insd{display:none;}}
 </style>
@@ -4204,7 +4208,7 @@ function insDetailHTML(ttl){
   const bTr=mini('공종 상위',aggr('trade').slice(0,5).map(([k,v])=>({h:`<span>${esc(k)}</span>`,v})));
   const bDt=mini('하자유형 상위',aggr('defectType').slice(0,5).map(([k,v])=>({h:`<span>${esc(k)}</span>`,v})));
   const bBand=mini('지연구간',[['~29일',bands[0]],['30~59일',bands[1]],['60일+',bands[2]]].map(([k,v])=>({h:`<span>${k}</span>`,v})));
-  return `<div class="insd" data-act="modal.stop"><div class="insd-h"><span>${esc(filtLbl||scopeLbl)} <b>${tot.toLocaleString()}건</b> 기준 상세</span><span class="insd-btns">${listBtns}</span></div><div class="insd-cols">${bSite}${bTr}${bDt}${bBand}</div><div class="insd-tip">현장명 클릭 → 현장 화면 · 카드를 다시 클릭하면 접힙니다</div></div>`;
+  return `<div class="insd" data-act="modal.stop"><div class="insd-h"><span>${esc(filtLbl||scopeLbl)} <b>${tot.toLocaleString()}건</b> 기준 상세</span><span class="insd-btns">${listBtns}</span></div><div class="insd-cols">${bSite}${bTr}${bDt}${bBand}</div></div>`;
 }
 // 카드에 확장 토글 속성 부착 — safeHTML(ALLOW_DATA_ATTR:false·속성 화이트리스트)이 data-act를 제거하므로 살균 후 DOM에서 부여.
 // 제목은 .ic-ttl 텍스트에서 읽어 세 렌더 경로(규칙 선정·AI 재작성·스냅샷 임베드) 공통으로 동작.
