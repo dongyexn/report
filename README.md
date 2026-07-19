@@ -5,8 +5,9 @@ HCS(하자관리시스템)에서 내려받은 「전체 하자 목록」 엑셀�
 **사내 게시** 기능으로 팀원 전체가 같은 화면을 실시간으로 열람합니다.
 
 - 배포 주소: https://dongyexn.github.io/report/
-- 스택: 단일 `index.html`(vanilla JS) · Firebase Realtime Database + Auth + App Check · GitHub Pages
-- 외부 라이브러리: Chart.js, DOMPurify, LZ-String, SheetJS·marked(필요 시점 지연 로드) — 모두 CDN + SRI 고정
+- 스택: `index.html` + `app.js`(vanilla JS) · Firebase Realtime Database + Auth + App Check · GitHub Pages
+- 외부 라이브러리: Chart.js, DOMPurify, LZ-String, Firebase SDK — CDN(jsdelivr) + SRI 고정 ·
+  SheetJS는 저장소 자체 호스팅(`xlsx.full.min.js`, 미배치 시 CDN 폴백) · marked 필요 시점 지연 로드
 
 ---
 
@@ -92,6 +93,8 @@ HCS 엑셀 다운로드
 
 1. HCS에서 「전체 하자 목록」 엑셀 다운로드(전 현장 통합본).
 2. 업로드 → 현장별 자동 분배·파싱 → 업로드 요약(현장·건수·기간)을 원본과 대조.
+   필수 컬럼(접수일·처리상태·공종)이 없으면 차단되고, 그 외 표준 컬럼이 빠져 있으면
+   **경고창**이 뜬다(HCS 컬럼명 변경 신호 — 원본 헤더 확인 후 진행 여부 결정).
 3. **기준월 확인** — 자동으로 전월이 잡힌다(엑셀에 당월 접수분이 섞여도 전월 상한).
 4. 대시보드·현장 화면 검토 → 장기미처리 표에 **처리계획** 작성(전월 계획 자동 이월) →
    월별 **분석 의견** 작성(AI 분석 생성 버튼 활용 가능 — 아래 4절 AI 참조).
@@ -143,32 +146,31 @@ AI 분석 규칙(기본 규칙 수정본·팀 추가 지침·중대하자 키워
 
 | 파일 | 역할 |
 |---|---|
-| `index.html` | 앱 전체(마크업+CSS+JS 단일 파일, 약 5,600줄) |
+| `index.html` | 마크업 + CSS (인라인 스크립트 없음) |
+| `app.js` | 앱 로직 전체(약 4,300줄) — `index.html` 하단에서 로드 |
+| `xlsx.full.min.js` | SheetJS 0.20.x 자체 호스팅본(업로드·내보내기용). cdn.sheetjs.com에서 내려받아 커밋 — 없으면 CDN 0.18.5로 폴백 |
 | `database.rules` | RTDB 보안 규칙(주석에 설계 의도·수용 리스크 문서화) |
-| `update_csp_hash.py` | 인라인 JS 수정 후 CSP 해시 재계산 스크립트 |
 | `README.md` | 이 문서 — 앱의 설정 > 사용 안내에서도 이 파일을 그대로 렌더한다 |
 
-### ⚠️ 가장 중요한 규칙 — CSP 해시
+### 스크립트 구성
 
-`index.html`의 CSP 메타에는 하단 인라인 `<script>` 본문의 **sha256 해시가 고정**되어 있다.
-**JS를 한 글자라도 수정하면 해시를 재계산해 교체해야 한다.** 안 하면 앱이 뜨지 않는다.
+앱 로직은 외부 파일 `app.js`에 있고 CSP `script-src 'self'`로 허용된다(인라인 스크립트 없음).
+`index.html`과 `app.js`는 항상 **같은 커밋으로 함께 배포**할 것
+(Pages 캐시로 짧게 어긋날 수 있음 — 배포 직후엔 Ctrl+F5).
 
-```bash
-python update_csp_hash.py          # 수정 후 반드시 실행
-```
-
-주의: 에디터/git이 줄바꿈을 LF↔CRLF로 바꾸면 바이트가 달라져 해시가 깨진다.
-`.gitattributes`로 LF 고정 권장.
+외부 스크립트는 전부 jsdelivr + SRI 고정이다(gstatic은 SRI를 제공하지 않아 Firebase SDK도
+npm 미러인 jsdelivr에서 로드 — npm 바이트와 동일). SheetJS는 저장소의
+`xlsx.full.min.js`(0.20.x)를 우선 로드하고, 파일이 없으면 CDN 0.18.5 + SRI로 폴백한다 —
+**폴백 경로가 남아있는 동안 `readWorkbookSafe`의 프로토타입 오염 완화 코드는 제거 금지.**
 
 ### 수정 → 검증 → 배포
 
 1. 수정은 외과적으로 — 대규모 리라이트 금지, 기존 주석·설계 의도 보존.
 2. 구문 검증(node --check 또는 브라우저 콘솔).
 3. 브라우저에서 `index.html?selftest=1` → 자체 점검 전체 통과 확인.
-4. CSP 해시 재계산.
-5. git push → GitHub Pages 반영(캐시로 수 분 소요 가능 · Ctrl+F5).
-6. **계산 로직을 바꿨다면 재게시**해야 뷰어에 반영된다.
-7. 인터랙션을 바꿨다면 실제 브라우저에서 해당 화면을 반드시 열어볼 것 — 정적 검사로
+4. git push → GitHub Pages 반영(캐시로 수 분 소요 가능 · Ctrl+F5).
+5. **계산 로직을 바꿨다면 재게시**해야 뷰어에 반영된다.
+6. 인터랙션을 바꿨다면 실제 브라우저에서 해당 화면을 반드시 열어볼 것 — 정적 검사로
    안 잡히는 런타임 오류 이력이 있음(가능하면 Playwright 자동화).
 
 ### Firebase 운영
@@ -182,7 +184,7 @@ firebase emulators:exec --only database "node --test tests/database.rules.test.m
   `plans` · `analysis` · `meta` · `siteConfig` · `aiRules`(AI 분석 규칙 팀 공유 —
   `custom` 추가 지침 · `critKw` 키워드 · `ovr/{ruleId}` 기본 규칙 수정본).
   스키마 외 키는 규칙이 거부한다.
-- `aiRules`의 `ovr` 키(ruleId)는 `index.html`의 규칙 레지스트리(RULE_DEF·CRIT_DEF) id와
+- `aiRules`의 `ovr` 키(ruleId)는 `app.js`의 규칙 레지스트리(RULE_DEF·CRIT_DEF) id와
   맞물린다 — 레지스트리에 항목을 추가·개명하면 규칙의 ruleId 패턴 검증도 함께 확인할 것.
 - App Check(reCAPTCHA Enterprise) 사용 중. CSP script-src의 Google 계열 호스트
   (`www.google.com`, `www.gstatic.com`, `www.recaptcha.net`, `recaptcha.google.com`,
@@ -193,7 +195,7 @@ firebase emulators:exec --only database "node --test tests/database.rules.test.m
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
-| 접속 시 로딩에서 멈춤 + 콘솔 CSP 차단 | 인라인 해시 불일치 또는 reCAPTCHA 호스트 차단 | 콘솔의 차단 URL 확인 → 해시 재계산 또는 script-src에 호스트 추가. 20초 후 안내가 뜨는 워치독 있음 |
+| 접속 시 로딩에서 멈춤 + 콘솔 CSP 차단 | `app.js` 미배포 또는 reCAPTCHA 호스트 차단 | 콘솔의 차단 URL 확인 → `app.js` 배포 여부·script-src 호스트 확인. 20초 후 안내가 뜨는 워치독 있음 |
 | 뷰어 숫자·기준월이 이상함 | 잘못된 월의 구게시본 잔존 | 올바른 기준월로 재게시 → 미래 게시월 삭제 토스트에서 삭제 |
 | 목록이 일부만 표시된다는 안내 | 전체 목록(압축) 이전의 구게시본 | 최신 빌드에서 재게시 |
 | 집컴(다른 PC)에서 게시 내용이 안 보임 | 편집자 화면은 로컬 원본 기준(설계상 정상) | 설정 > 뷰어 시점으로 보기 |
@@ -207,8 +209,10 @@ firebase emulators:exec --only database "node --test tests/database.rules.test.m
 ## 7. 하지 말아야 할 것
 
 - **마스터 PC의 브라우저 데이터(IndexedDB) 삭제 금지** — 원본 하자 행이 사라진다.
-  삭제·PC 교체 전 HCS 원본 엑셀 보관과 스냅샷 백업 확인.
-- JS 수정 후 CSP 해시 갱신 없이 배포 금지(앱 전체 다운).
+  삭제·PC 교체 전 HCS 원본 엑셀 보관과 스냅샷 백업 확인. 앱이 부팅 시
+  `navigator.storage.persist()`로 영속화를 요청하지만(디스크 부족 시 브라우저 자동 삭제 방지),
+  이것이 백업을 대체하지는 않는다 — **월별 원본 엑셀은 별도 보관이 원칙.**
+- `index.html`만 또는 `app.js`만 단독 배포 금지 — 두 파일은 항상 같은 커밋으로 함께 배포.
 - `database.rules` 스키마를 앱 수정 없이 단독 변경 금지(양쪽이 맞물림 —
   특히 `aiRules/ovr`의 ruleId 패턴은 앱의 규칙 레지스트리와 쌍).
 - 게시 목록의 PII 마스킹 제거 금지 — 입주민 개인정보가 전 팀원에게 노출된다.
@@ -224,7 +228,7 @@ firebase emulators:exec --only database "node --test tests/database.rules.test.m
 - [ ] GitHub 저장소 권한 이양(Pages 설정 확인)
 - [ ] 후임자 계정 가입 → 기존 editor가 역할을 editor로 변경
 - [ ] 마스터 PC 지정 + 최신 HCS 엑셀·스냅샷 백업 전달
-- [ ] `update_csp_hash.py` 실행 시연(수정→해시→배포 1회 동행)
+- [ ] 수정→`?selftest=1` 검증→배포 절차 1회 동행(`index.html`+`app.js` 동시 배포 확인)
 - [ ] `?selftest=1` 자체 점검 통과 확인
 - [ ] 규칙 배포/테스트 명령 1회 실행 확인(`aiRules` 노드 포함 최신 규칙인지 확인)
 - [ ] 월간 루틴(3절) 1주기 동행 운영
