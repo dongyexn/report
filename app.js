@@ -849,19 +849,26 @@ async function fb2EnterViewer(){
 // 이 PC의 편집자 화면(로컬 계산)에 반영되지 않는다(뷰어는 게시본을 보므로 정상 반영).
 // 이 기능은 뷰어와 동일한 스냅샷 배선(fb2ApplyReport)으로 최신 게시본을 그대로 열람한다.
 // 열람 중에는 편집 UI가 숨겨지며, 새로고침(F5)하면 로컬 편집 모드로 복귀(원본 IndexedDB 불변).
+// 최신 게시본(report/{마지막 게시월}) 조회 — 뷰어 시점 열람과 스냅샷 내보내기가 공유
+async function fb2FetchLatestReport(){
+  if(!FB2.ready||!FB2.db)return null;
+  const idxSnap=await FB2.db.ref('reportIndex').once('value');
+  const idx=idxSnap.val()||{};
+  const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
+  let rm=months.length?months.reduce((a,b)=>(idx[a]>=idx[b]?a:b)):null; // 마지막으로 게시한 월
+  let data=rm?(await FB2.db.ref('report/'+rm).once('value')).val():null;
+  if(!data){ // 인덱스 도입 전 게시분 폴백
+    const snap=await FB2.db.ref('report').orderByKey().limitToLast(1).once('value');
+    const v=snap.val();if(v){rm=Object.keys(v)[0];data=v[rm];}
+  }
+  return (rm&&data)?{rm:rm,data:data}:null;
+}
 async function fb2ViewAsViewer(){
   try{
     if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다');return;}
-    const idxSnap=await FB2.db.ref('reportIndex').once('value');
-    const idx=idxSnap.val()||{};
-    const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k));
-    let rm=months.length?months.reduce((a,b)=>(idx[a]>=idx[b]?a:b)):null; // 마지막으로 게시한 월
-    let data=rm?(await FB2.db.ref('report/'+rm).once('value')).val():null;
-    if(!data){ // 인덱스 도입 전 게시분 폴백
-      const snap=await FB2.db.ref('report').orderByKey().limitToLast(1).once('value');
-      const v=snap.val();if(v){rm=Object.keys(v)[0];data=v[rm];}
-    }
-    if(!rm||!data){toast('아직 게시된 집계가 없습니다');return;}
+    const r=await fb2FetchLatestReport();
+    if(!r){toast('아직 게시된 집계가 없습니다');return;}
+    const rm=r.rm,data=r.data;
     fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);
     toast('뷰어 시점으로 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
   }catch(e){console.error('[FB2] 뷰어 시점 열람 실패',e);toast('게시본 열람 실패');}
@@ -894,40 +901,46 @@ async function fb2LoadReportLatest(){
   const rm=Object.keys(v)[0];
   return{rm:rm,data:v[rm]||{}};
 }
-function fb2ApplyReport(rm,rep){
+// 게시본(report/{rm}) → 뷰어가 보는 __SNAP__ 형태로 변환하는 순수 함수.
+// 화면 상태를 전혀 건드리지 않으므로, 뷰어 적용(fb2ApplyReport)과 편집자의 스냅샷 내보내기가
+// 같은 산출을 공유하면서도 후자는 편집 모드를 유지할 수 있다.
+function buildSnapFromReport(rm,rep){
   rep=deepDecKeys(rep||{}); // 게시 시 인코딩된 중첩 맵 키(dtb/rpb/am/siteAm)를 원복 — 이후 st·am·siteAm은 정상 키
   const dash=rep._dash||{};
-  S.sites=Array.isArray(dash.sites)?dash.sites:[];
-  S.teams=Array.isArray(dash.teams)?dash.teams:[];
-  if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
-  Object.keys(S.def).forEach(_k=>delete S.def[_k]); // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
-  const st={},siteWks={},siteAm={};
+  const sites=Array.isArray(dash.sites)?dash.sites:[];
+  const teams=Array.isArray(dash.teams)?dash.teams:[];
+  const st={},siteWks={},siteAm={},vac={};
   for(const sid in rep){
     if(sid==='_dash'||sid==='_meta')continue;
     const n=rep[sid]||{};
-    st[sid]=n.kpi||{};
-    {const k=st[sid];
-     // 전체 목록(압축 게시) 우선: ulz가 있으면 캡(300건) 배열을 대체해 편집자와 동일한 목록·피벗 제공.
-     // 해제 실패 시 기존 캡 목록으로 폴백(표시 축소일 뿐 KPI 숫자는 게시값 그대로).
-     if(typeof n.ulz==='string'&&n.ulz&&typeof LZString!=='undefined'){
-       try{const full=JSON.parse(LZString.decompressFromBase64(n.ulz)||'null');if(Array.isArray(full)){k.ul=full;k.lul=null;}}
-       catch(e){console.warn('[FB2] ulz 해제 실패 — 캡 목록 폴백',sid,e);}
-     }
-     deriveLul(k); // ulz 대체 후 또는 구버전 게시본(lul 빈 배열)에서 ul의 지연 30일+ 필터로 산출
+    const k=st[sid]=n.kpi||{};
+    // 전체 목록(압축 게시) 우선: ulz가 있으면 캡(300건) 배열을 대체해 편집자와 동일한 목록·피벗 제공.
+    // 해제 실패 시 기존 캡 목록으로 폴백(표시 축소일 뿐 KPI 숫자는 게시값 그대로).
+    if(typeof n.ulz==='string'&&n.ulz&&typeof LZString!=='undefined'){
+      try{const full=JSON.parse(LZString.decompressFromBase64(n.ulz)||'null');if(Array.isArray(full)){k.ul=full;k.lul=null;}}
+      catch(e){console.warn('[FB2] ulz 해제 실패 — 캡 목록 폴백',sid,e);}
     }
+    deriveLul(k); // ulz 대체 후 또는 구버전 게시본(lul 빈 배열)에서 ul의 지연 30일+ 필터로 산출
     siteWks[sid]=n.siteWks||[];
     siteAm[sid]=n.siteAm||{};
-    if(n.vac){ // 공가/상가 상태(미분양·미키불출)는 게시 데이터 — S.cmt에 병합(실시간 plans와 충돌 없음)
-      if(!S.cmt[sid])S.cmt[sid]={};
-      if(n.vac.vacantStatus)S.cmt[sid].vacantStatus=n.vac.vacantStatus;
-      if(n.vac.commercialStatus)S.cmt[sid].commercialStatus=n.vac.commercialStatus;
-    }
+    if(n.vac)vac[sid]=n.vac; // 공가/상가 상태(미분양·미키불출)는 게시 데이터 — 호출자가 cmt에 병합
   }
-  window.__SNAP__={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st:st,wks:dash.wks||[],am:dash.am||{},siteWks:siteWks,siteAm:siteAm,insightsHTML:dash.insightsHTML||''};
+  const cmt={};Object.keys(S.cmt||{}).forEach(x=>{cmt[x]=Object.assign({},S.cmt[x]);}); // 사본 — 호출자 상태 불변
+  Object.keys(vac).forEach(sid=>{const v=vac[sid];if(!cmt[sid])cmt[sid]={};if(v.vacantStatus)cmt[sid].vacantStatus=v.vacantStatus;if(v.commercialStatus)cmt[sid].commercialStatus=v.commercialStatus;});
+  return {P:{rm:(/^\d{4}-\d{2}$/.test(rm)?rm:S.rm),sites:sites,teams:teams,cmt:cmt,ana:S.ana,st:st,wks:dash.wks||[],am:dash.am||{},siteWks:siteWks,siteAm:siteAm,insightsHTML:dash.insightsHTML||''},vac:vac};
+}
+function fb2ApplyReport(rm,rep){
+  const built=buildSnapFromReport(rm,rep),P=built.P;
+  S.sites=P.sites;S.teams=P.teams;
+  if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
+  Object.keys(S.def).forEach(_k=>delete S.def[_k]); // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
+  Object.keys(built.vac).forEach(sid=>{const v=built.vac[sid];if(!S.cmt[sid])S.cmt[sid]={};if(v.vacantStatus)S.cmt[sid].vacantStatus=v.vacantStatus;if(v.commercialStatus)S.cmt[sid].commercialStatus=v.commercialStatus;});
+  P.cmt=S.cmt;P.ana=S.ana; // 실시간 처리계획·분석 갱신이 그대로 반영되도록 라이브 참조 유지
+  window.__SNAP__=P;
   document.body.classList.add('viewer');
   ensureTeams();
   fb2ApplySiteCfg(); // 게시된 sites 위에 최신 토글(siteConfig) 덮어쓰기
-  const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 사내공유';
+  setRmChip();
   rTeamSel();rNav();
   if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);
   else go('dashboard');
@@ -2497,8 +2510,16 @@ function buildDashMonthTable(){
   const thead=`<thead><tr>${th('','월')}${thG('','전체 접수')}${th('recv-sub','월간 접수')}${thG('','전체 처리')}${th('rate-col','처리율')}${th('','월간 처리')}${th('','전월대비')}${thG('','전체 미처리')}${th('','전월대비')}${th('tl-grp-ltr','장기미처리')}<th class="cc tl-grp-ltr">장기미처리 비율</th><th class="cc">전월대비</th></tr></thead>`;
   tbl.innerHTML=colgroup+thead+`<tbody>${body||'<tr><td colspan="12" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody>`;
 }
+// 기준월 칩 — 라벨은 모드에 따라 다르다(편집자=로컬 집계 / 사내공유=게시본 / 스냅샷=박제 문서).
+// 렌더마다 갱신되므로 단일 진입점으로 둔다. (과거 rDash가 편집자 형식으로 덮어써 뷰어·스냅샷 라벨이 지워졌음)
+function setRmChip(){
+  const chip=document.getElementById('mchip');if(!chip)return;
+  const b=document.body.classList;
+  const src=b.contains('snap')?' · 스냅샷':(b.contains('viewer')?' · 사내공유':'');
+  chip.textContent='기준월 '+S.rm+src;
+}
 function rDash(){
-  document.getElementById('mchip').textContent='기준월 '+S.rm;
+  setRmChip();
   const all=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));
   // 합계: all을 단일 패스로 집계 (KPI 4종 + 전월 3종 + 지연구간 3종 + 전월장기 1종).
   let tR=0,tRes=0,tU=0,tLt=0,pU=0,pR=0,pRes=0,tDd0=0,tDd30=0,tDd60=0,pLt=0;
@@ -3611,7 +3632,7 @@ async function doSaveUL(byName,allItems){
   progHide();
   S._uploadRaw=null;
   
-  const chip=document.getElementById('mchip');if(chip)chip.textContent=`기준월 ${S.rm}`;
+  setRmChip();
   toast(`${savedCount.toLocaleString()}건 · ${savedSites}개 현장 저장 완료`);
   S.ubuf=null;setStep(3);
   setTimeout(()=>{
@@ -3716,14 +3737,14 @@ function openMP(){
   if(document.body.classList.contains('snap')){toast('스냅샷은 내보낸 시점의 기준월로 고정된 문서입니다');return;}
   if(document.body.classList.contains('viewer')){toast('게시본은 기준월 선택기로 전환하세요');return;}
   document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
-function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
+function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;setRmChip();lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
 function stepMonth(delta){
   if(document.body.classList.contains('snap')||document.body.classList.contains('viewer'))return; // 게시본·스냅샷은 기준월 고정(집계가 박제됨)
   const [y,m]=S.rm.split('-').map(Number);
   const d=new Date(y,m-1+delta,1);
   const ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   S.rm=ym;
-  const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+ym;
+  setRmChip();
   lsSave();
   if(S.view==='dashboard')rDash();
   if(S.view==='site'&&S.sid)rSite(S.sid);
@@ -4032,13 +4053,15 @@ async function exportSnapshot(){
     if(typeof LZString==='undefined'){toast('스냅샷 생성 불가 · 데이터 압축 라이브러리(lz-string CDN) 미로드');return;}
     // 기준 데이터는 '사내 게시본' — 뷰어가 실제로 보는 것과 같은 파일을 만들기 위함.
     //   로컬 원본(S.def)은 업로드한 PC의 IndexedDB에만 있어, 다른 PC에서 만들면 뷰어와 내용이 어긋난다.
-    //   게시본을 아직 열지 않은 상태면 뷰어 시점으로 전환한 뒤 내보낸다(화면 = 파일 내용 보장).
+    //   이미 게시본을 보고 있으면(뷰어·게시본 열람) 그대로 쓰고, 편집 모드면 게시본을 '조회만' 해서 쓴다.
+    //   (과거엔 뷰어 시점으로 전환했는데, 편집자가 화면을 잃어 새로고침이 필요했다 — 상태는 건드리지 않는다.)
+    let pub=null;
     if(!window.__SNAP__&&FB2.ready&&FB2.db){
       toast('게시본을 불러오는 중…');
-      try{await fb2ViewAsViewer();}catch(e){console.warn('[snap] 게시본 로드 실패',e);}
-      if(window.__SNAP__)await nextFrame();
+      try{const r=await fb2FetchLatestReport();if(r)pub=buildSnapFromReport(r.rm,r.data).P;}
+      catch(e){console.warn('[snap] 게시본 로드 실패',e);}
     }
-    const P=window.__SNAP__;
+    const P=window.__SNAP__||pub;
     if(!P&&!Object.keys(S.def||{}).length){toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;}
     toast('스냅샷 생성 중…');
     let payload;
@@ -4046,7 +4069,7 @@ async function exportSnapshot(){
       // 게시본 기준 — 뷰어가 보고 있는 집계·목록을 재계산 없이 그대로 담는다(수치 불일치 원천 차단).
       const st={};
       for(const sid in (P.st||{})){const k=Object.assign({},P.st[sid]);k.lul=null;st[sid]=k;} // lul은 열 때 ul에서 파생
-      payload={rm:P.rm||S.rm,sites:P.sites||S.sites,teams:P.teams||S.teams,cmt:S.cmt,ana:S.ana,st,wks:P.wks||[],am:P.am||{},siteWks:P.siteWks||{},siteAm:P.siteAm||{},insightsHTML:P.insightsHTML||''};
+      payload={rm:P.rm||S.rm,sites:P.sites||S.sites,teams:P.teams||S.teams,cmt:P.cmt||S.cmt,ana:P.ana||S.ana,st,wks:P.wks||[],am:P.am||{},siteWks:P.siteWks||{},siteAm:P.siteAm||{},insightsHTML:P.insightsHTML||''}; // cmt는 게시본의 공가·상가 상태가 병합된 P.cmt 사용(편집자 로컬 cmt 아님)
     }else{
       // 폴백 — 네트워크 불가·미게시 상태에서는 이 PC의 로컬 원본으로 계산(내용이 뷰어와 다를 수 있음).
       toast('게시본에 연결할 수 없어 이 PC의 로컬 데이터로 생성합니다',6000);
@@ -4087,7 +4110,7 @@ async function exportSnapshot(){
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+(payload.rm||S.rm)+'.html';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-    toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+(payload.rm||S.rm)+' · '+(html.length/1048576).toFixed(2)+'MB'+(P?' · 편집 모드 복귀는 새로고침(F5)':''),7000);
+    toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+(payload.rm||S.rm)+' · '+(html.length/1048576).toFixed(2)+'MB',6000);
   }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
 }
 window.exportSnapshot=exportSnapshot;
@@ -4319,7 +4342,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.body.classList.add('snap');
     document.body.classList.add('viewer'); // 뷰어 시점 — 실제 뷰어 화면과 동일한 숨김 규칙 공유(업로드 탭·관리 편집 요소 등)
     ensureTeams();
-    const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 스냅샷';
+    setRmChip();
     rTeamSel();rNav();
     go('dashboard');
     hideCover();progHide(); // 골격 fetch 방식의 coverGate는 기본 표시 상태 — 명시적으로 걷어야 함(라이브 DOM 박제 시절엔 숨김 상태가 우연히 담겨 있었음)
@@ -4348,7 +4371,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // 사내 Firebase 인증 게이트 (@hdec.co.kr) → 인증 후 편집자=로컬집계, 뷰어=게시 열람·실시간 협업
   try{fb2Boot();}catch(e){console.error('[boot] fb2Boot failed',e);try{showGateForm();fbMsg('초기화 오류 · 페이지를 새로고침하세요');}catch(_){}}
   // 기준월 chip 표시 + 사이드바 초기 렌더 (게이트 뒤에서 미리 그려둠)
-  const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm;
+  setRmChip();
   rTeamSel();rNav();rSMgr();
   if(!parseHashNav())go('dashboard'); // 해시 딥링크 우선 (#site/{sid} 등) — 없거나 무효면 대시보드
   // 부팅 중 어느 단계에서 로딩창이 켜졌든, 완료 시 반드시 닫음
