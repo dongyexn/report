@@ -203,8 +203,6 @@ svg{display:block;flex-shrink:0;}
 .mc{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--b100),var(--b200));color:var(--b900);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--rp);border:1px solid var(--b200);}
 .saved-mark{position:absolute;top:-9px;right:6px;font-size:10px;font-weight:700;color:#1A7A3C;background:rgba(52,199,89,.14);border:1px solid rgba(52,199,89,.3);padding:1px 6px;border-radius:99px;opacity:0;transform:translateY(2px);transition:opacity .25s ease,transform .25s ease;pointer-events:none;letter-spacing:.02em;}
 .saved-mark.show{opacity:1;transform:translateY(0);}
-.bpr{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--b600),var(--b950));color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:var(--rp);border:none;cursor:pointer;transition:opacity .15s;}
-.bpr:hover{opacity:.86;}
 
 /* TABLE */
 .dt{width:100%;font-size:12.5px;}
@@ -357,7 +355,7 @@ table.dt-detail th{text-align:center!important;}
 .vmodal-sum{display:flex;align-items:baseline;justify-content:space-between;border-top:1px solid var(--sep);padding-top:12px;margin-top:4px;margin-bottom:18px;}
 .vmodal-sum span{font-size:12px;color:var(--lbl3);}
 .vmodal-sum b{font-size:22px;font-weight:700;color:var(--b700);}
-.vmodal-btn{width:100%;background:linear-gradient(135deg,var(--b600),var(--b950));color:#fff;font-size:13px;font-weight:600;padding:10px;border-radius:var(--rmd);border:none;cursor:pointer;}
+.vmodal-btn{width:100%;background:linear-gradient(135deg,var(--b500),var(--b800));color:#fff;font-size:13px;font-weight:600;padding:10px;border-radius:var(--rmd);border:none;cursor:pointer;}
 
 .sel{width:100%;padding:10px 14px;border:1.5px solid var(--sepo);border-radius:var(--rmd);font-size:14px;color:var(--lbl);background:var(--bg2);cursor:pointer;-webkit-appearance:none;}
 .sel:focus{border-color:var(--b400);}
@@ -748,7 +746,7 @@ canvas{max-width:100%!important;height:auto!important;}
 
 /* 인터랙티브 요소 숨김 */
 input,select,textarea,button{display:none!important;}
-.fchip,.btn,.bpr,.bp,.bg2,.bo,.sbtg,.sortmk{display:none!important;}
+.fchip,.btn,.bp,.bg2,.bo,.sbtg,.sortmk{display:none!important;}
 
 /* KPI 첫 슬롯 화면/인쇄 전환: 화면=현장명, 인쇄=세대/개동·준공일 */
 .akpi .kc-site .kl .kpi-screen{display:none!important;}
@@ -1378,22 +1376,6 @@ body.snap .snap-badge{display:inline-flex;align-items:center;gap:5px;font-size:1
 .nvi:focus-visible,.sti:focus-visible,.rgh:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;border-radius:8px;}
 th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 /* 분석 규칙 전체 편집 모달 */
-.rz-wrap{padding-bottom:10px;}
-.rz-note{font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 12px;}
-.rz-warn{color:var(--rd);font-weight:600;}
-.rz-gh{font-size:13px;font-weight:700;color:var(--lbl);margin:18px 0 8px;padding-bottom:6px;border-bottom:1.5px solid var(--sepo);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.rz-badge{font-size:10.5px;font-weight:700;color:#B45309;background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;padding:2px 7px;}
-.rz-hint{font-size:11px;font-weight:500;color:var(--lbl3);}
-.rz-mod{font-size:10.5px;font-weight:700;color:#1D4ED8;background:#DBEAFE;border-radius:6px;padding:2px 7px;}
-.rz-it{margin:0 0 10px;}
-.rz-t{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;color:var(--lbl);margin-bottom:4px;}
-.rz-t>span{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;}
-.rz-ta{width:100%;resize:vertical;font-size:12px;line-height:1.55;font-family:inherit;}
-.rz-in{width:100%;font-size:12.5px;}
-.rz-tabs{margin:0 0 14px;padding:5px;gap:5px;}
-.rz-tabs .tnav-i{padding:7px 10px;font-size:12.5px;}
-.rz-sec{display:none;}
-.rz-sec.act{display:block;}
 /* 주요 이슈 카드 확장 — 클릭 시 컨테이너를 덮는 오버레이, 다시 클릭 시 복귀 */
 .ins-grid{position:relative;}
 .ic[data-act="dash.insToggle"]{cursor:pointer;}
@@ -1494,7 +1476,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     <div class="tbr">
       <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"></rect><path d="M5 1v4M11 1v4M2 7h12"></path></svg><span id="mchip">기준월 2026-05</span></div>
       <button class="btn bg2 bsm no-print" data-act="top.month" data-tt="기준월 변경 · 단축키 [ ]">기준월 변경</button>
-      <button id="pbtn" class="bpr no-print hide-mobile" data-act="top.print" style="height: 29px; font-size: 12px; display: none;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"></path></svg>인쇄</button>
+      <button id="pbtn" class="btn bp bsm no-print hide-mobile" data-act="top.print" style="display: none;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"></path></svg>인쇄</button>
     </div>
   </header>
   <div id="content">
@@ -1592,16 +1574,6 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
               <div class="share-info" style="flex:1;min-width:0"><b>Gemini API 키</b><span>개인 키 · 이 PC의 브라우저에만 저장 · 접수내용은 PII 마스킹 후 전송</span>
                 <input type="password" class="inp" id="cfgc" placeholder="AIzaSy..." data-act="set.aiKey" style="margin-top:8px;font-size:12.5px">
               </div>
-            </div>
-            <div class="share-sep"></div>
-            <div class="share-row">
-              <div class="share-info"><b>분석 규칙 전체 보기·편집</b><span>현장 분석·대시보드 작성 규칙, 중대하자 의심 추출 규칙, 팀 추가 지침·키워드를 항목별로 확인·수정 · 팀 전체 공유(편집자만 수정) · 비운 항목은 기본값 사용</span></div>
-              <button class="btn bo bsm" data-act="set.rulesAll">편집</button>
-            </div>
-            <div class="share-sep"></div>
-            <div class="share-row">
-              <div class="share-info"><b>기본값 복원</b><span>팀 추가 지침·키워드·기본 규칙 수정본을 모두 비우고 되돌림 · 팀 전체 적용</span></div>
-              <button class="btn bo bsm" data-act="set.aiRulesReset">복원</button>
             </div>
           </div>
         </div>

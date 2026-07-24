@@ -1,4 +1,4 @@
-const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',rulesOvr:{},smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,teams:[],teamId:null};
+const S={view:'dashboard',sid:null,sites:[],def:{},defVer:0,cmt:{},ana:{},rm:pM(todayYM()),ck:'',charts:{},ubuf:null,mini:false,tab:'overview',exTk:'dummy',smsort:null,regionOrder:[],detailYear:null,trendYear:null,siteTrendYear:null,teams:[],teamId:null};
 // calc() 메모이즈 캐시. 키 = 현장id|기준월|defVer|필터서명.
 // 캐시 무효화는 자동: S.def를 Proxy로 감싸 set/delete 시 bumpDef() 호출 → defVer↑ + 캐시 비움.
 // (S.def는 전부 통째 교체/삭제만 — 깊은 in-place 편집(push/splice/필드수정)은 트랩 미포착이라 금지: 항상 통째 교체)
@@ -231,13 +231,10 @@ registerActions('click', {
   'top.month':()=>openMP(), 'top.print':()=>doPrint(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
-  'set.rulesAll':()=>openRulesModal(), 'modal.rulesSave':()=>rulesModalSave(), 'modal.rulesResetAll':()=>rulesModalResetAll(), 'modal.ruleReset':(el)=>rulesModalResetOne(el.dataset.rid),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
   'dash.insTr':(el)=>openRecList('__team',el.dataset.scope||'ul',el.dataset.tr||'',''), // 상세 공종 행 → 공종 필터 팀 목록
   'dash.insList':(el)=>{openRecList('__team',el.dataset.scope||'ul','','');const R=window.__REC;if(!R)return;const k=el.dataset.fk,v=el.dataset.fv;if(k&&v!=null){R.valueFilters[k]=new Set([v]);R.filterRow=true;recRenderModalBody();}}, // 팀 목록 열고 카드 주제(보수주체·유형·업체) 필터 적용
-  'modal.rulesTab':(el)=>{const t=el.dataset.rztab;document.querySelectorAll('#mbody .rz-tab').forEach(b=>b.classList.toggle('act',b.dataset.rztab===t));document.querySelectorAll('#mbody .rz-sec').forEach(p=>p.classList.toggle('act',p.dataset.rzsec===t));const sc=document.querySelector('#mbody .md-scroll');if(sc)sc.scrollTop=0;}, // 규칙 모달 탭 전환 — 섹션 show/hide만, 입력값은 DOM에 유지
-  'set.aiRulesReset':()=>{if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}S.aiRules='';S.critKw='';S.rulesOvr={};localStorage.removeItem('aiRules');localStorage.removeItem('critKw');localStorage.removeItem('rulesOvr');_critRxCache={};_calcCache.clear();fb2RulesWrite();toast('AI 분석 규칙을 기본값으로 되돌렸습니다 · 팀 전체 적용');}, // 규칙 수정본(rulesOvr)까지 일괄 초기화 · 팀 공유 반영 · click맵 등록(기존 input맵 등록은 버튼 클릭에 반응하지 않던 버그 수정)
   'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
   'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||'', el.dataset.vac||''),
   'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
@@ -659,7 +656,6 @@ function fb2Cleanup(){
   if(FB2._reportOff){try{FB2._reportOff();}catch(_){}FB2._reportOff=null;}
   FB2._usersBound=false;
   FB2._siteCfgBound=false;
-  FB2._rulesBound=false;
   FB2.users={};FB2._siteCfg={};
 }
 
@@ -815,7 +811,6 @@ async function fb2Enter(user){
     fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
     if(S.view==='site'&&S.sid)fb2ScopeSiteSubs(S.sid);
     fb2SubSiteConfig();
-    fb2SubRules(); // 규칙 팀 공유 — 뷰어 포함 전 사용자 구독
     if(role==='editor'){
       document.body.classList.remove('viewer');
       const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
@@ -1073,39 +1068,6 @@ function fb2SubSiteConfig(){
 // ----- AI 분석 규칙 팀 공유 동기화 -----
 // 규칙(추가 지침·중대하자 키워드·기본 규칙 override)을 DB 최상위 aiRules 노드에 저장 → 전 사용자 실시간 공유.
 // 쓰기는 편집자 전용(클라이언트 게이트 + DB 보안규칙으로 강제 — siteConfig와 동일하게 aiRules 노드 규칙 추가 필요).
-// localStorage(aiRules/critKw/rulesOvr)는 부팅 캐시로 유지 — 구독 수신 시 최신값으로 갱신.
-function fb2ApplyRules(v){
-  v=v||{};
-  const nc=typeof v.custom==='string'?v.custom:'';
-  const nk=typeof v.critKw==='string'?v.critKw:'';
-  const no=(v.ovr&&typeof v.ovr==='object')?v.ovr:{};
-  const changed=(S.aiRules!==nc)||(S.critKw!==nk)||(JSON.stringify(S.rulesOvr||{})!==JSON.stringify(no));
-  if(!changed)return false;
-  S.aiRules=nc;S.critKw=nk;S.rulesOvr=no;
-  try{localStorage.setItem('aiRules',nc);localStorage.setItem('critKw',nk);if(Object.keys(no).length)localStorage.setItem('rulesOvr',JSON.stringify(no));else localStorage.removeItem('rulesOvr');}catch(_){}
-  _critRxCache={};_calcCache.clear();
-  return true;
-}
-function fb2SubRules(){
-  if(FB2._rulesBound)return;FB2._rulesBound=true;
-  const ref=FB2.db.ref('aiRules');
-  const h=ref.on('value',function(snap){
-    const v=snap.val();
-    if(v==null)return; // 서버에 규칙 미설정 — 로컬 캐시/기본값 유지
-    if(fb2ApplyRules(v)){ // 자기 저장 에코는 changed=false → 재렌더 생략(깜빡임 방지)
-      fb2Rerender();
-    }
-  });
-  FB2.subs.push(function(){ref.off('value',h);});
-}
-function fb2RulesWrite(){
-  if(!FB2.ready||!FB2.db)return;
-  if(!fb2IsEditor())return; // 규칙 변경은 편집자 전용
-  const ovr=S.rulesOvr||{};
-  try{FB2.db.ref('aiRules').set({custom:S.aiRules||'',critKw:S.critKw||'',ovr:Object.keys(ovr).length?ovr:null,updatedAt:Date.now(),updatedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120)})
-    .catch(function(e){console.warn('[FB2] rulesWrite',e);toast('규칙 서버 저장 실패 · DB 보안규칙에 aiRules 노드 쓰기 허용(편집자) 필요');});}
-  catch(e){console.warn('[FB2] rulesWrite',e);}
-}
 function fb2Rerender(){
   if(shEditing()){FB2._pendRerender=true;return;}
   FB2._pendRerender=false;
@@ -2045,17 +2007,13 @@ function critReason(i){
   {const rx=critKwRegex('c_media');if(rx&&rx.test(c))tags.push('언론리스크');}
   {const rx=critKwRegex('c_legal');if(rx&&rx.test(c))tags.push('피해보상법적');}
   if((i.receiptContent||'').replace(/\s+/g,'').length>=critLongLen())tags.push('장문민원');
-  {const uk=critUserKwRegex();if(uk&&hasHazard(uk,t+' '+c))tags.push('팀키워드');} // 설정에서 추가한 의심 키워드
   return tags;
 }
 function isCritCandidate(i){return critReason(i).length>0;}
 // ── AI 분석 규칙 사용자 설정 (설정 > AI 분석) ──
 // aiRules: 기본 시스템 지침 뒤에 덧붙는 팀 추가 지침(내용 규칙 우선, 출력 형식은 불변).
 // critKw: 중대하자 의심 추출에 더할 키워드(쉼표 구분) — 규칙 추출(critReason)과 접수내용 샘플 우선순위 양쪽에 반영.
-function aiUserKwList(){return String(S.critKw||'').split(',').map(x=>x.trim()).filter(Boolean);}
-function critUserKwRegex(){const l=aiUserKwList();if(!l.length)return null;try{return new RegExp(l.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'));}catch(e){return null;}}
-function aiCustomRulesBlock(){const r=String(S.aiRules||'').trim();return r?('\n\n**[TEAM CUSTOM RULES — 팀 추가 지침. 내용(CONTENT) 관련해서는 위 기본 규칙보다 우선 적용하되, OUTPUT FORMAT & STYLE 규칙은 절대 변경하지 말 것]**\n'+r):'';}
-// ── 분석 규칙 레지스트리 — 기본 규칙 전체를 항목화. 설정>AI 분석>기본 규칙 편집에서 항목별 override(S.rulesOvr, localStorage rulesOvr) 가능. ──
+// ── 분석 규칙 레지스트리 — 고정 기본값(수정은 코드에서). 런타임 편집 기능은 의도적으로 두지 않음: 운영자 1인 도구라 좋은 기본값이 설정 UI보다 낫다는 결정. ──
 //    비운 항목은 기본값 사용. 프롬프트는 buildRules(scope)가 (override ?? 기본값)으로 재조립 — 미수정 시 종전 하드코딩 문자열과 바이트 동일.
 const RULE_DEF=[
  {scope:"site",label:"역할",hdr:null,fmt:false,rules:[
@@ -2102,11 +2060,9 @@ const CRIT_DEF=[
  {id:'c_long',t:'장문민원 기준(공백 제외 글자수)',d:'80',num:true},
 ];
 function _ruleFind(id){for(const g of RULE_DEF)for(const r of g.rules)if(r.id===id)return r;for(const r of CRIT_DEF)if(r.id===id)return r;return null;}
-function ruleDefault(id){const r=_ruleFind(id);return r?r.d:'';}
-function ruleVal(id){const o=S.rulesOvr?S.rulesOvr[id]:undefined;return (o!==undefined&&String(o).trim()!=='')?String(o):ruleDefault(id);}
-function ruleIsOvr(id){const o=S.rulesOvr?S.rulesOvr[id]:undefined;return o!==undefined&&String(o).trim()!==''&&String(o)!==ruleDefault(id);}
+function ruleVal(id){const r=_ruleFind(id);return r?r.d:'';}
 function buildRules(scope){let out='';for(const g of RULE_DEF){if(g.scope!==scope)continue;const body=g.rules.map(r=>String(ruleVal(r.id)).trim()).filter(Boolean).join('\n');if(!body)continue;out+=(out?'\n\n':'')+(g.hdr?g.hdr+'\n':'')+body;}return out;}
-let _critRxCache={}; // 규칙 저장·복원 시 초기화
+let _critRxCache={}; // 정규식 캐시(규칙이 고정이라 무효화 불필요)
 function critKwRegex(id,flags){const k=id+'|'+(flags||'');if(k in _critRxCache)return _critRxCache[k];const v=String(ruleVal(id)||'').split(',').map(x=>x.trim()).filter(Boolean);let rx=null;if(v.length){try{rx=new RegExp(v.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s*')).join('|'),flags||'');}catch(e){rx=null;}}_critRxCache[k]=rx;return rx;}
 function critLongLen(){const n=parseInt(ruleVal('c_long'),10);return (isFinite(n)&&n>0)?n:80;}
 function _calcImpl(items,site,rm){
@@ -3376,11 +3332,10 @@ function maskPII(s){
   // 일반 어휘 오탐이 발생). 인명 마스킹은 best-effort이며 고위험 PII(전화·이메일)는 위 규칙이 전담.
 }
 async function runAI(sid){if(!S.ck){toast('설정에서 Gemini API 키를 입력하세요');return;}const site=S.sites.find(s=>s.id===sid);if(!site)return;const st=calc(S.def[sid]||[],site,S.rm),el=document.getElementById(`ait-${sid}`);if(el)el.innerHTML='<p style="color:var(--lbl3)">AI 분석 생성 중…</p>';
-const systemInstruction = buildRules('site') + aiCustomRulesBlock(); // 기본 규칙 레지스트리(RULE_DEF)에서 조립 — 설정>기본 규칙 편집의 override 반영, 미수정 시 종전 문자열과 동일
+const systemInstruction = buildRules('site'); // 기본 규칙 레지스트리(RULE_DEF)에서 조립 — 설정>기본 규칙 편집의 override 반영, 미수정 시 종전 문자열과 동일
 const _ul=st.ul||[];
 // 키워드 포함건 우선 + 60일+ 장기미처리 우선으로 접수내용 샘플 추출 (최대 40건, 각 60자)
-const _ukw=aiUserKwList().map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
-const _kw=new RegExp('누수|민원|품의|자재|피해|보상|결로|곰팡이|균열|파손|재시공|소송|법무|하자판정|중대'+(_ukw?'|'+_ukw:''));
+const _kw=new RegExp('누수|민원|품의|자재|피해|보상|결로|곰팡이|균열|파손|재시공|소송|법무|하자판정|중대');
 const _daysB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
 const _scored=_ul.map(i=>{const c=(i.receiptContent||'').replace(/\s+/g,' ').trim();const dd=i.receiptDate?_daysB(i.receiptDate,st.rmEnd):0;return{c,dd,co:i.complaint,t:i.trade||'',kw:_kw.test(c)||_kw.test(i.complaint||'')};}).filter(x=>x.c);
 _scored.sort((a,b)=>(b.kw-a.kw)||(b.dd-a.dd));
@@ -3402,7 +3357,7 @@ async function runDashAI(){
   if(el)el.innerHTML='<div class="ic"><div class="ic-t"><div class="ic-sub" style="color:var(--lbl3)">AI 분석 생성 중…</div></div></div>';
   const stripTags=h=>String(h).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
   const src=items.map((x,i)=>{const parts=String(x.sub).split('<br>');return `[카드${i+1}] 제목:${x.ttl} | 등급:${x.cls}\n  핵심수치(원문):${stripTags(parts[0]||'')}\n  진단·조치(원문):${stripTags(parts[1]||'')}`;}).join('\n');
-  const dashSystem = buildRules('dash') + aiCustomRulesBlock(); // RULE_DEF 조립 — 기본 규칙 편집 override 반영
+  const dashSystem = buildRules('dash'); // RULE_DEF 조립 — 기본 규칙 편집 override 반영
   const dp=`아래 3개 카드의 각 2줄을 위 규칙에 따라 한국어 개조식으로 다시 작성하세요. 수치는 원문 그대로 유지할 것.\n\n${src}`;
   try{
     const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
@@ -3713,58 +3668,9 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
-  {const ro=manageLocked();const e=document.querySelector('[data-act="set.rulesAll"]');if(e)e.textContent=ro?'열람':'편집';const rs=document.querySelector('[data-act="set.aiRulesReset"]');if(rs)rs.disabled=ro;} // 규칙 편집 UI — 뷰어는 열람만
   const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
-}
-// ── 분석 규칙 전체 보기·편집 모달 (설정 > AI 분석 > 기본 규칙 편집) ──
-function openRulesModal(){
-  const ro=manageLocked(); // 뷰어는 읽기 전용 열람 — 규칙 수정은 편집자 전용
-  document.getElementById('mt').textContent=ro?'분석 규칙 전체 보기 (보기 전용)':'분석 규칙 전체 보기·편집';
-  // 항목별 HTML 조각 빌더 (탭 섹션 공용)
-  const taHtml=r=>`<div class="rz-it"><div class="rz-t"><span>${esc(r.t)}${ruleIsOvr(r.id)?'<span class="rz-mod">수정됨</span>':''}</span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="${r.id}">기본값</button>`}</div><textarea class="inp rz-ta" data-rid="${r.id}"${ro?' disabled':''} rows="${Math.min(9,Math.max(2,Math.ceil(String(ruleVal(r.id)).length/95)))}">${esc(ruleVal(r.id))}</textarea></div>`;
-  // 현장/대시보드 섹션 — RULE_DEF를 scope별로 분리
-  const secs={site:'',dash:''};
-  for(const g of RULE_DEF){
-    secs[g.scope]+=`<div class="rz-gh">${esc(g.label)}${g.fmt?'<span class="rz-badge">형식 규칙 — 수정 주의</span>':''}</div>`+g.rules.map(taHtml).join('');
-  }
-  // 중대하자 섹션 — 기본 6종 + 팀 추가 키워드(critKw: 기본 분류 외 키워드를 팀키워드 태그로 추출 + 접수내용 샘플 우선순위 반영)
-  let critSec='<div class="rz-gh">의심 추출 규칙<span class="rz-hint">쉼표로 구분 · 키워드 내 공백은 띄어쓰기 유무 모두 매칭 · 부정문맥 필터와 AI 최종 판정은 유지됨</span></div>';
-  for(const r of CRIT_DEF){
-    critSec+=`<div class="rz-it"><div class="rz-t"><span>${esc(r.t)}${ruleIsOvr(r.id)?'<span class="rz-mod">수정됨</span>':''}${r.hint?`<span class="rz-hint">${esc(r.hint)}</span>`:''}</span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="${r.id}">기본값</button>`}</div><input class="inp rz-in" data-rid="${r.id}"${ro?' disabled':''}${r.num?' type="number" min="1" style="max-width:140px"':''} value="${esc(ruleVal(r.id))}"></div>`;
-  }
-  critSec+=`<div class="rz-it"><div class="rz-t"><span>팀 추가 키워드${(S.critKw&&S.critKw.trim())?'<span class="rz-mod">사용 중</span>':''}<span class="rz-hint">쉼표 구분 · 예: 화재, 감전, 석면 · 기본 분류 외 키워드를 의심 후보로 추출하고 AI에 보낼 접수내용 샘플 우선순위에도 반영</span></span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="__critKw">비우기</button>`}</div><input class="inp rz-in" data-rid="__critKw"${ro?' disabled':''} value="${esc(S.critKw||'')}"></div>`;
-  // 팀 추가 지침 섹션 — 기본 규칙 뒤에 TEAM CUSTOM RULES 블록으로 덧붙음(내용 규칙 우선, 출력 형식 불변)
-  let cusSec='<div class="rz-gh">팀 추가 지침<span class="rz-hint">기본 규칙 위에 덧붙음 · 내용 규칙에 우선 적용, 출력 형식은 불변 · 예: 공가세대 항목은 항상 포함할 것</span></div>';
-  cusSec+=`<div class="rz-it"><div class="rz-t"><span>추가 지침${(S.aiRules&&S.aiRules.trim())?'<span class="rz-mod">사용 중</span>':''}</span>${ro?'':`<button class="btn bo bsm" data-act="modal.ruleReset" data-rid="__custom">비우기</button>`}</div><textarea class="inp rz-ta" data-rid="__custom"${ro?' disabled':''} rows="3" placeholder="비우면 기본 규칙만 사용">${esc(S.aiRules||'')}</textarea></div>`;
-  // 상단 탭 + 섹션 조립 — 숨긴 섹션의 입력값도 DOM에 남으므로 저장 시 전체가 수집됨
-  const tabs=[['site','현장 분석'],['dash','대시보드 이슈'],['crit','중대하자 추출'],['custom','팀 추가 지침']];
-  let h='<div class="md-scroll rz-wrap"><p class="rz-note">'+(ro?'보기 전용입니다 · 규칙 수정은 편집자만 할 수 있습니다.':'각 항목은 <b>비우면 기본값</b>이 사용됩니다. <span class="rz-warn">형식 규칙(HTML·JSON 출력)을 수정하면 분석 결과 표시가 깨질 수 있으니 주의하세요.</span> 저장 시 <b>팀 전체에 적용</b>됩니다.')+'</p>';
-  h+='<div class="tnav rz-tabs">'+tabs.map(([k,l],i)=>`<button type="button" class="tnav-i rz-tab${i===0?' act':''}" data-act="modal.rulesTab" data-rztab="${k}">${l}</button>`).join('')+'</div>';
-  const secMap={site:secs.site,dash:secs.dash,crit:critSec,custom:cusSec};
-  h+=tabs.map(([k],i)=>`<div class="rz-sec${i===0?' act':''}" data-rzsec="${k}">${secMap[k]}</div>`).join('');
-  h+='</div>';
-  document.getElementById('mbody').innerHTML=h;
-  document.getElementById('mf').innerHTML=ro?'<button class="btn bg2 bsm" data-act="modal.close">닫기</button>':'<button class="btn bo bsm" data-act="modal.rulesResetAll">전체 기본값</button><div style="flex:1"></div><button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.rulesSave">저장</button>';
-  const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
-  openMo();
-}
-function rulesModalResetOne(rid){if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}const el=document.querySelector(`#mbody .rz-ta[data-rid="${rid}"], #mbody .rz-in[data-rid="${rid}"]`);if(el)el.value=ruleDefault(rid);}
-function rulesModalResetAll(){if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}document.querySelectorAll('#mbody .rz-ta[data-rid], #mbody .rz-in[data-rid]').forEach(el=>{el.value=ruleDefault(el.dataset.rid);});toast('모든 항목을 기본값으로 채웠습니다 · 저장을 눌러야 반영됩니다');}
-function rulesModalSave(){
-  if(manageLocked()){toast('보기 전용입니다 · 규칙은 편집자만 수정할 수 있습니다');return;}
-  const ovr={};
-  let nc=S.aiRules||'',nk=S.critKw||'';
-  document.querySelectorAll('#mbody .rz-ta[data-rid], #mbody .rz-in[data-rid]').forEach(el=>{const rid=el.dataset.rid,v=String(el.value);if(rid==='__custom'){nc=v;return;}if(rid==='__critKw'){nk=v;return;}if(v.trim()!==''&&v!==ruleDefault(rid))ovr[rid]=v;}); // 기본값과 동일·공백은 저장하지 않음 → 앱 업데이트로 기본 규칙이 바뀌어도 미수정 항목은 자동 반영
-  S.aiRules=nc;S.critKw=nk;S.rulesOvr=ovr;
-  try{localStorage.setItem('aiRules',nc);localStorage.setItem('critKw',nk);}catch(_){}
-  const n=Object.keys(ovr).length;
-  if(n)localStorage.setItem('rulesOvr',JSON.stringify(ovr));else localStorage.removeItem('rulesOvr');
-  _critRxCache={};_calcCache.clear(); // 의심 추출 규칙 변경 반영 — calc 캐시 무효화
-  fb2RulesWrite(); // 팀 전체 공유 저장
-  closeMo();toast(n?('분석 규칙 저장됨 · 팀 전체 적용 · 수정 '+n+'개 항목'):'분석 규칙 저장됨 · 팀 전체 적용 · 모두 기본값');
-  if(S.view==='site'&&S.sid)rSite(S.sid);else if(S.view==='dashboard')rDash();
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option ${site?.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${esc(site?.name||'')}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2"><label class="il" for="mcu">상가수</label><input class="inp" id="mcu" type="number" value="${site?.commercialUnits||''}"></div><div class="ig2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" max="9999-12-31" data-act="util.clampYear" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''} aria-label="공가상가 포함 현장"> 공가상가 포함 현장</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px"><input type="checkbox" id="mcv" ${site?.showVacant!==false?'checked':''} aria-label="공가세대 탭 표시"> 공가세대 탭 표시</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.confirmSM" data-sid="${esc(sid||'')}">저장</button>`;openMo();}
 function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
@@ -4112,28 +4018,38 @@ function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.c
 async function exportSnapshot(){
   try{
     if(!Object.keys(S.def||{}).length){toast('데이터가 없습니다');return;}
+    if(typeof LZString==='undefined'){toast('스냅샷 생성 불가 · 데이터 압축 라이브러리(lz-string CDN) 미로드');return;}
     toast('스냅샷 생성 중…');
     const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
-    go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화(스냅샷은 문서 자체를 내보내므로 대시보드 상태 필요)
-    await nextFrame(); // 레이아웃 1프레임 정착(문서 outerHTML 직렬화 전)
+    go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화
+    await nextFrame();
     const insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
     const st={};
-    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 // 스냅샷 파일은 캡 불필요 — 전체 임베드
+    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 · PII 마스킹
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
-    const json=JSON.stringify(payload).replace(/<\//g,'<\\/').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');   // 종료태그·줄종료자(U+2028/9) 차단
-    const keep=window.__SNAP__; window.__SNAP__=null;
-    let docHtml='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-    window.__SNAP__=keep;
-    const injectBody='window.__SNAP__='+json+';';   // 주입 스크립트 해시 대상(태그 사이 내용)
-    // 해시 기반 CSP: 동적 주입분은 미리 해시 불가 → 내보낼 때 SHA-256 계산해 스냅샷 CSP의 script-src에 추가.
-    //   (없으면 스냅샷 CSP가 주입을 차단 → __SNAP__ 미설정 → 스냅샷이 로그인 게이트로 빠짐)
+    // 뷰어 동등 정보량 — 게시본(ulz)과 같은 LZ 압축으로 임베드. 비압축 JSON은 수십 MB로 커져 파일이 사실상 못 쓰게 됨.
+    const packed=LZString.compressToBase64(JSON.stringify(payload)); // base64 — <, U+2028/9, $& 등 위험 문자 원천 배제
+    // 골격은 라이브 DOM 직렬화가 아니라 배포 원본을 새로 fetch — 라이브 DOM에는 reCAPTCHA가 런타임에
+    // 주입한 스크립트·배지, 렌더 잔재, 모달 상태가 섞여 스냅샷에 그대로 박제되는 문제가 있었음.
+    let docHtml,appTxt;
     try{
-      const _dig=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(injectBody));
-      const _h=btoa(String.fromCharCode.apply(null,new Uint8Array(_dig)));
-      docHtml=docHtml.replace("script-src 'self' ","script-src 'self' 'sha256-"+_h+"' ");
-    }catch(e){console.warn('[snap] 주입 해시 실패 — 스냅샷 CSP 미보정(브라우저에서 차단될 수 있음)',e);}
-    const inject='<scr'+'ipt>'+injectBody+'</scr'+'ipt>\n';
-    const html=docHtml.replace('</head>',inject+'</head>');
+      docHtml=await(await fetch('index.html',{cache:'no-cache'})).text();
+      appTxt=await(await fetch('app.js',{cache:'no-cache'})).text();
+    }catch(e){console.error('[snap] 원본 fetch 실패',e);toast('스냅샷 생성 실패 · index.html/app.js 로드 불가');return;}
+    // ⚠ CSP 해시는 HTML 파서의 줄바꿈 정규화(CRLF→LF) "이후" 본문을 기준으로 검사된다.
+    //   CRLF 그대로 해시하면 브라우저 계산값과 어긋나 인라인 앱이 차단됨(스냅샷 전체 먹통의 근본 원인이었음).
+    //   → 해시 대상과 삽입 본문을 모두 LF로 정규화해 일치시킨다.
+    docHtml=docHtml.replace(/\r\n/g,'\n');
+    appTxt=appTxt.replace(/\r\n/g,'\n').replace(/<\/script/gi,'<\\/script'); // 종료태그 방어(현재 0건 — 안전망)
+    // 스냅샷은 Firebase를 전혀 쓰지 않음(부팅이 __SNAP__ 분기로 빠짐) — SDK·App Check 태그 제거로 reCAPTCHA 원천 차단
+    docHtml=docHtml.replace(/[ \t]*<script[^>]*firebase-(?:app|auth|database|app-check)-compat\.js[^>]*><\/script>\n?/g,'');
+    if(docHtml.indexOf('<script src="./app.js"></script>')<0){toast('스냅샷 생성 실패 · index.html 구조 불일치(app.js 태그 없음)');return;}
+    const injectBody='window.__SNAPZ__='+JSON.stringify(packed)+';'; // 한 줄 — 줄바꿈 정규화 무관
+    const _h256=async s=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return btoa(String.fromCharCode.apply(null,new Uint8Array(d)));};
+    const hApp=await _h256(appTxt),hInj=await _h256(injectBody);
+    docHtml=docHtml.replace('<script src="./app.js"></script>',()=>'<scr'+'ipt>'+appTxt+'</scr'+'ipt>'); // 함수 치환 필수 — appTxt 안의 $& 등 replace 특수 패턴 무력화
+    docHtml=docHtml.replace("script-src 'self' ","script-src 'self' 'sha256-"+hInj+"' 'sha256-"+hApp+"' ");
+    const html=docHtml.replace('</head>',()=>'<scr'+'ipt>'+injectBody+'</scr'+'ipt>\n</head>'); // 함수 치환 — 방어적 유지
     const blob=new Blob([html],{type:'text/html;charset=utf-8'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+S.rm+'.html';
     document.body.appendChild(a);a.click();a.remove();
@@ -4266,6 +4182,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
   applyChartTheme();
   bindDelegatedEvents(); // 위임 리스너 — 스냅샷·일반 경로 모두 커버 (조기 return 이전, 멱등)
   if(/[?&]selftest=1(?:&|$)/.test(location.search)){__runSelfTest();return;} // 셀프테스트 모드 — 일반 부팅 생략
+  if(window.__SNAPZ__&&!window.__SNAP__){ // 압축 스냅샷 — lz-string(CDN)으로 해제. 오프라인이면 명시적으로 알림
+    try{
+      if(typeof LZString==='undefined')throw new Error('lz-string 미로드(CDN 차단/오프라인)');
+      window.__SNAP__=JSON.parse(LZString.decompressFromBase64(window.__SNAPZ__));
+    }catch(e){console.error('[snap] 압축 해제 실패',e);alert('스냅샷 데이터를 여는 데 실패했습니다.\n네트워크(CDN) 연결 상태에서 다시 열어 주세요.');}
+  }
   if(window.__SNAP__){try{
     const P=window.__SNAP__;
     S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};Object.keys(S.def).forEach(_k=>delete S.def[_k]);
@@ -4286,8 +4208,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   {const miss=[];if(typeof Chart==='undefined')miss.push('차트');if(typeof LZString==='undefined')miss.push('데이터 압축');if(miss.length)setTimeout(()=>{try{toast('일부 기능 사용 불가('+miss.join('·')+') · 네트워크/CDN 차단 여부 확인',6000);}catch(_){}}, 500);}
   const ck=localStorage.getItem('ck'),exTk=localStorage.getItem('exTk');
   if(ck)S.ck=ck;
-  S.aiRules=localStorage.getItem('aiRules')||'';S.critKw=localStorage.getItem('critKw')||''; // AI 분석 사용자 규칙
-  try{S.rulesOvr=JSON.parse(localStorage.getItem('rulesOvr')||'{}')||{};}catch(_){S.rulesOvr={};} // 기본 규칙 항목별 override
+  try{['aiRules','critKw','rulesOvr'].forEach(k=>localStorage.removeItem(k));}catch(_){} // 규칙 편집 기능 폐지 — 레거시 캐시 정리(규칙은 코드 내 RULE_DEF/CRIT_DEF 고정)
   // 제외 키워드: localStorage 값이 있으면 (빈 문자열 포함) 그것을 사용, 없으면 기본값 'dummy' 유지
   if(exTk!==null)S.exTk=exTk;
   const ulex=document.getElementById('ulex');if(ulex)ulex.value=S.exTk;
