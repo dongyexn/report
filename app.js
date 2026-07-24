@@ -240,6 +240,16 @@ registerActions('click', {
   'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
   'top.month':()=>openMP(), 'top.print':()=>doPrint(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
+  'readme.tab':(el)=>{const i=el.dataset.i;const mb=document.getElementById('mbody');if(!mb)return;
+    mb.querySelectorAll('.rd-navi').forEach(b=>b.classList.toggle('act',b.dataset.i===i));
+    mb.querySelectorAll('.rd-sec').forEach((s,n)=>s.classList.toggle('act',String(n)===i));
+    const sc=mb.querySelector('.md-scroll');if(sc)sc.scrollTop=0;},
+  'snapPick.all':()=>{document.querySelectorAll('#mbody .snap-mo').forEach(c=>{c.checked=true;});},
+  'snapPick.cancel':()=>{closeMo();},
+  'snapPick.ok':()=>{const v=Array.from(document.querySelectorAll('#mbody .snap-mo:checked')).map(c=>c.value);
+    if(!v.length){toast('한 개 이상 선택하세요');return;}
+    const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r(v);},
+  'snap.rm':(el)=>snapSwitchMonth(el.value),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
@@ -816,6 +826,8 @@ async function fb2Enter(user){
     FB2.ready=true;
     clearTimeout(FB2._loginWatch); // 진입 성공 — 워치독 해제
     hideCover();
+    // 첫 방문 안내 — 이 브라우저에서 처음 로그인한 사용자에게 사용 안내를 1회만 띄운다(이후엔 헤더 ? 버튼).
+    try{if(!localStorage.getItem('rmSeen')){localStorage.setItem('rmSeen','1');setTimeout(()=>{try{openReadme();}catch(_){}},1400);}}catch(_){}
     fb2RenderAcct();
     fb2BindFocusout();
     fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
@@ -842,6 +854,7 @@ async function fb2EnterViewer(){
     fb2ApplyReport(rep.rm,rep.data);
     fb2SubReport(rep.rm);
     fb2InitViewerRmSel(rep.rm); // 기준월 아카이브 선택기 (게시월 2개 이상일 때 표시)
+    fb2SubReportIndex(); // 새 게시월 등록 감지
   }catch(e){console.error('[FB2] viewer 진입 실패',e);fb2ViewerEmpty();}
 }
 // ── 편집자 '뷰어 시점으로 보기' (설정 > 사내 게시) ──
@@ -863,13 +876,33 @@ async function fb2FetchLatestReport(){
   }
   return (rm&&data)?{rm:rm,data:data}:null;
 }
+// 게시된 월 목록(최신순) — 스냅샷에 담을 월을 고를 때 사용
+async function fb2ListReportMonths(){
+  if(!FB2.ready||!FB2.db)return [];
+  const snap=await FB2.db.ref('reportIndex').once('value');
+  const idx=snap.val()||{};
+  return Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort().reverse();
+}
+// 스냅샷에 담을 기준월 선택 — 여러 달을 담으면 파일 안에서 월 전환이 가능해진다(그만큼 커진다).
+//   resolve: 선택한 월 배열 / 취소 시 null. 모달을 닫아도(Esc·배경) 취소로 처리된다.
+function pickSnapMonths(list,defRm){
+  return new Promise(resolve=>{
+    window.__SNAPPICK__=resolve;
+    document.getElementById('mt').textContent='스냅샷에 포함할 기준월';
+    const rows=list.map(m=>`<label class="share-row" style="cursor:pointer"><span class="share-info"><b>${esc(m)}</b>${m===defRm?'<span style="margin-left:8px;font-size:11px;color:var(--b700)">현재</span>':''}</span><input type="checkbox" class="snap-mo" value="${esc(m)}"${m===defRm?' checked':''} style="width:17px;height:17px;accent-color:var(--b600)"></label>`).join('<div class="share-sep"></div>');
+    document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:52vh"><p style="font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 12px">담은 달은 파일을 열었을 때 <b>기준월을 바꿔가며</b> 볼 수 있습니다. 여러 달을 담으면 파일 크기도 그만큼 커집니다(월당 수백 KB~수 MB).</p>'+rows+'</div>';
+    document.getElementById('mf').innerHTML='<button class="btn bo bsm" data-act="snapPick.all">전체 선택</button><div style="flex:1"></div><button class="btn bg2 bsm" data-act="snapPick.cancel">취소</button><button class="btn bp bsm" data-act="snapPick.ok">내보내기</button>';
+    const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
+    openMo();
+  });
+}
 async function fb2ViewAsViewer(){
   try{
     if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다');return;}
     const r=await fb2FetchLatestReport();
     if(!r){toast('아직 게시된 집계가 없습니다');return;}
     const rm=r.rm,data=r.data;
-    fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);
+    fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);fb2SubReportIndex();
     toast('뷰어 시점으로 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
   }catch(e){console.error('[FB2] 뷰어 시점 열람 실패',e);toast('게시본 열람 실패');}
 }
@@ -951,12 +984,33 @@ function fb2ApplyReport(rm,rep){
 function fb2SubReport(rm){
   if(FB2._reportOff){try{FB2._reportOff();}catch(_){}} // 월 전환 시 이전 구독 해제(누적 방지)
   const ref=FB2.db.ref('report/'+rm);
+  let first=true; // 최초 수신은 화면 구성 — 이후 수신만 '갱신'으로 알린다
   const h=ref.on('value',function(snap){
     const data=snap.val();if(!data)return;
     if(shEditing()){FB2._pendReport=data;FB2._pendReportRm=rm;return;}
     fb2ApplyReport(rm,data);
+    if(first)first=false;
+    else toast(rm+' 게시본이 갱신되었습니다 · 최신 집계로 표시 중',5000);
   });
   FB2._reportOff=function(){ref.off('value',h);};
+}
+// 게시월 인덱스 구독 — 열람 중 새 달이 등록되면 알리고 기준월 선택기를 갱신한다.
+function fb2SubReportIndex(){
+  if(FB2._idxBound)return;FB2._idxBound=true;
+  const ref=FB2.db.ref('reportIndex');
+  let known=null;
+  const h=ref.on('value',function(snap){
+    const idx=snap.val()||{};
+    const months=Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort();
+    if(known===null){known=months;return;} // 최초 수신은 기준선만
+    const added=months.filter(m=>known.indexOf(m)<0);
+    known=months;
+    if(!added.length)return;
+    try{fb2InitViewerRmSel(S.rm);}catch(_){} // 선택기에 새 달 반영
+    const newest=added.sort().reverse()[0];
+    if(newest>S.rm)toastAction(newest+' 게시본이 새로 등록되었습니다','열기',()=>fb2SwitchReportMonth(newest),15000);
+  });
+  FB2.subs.push(function(){ref.off('value',h);});
 }
 // ── 뷰어 기준월 선택 — 월간보고 아카이브 열람 ──
 async function fb2InitViewerRmSel(curRm){
@@ -1183,7 +1237,7 @@ async function fb2Publish(){
     // 편집자가 로컬에만 갖고 있던 처리계획·분석의견을 리프로 시드(실시간 협업 시작점) — 실패해도 게시 자체는 완료.
     try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
     fb2RefreshMeta();
-    toast('등록 완료 · '+rm+' · 현장 '+teamSites().length+'개');
+    toastAction('등록 완료 · '+rm+' · 현장 '+teamSites().length+'개','스냅샷 저장',()=>{try{exportSnapshot();}catch(e){console.error(e);}},12000);
     // 잔존 미래 게시월 정리: 기준월이 잘못 설정된 채 게시된 노드(예: 2026-07)가 남아 있으면
     // 뷰어 기준월 선택기에 계속 노출되고 과거엔 '최신'으로 오판되던 원인이므로 삭제를 제안한다.
     try{
@@ -1927,8 +1981,24 @@ async function openReadme(){
     const md=await res.text();
     await loadMarked();
     const html=DOMPurify.sanitize(marked.parse(md));
+    // 장(h2) 단위로 쪼개 좌측 목차 + 본문 한 장씩 — 문서가 길어 세로 스크롤만으로는 찾기 어렵다.
+    const src=document.createElement('div');src.innerHTML=html;
+    const secs=[];let cur={t:'소개',nodes:[]};
+    Array.from(src.childNodes).forEach(n=>{
+      if(n.nodeType===1&&n.tagName==='H2'){if(cur.nodes.length)secs.push(cur);cur={t:n.textContent.trim(),nodes:[n]};}
+      else cur.nodes.push(n);
+    });
+    if(cur.nodes.length)secs.push(cur);
+    const wrap=document.createElement('div');wrap.className='rd-wrap';
+    const nav=document.createElement('nav');nav.className='rd-nav';nav.setAttribute('aria-label','사용 안내 목차');
+    nav.innerHTML=secs.map((s,i)=>`<button type="button" class="rd-navi${i===0?' act':''}" data-act="readme.tab" data-i="${i}">${esc(s.t)}</button>`).join('');
+    const body=document.createElement('div');body.className='rd-body md-doc';
+    secs.forEach((s,i)=>{const d=document.createElement('div');d.className='rd-sec'+(i===0?' act':'');s.nodes.forEach(n=>d.appendChild(n));body.appendChild(d);});
+    wrap.appendChild(nav);wrap.appendChild(body);
     document.getElementById('mt').textContent='사용 안내 (README)';
-    document.getElementById('mbody').innerHTML=`<div class="md-scroll"><div class="md-doc">${html}</div></div>`;
+    const mbody=document.getElementById('mbody');
+    mbody.innerHTML='<div class="md-scroll"></div>';
+    mbody.firstChild.appendChild(wrap);
     document.getElementById('mf').innerHTML='';
     const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
     openMo();
@@ -2517,6 +2587,27 @@ function setRmChip(){
   const b=document.body.classList;
   const src=b.contains('snap')?' · 스냅샷':(b.contains('viewer')?' · 사내공유':'');
   chip.textContent='기준월 '+S.rm+src;
+}
+// 스냅샷에 여러 달이 담긴 경우의 기준월 선택기 — 뷰어(vrm)와 같은 자리·같은 모양, 네트워크 없이 동작
+function snapInitRmSel(){
+  const M=window.__SNAPM__,mc=document.querySelector('.mc');if(!mc)return;
+  const months=M?Object.keys(M).sort().reverse():[];
+  let sel=document.getElementById('vrm');
+  if(months.length<2){if(sel)sel.style.display='none';mc.style.display='';return;}
+  if(!sel){sel=document.createElement('select');sel.id='vrm';sel.className='fbu-sel vrm-sel';sel.setAttribute('aria-label','열람할 기준월 선택');mc.parentNode.insertBefore(sel,mc.nextSibling);}
+  sel.setAttribute('data-act','snap.rm');
+  sel.innerHTML=months.map(m=>`<option value="${esc(m)}"${m===S.rm?' selected':''}>${esc(m)}</option>`).join('');
+  sel.style.display='';mc.style.display='none'; // 선택기가 보이면 기준월 칩은 중복 정보 — 숨김
+}
+function snapSwitchMonth(rm){
+  const M=window.__SNAPM__;if(!M||!M[rm]||rm===S.rm)return;
+  const P=M[rm];
+  window.__SNAP__=P;
+  S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};S.rm=P.rm||rm;
+  for(const sid in (P.st||{}))deriveLul(P.st[sid]); // 장기미처리는 미저장 — 전환 시 파생
+  _calcCache.clear();
+  ensureTeams();setRmChip();rTeamSel();rNav();
+  if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);else go('dashboard');
 }
 function rDash(){
   setRmChip();
@@ -3988,6 +4079,7 @@ function openMo(){
 }
 function closeMo(){
   const mo=document.getElementById('mo');if(mo)mo.classList.remove('open');
+  if(window.__SNAPPICK__){const r=window.__SNAPPICK__;window.__SNAPPICK__=null;try{r(null);}catch(_){}} // 월 선택 대기 중이면 취소로 종결
   if(typeof recCloseMenu==='function')recCloseMenu();
   if(typeof recClosePvMenu==='function')recClosePvMenu();
   window.__REC=null;
@@ -4055,17 +4147,41 @@ async function exportSnapshot(){
     //   로컬 원본(S.def)은 업로드한 PC의 IndexedDB에만 있어, 다른 PC에서 만들면 뷰어와 내용이 어긋난다.
     //   이미 게시본을 보고 있으면(뷰어·게시본 열람) 그대로 쓰고, 편집 모드면 게시본을 '조회만' 해서 쓴다.
     //   (과거엔 뷰어 시점으로 전환했는데, 편집자가 화면을 잃어 새로고침이 필요했다 — 상태는 건드리지 않는다.)
-    let pub=null;
-    if(!window.__SNAP__&&FB2.ready&&FB2.db){
+    const _stripLul=Q=>{const st={};for(const sid in (Q.st||{})){const k=Object.assign({},Q.st[sid]);k.lul=null;st[sid]=k;}Q.st=st;return Q;}; // 장기미처리는 열 때 파생
+    let pub=null,months=null,defRm=null;
+    if(FB2.ready&&FB2.db){
+      try{
+        const list=await fb2ListReportMonths();
+        const cur=(window.__SNAP__&&window.__SNAP__.rm)||S.rm;
+        if(list.length>1){ // 게시월이 둘 이상이면 어떤 달을 담을지 물어본다(여러 달이면 파일 안에서 전환 가능)
+          const picked=await pickSnapMonths(list,list.includes(cur)?cur:list[0]);
+          if(picked===null)return; // 취소
+          toast('게시본을 불러오는 중…');
+          months={};
+          for(const rm of picked){
+            const d=(await FB2.db.ref('report/'+rm).once('value')).val();
+            if(d)months[rm]=_stripLul(buildSnapFromReport(rm,d).P);
+          }
+          const keys=Object.keys(months);
+          if(!keys.length){toast('선택한 월의 게시본을 불러오지 못했습니다');return;}
+          defRm=keys.includes(cur)?cur:keys.sort().reverse()[0];
+          if(keys.length===1){pub=months[defRm];months=null;} // 한 달만 골랐으면 기존 단일 구조
+        }
+      }catch(e){console.warn('[snap] 게시월 목록 조회 실패',e);}
+    }
+    if(!months&&!pub&&!window.__SNAP__&&FB2.ready&&FB2.db){
       toast('게시본을 불러오는 중…');
       try{const r=await fb2FetchLatestReport();if(r)pub=buildSnapFromReport(r.rm,r.data).P;}
       catch(e){console.warn('[snap] 게시본 로드 실패',e);}
     }
-    const P=window.__SNAP__||pub;
+    const P=months?months[defRm]:(window.__SNAP__||pub);
     if(!P&&!Object.keys(S.def||{}).length){toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;}
     toast('스냅샷 생성 중…');
     let payload;
-    if(P){
+    if(months){
+      // 여러 달 — 월별 게시본을 그대로 담는다(파일 안에서 기준월 전환).
+      payload={rm:defRm,months:months};
+    }else if(P){
       // 게시본 기준 — 뷰어가 보고 있는 집계·목록을 재계산 없이 그대로 담는다(수치 불일치 원천 차단).
       const st={};
       for(const sid in (P.st||{})){const k=Object.assign({},P.st[sid]);k.lul=null;st[sid]=k;} // lul은 열 때 ul에서 파생
@@ -4107,10 +4223,12 @@ async function exportSnapshot(){
     docHtml=docHtml.replace("script-src 'self' ","script-src 'self' 'sha256-"+hInj+"' 'sha256-"+hApp+"' ");
     const html=docHtml.replace('</head>',()=>'<scr'+'ipt>'+injectBody+'</scr'+'ipt>\n</head>'); // 함수 치환 — 방어적 유지
     const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+(payload.rm||S.rm)+'.html';
+    const _mk=months?Object.keys(months).sort():null;
+    const _label=_mk?(_mk.length>1?_mk[0]+'~'+_mk[_mk.length-1]:_mk[0]):(payload.rm||S.rm);
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+_label+'.html';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-    toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+(payload.rm||S.rm)+' · '+(html.length/1048576).toFixed(2)+'MB',6000);
+    toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+_label+(months?(' · '+Object.keys(months).length+'개월'):'')+' · '+(html.length/1048576).toFixed(2)+'MB',6000);
   }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
 }
 window.exportSnapshot=exportSnapshot;
@@ -4334,7 +4452,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     }catch(e){console.error('[snap] 압축 해제 실패',e);alert('스냅샷 데이터를 여는 데 실패했습니다.\n네트워크(CDN) 연결 상태에서 다시 열어 주세요.');}
   }
   if(window.__SNAP__){try{
-    const P=window.__SNAP__;
+    let P=window.__SNAP__;
+    if(P.months&&P.rm&&P.months[P.rm]){window.__SNAPM__=P.months;P=P.months[P.rm];window.__SNAP__=P;} // 여러 달 스냅샷 — 기본 월로 시작
     S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};Object.keys(S.def).forEach(_k=>delete S.def[_k]);
     for(const _sid in (P.st||{}))deriveLul(P.st[_sid]); // 장기미처리는 미저장 — 뷰어와 동일하게 여기서 파생
     if(P.rm)S.rm=P.rm;
@@ -4343,6 +4462,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.body.classList.add('viewer'); // 뷰어 시점 — 실제 뷰어 화면과 동일한 숨김 규칙 공유(업로드 탭·관리 편집 요소 등)
     ensureTeams();
     setRmChip();
+    snapInitRmSel(); // 여러 달이 담겼으면 기준월 선택기 표시
     rTeamSel();rNav();
     go('dashboard');
     hideCover();progHide(); // 골격 fetch 방식의 coverGate는 기본 표시 상태 — 명시적으로 걷어야 함(라이브 DOM 박제 시절엔 숨김 상태가 우연히 담겨 있었음)

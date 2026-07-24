@@ -551,6 +551,16 @@ table.dt-detail th{text-align:center!important;}
 .pv-pct{font-size:10px;color:var(--lbl3);margin-left:4px;font-weight:400;}
 /* README(사용 안내) 문서 렌더 */
 .md-scroll{max-height:min(74vh,900px);overflow-y:auto;overscroll-behavior:contain;margin:0 -8px;padding:0 8px;} /* 모달 안에서 문서 전체를 스크롤로 읽기 */
+/* 사용 안내(README) — 좌측 목차 탭 · 장 단위로 나눠 보여 세로 스크롤을 줄인다 */
+.rd-wrap{display:flex;gap:20px;align-items:flex-start;}
+.rd-nav{flex:0 0 200px;max-height:62vh;overflow-y:auto;border-right:1px solid var(--sep);padding-right:12px;position:sticky;top:0;}
+.rd-navi{display:block;width:100%;text-align:left;border:none;background:none;padding:8px 10px;margin-bottom:2px;border-radius:8px;font-size:12.5px;line-height:1.45;color:var(--lbl2);cursor:pointer;font-family:inherit;}
+.rd-navi:hover{background:var(--fill);}
+.rd-navi.act{background:var(--b50);color:var(--b700);font-weight:700;}
+.rd-body{flex:1;min-width:0;}
+.rd-sec{display:none;}
+.rd-sec.act{display:block;}
+@media(max-width:820px){.rd-wrap{flex-direction:column;gap:12px;}.rd-nav{flex:none;width:100%;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--sep);padding:0 0 8px;display:flex;gap:6px;overflow-x:auto;}.rd-navi{width:auto;white-space:nowrap;margin:0;}}
 .md-doc{font-size:13.5px;line-height:1.75;color:var(--lbl);max-width:820px;margin:0 auto;padding:4px 2px 12px;}
 .md-doc h1{font-size:20px;margin:6px 0 14px;letter-spacing:-.01em;}
 .md-doc h2{font-size:16px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--sep);}
@@ -1321,6 +1331,8 @@ select.mg-inp{cursor:pointer;-webkit-appearance:none;appearance:none;background-
 body.snap .nvi[data-view="manage"],body.snap .nvi[data-view="settings"],body.snap .sb-bottom .sbsl{display:none!important;}
 body.snap [data-act="dash.ai"],body.snap [data-act="panel.ai"]{display:none!important;} /* 박제 문서 — AI 재생성은 저장 불가·무의미 */
 body.snap [data-act="top.month"],body.viewer [data-act="top.month"]{display:none!important;} /* 게시본·스냅샷은 기준월 고정 — 뷰어는 기준월 선택기(vrm)로 전환 */
+body.snap [data-act="set.readme"]{display:none!important;} /* 스냅샷은 단일 파일 — README.md를 읽을 수 없음 */
+.tb-help{font-weight:800;padding-left:11px;padding-right:11px;}
 body.snap textarea,body.snap [contenteditable="true"]{pointer-events:none!important;background:transparent!important;}
 /* 사내 뷰어(@hdec.co.kr 로그인) — 업로드/관리/설정만 숨기고 처리계획·분석의견 입력은 허용 */
 body.viewer .nvi[data-view="upload"],body.viewer .sb-bottom .sbsl{display:none!important;}
@@ -1478,6 +1490,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     <div class="tbr">
       <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"></rect><path d="M5 1v4M11 1v4M2 7h12"></path></svg><span id="mchip">기준월 2026-05</span></div>
       <button class="btn bg2 bsm no-print" data-act="top.month" data-tt="기준월 변경 · 단축키 [ ]">기준월 변경</button>
+      <button class="btn bg2 bsm no-print tb-help" data-act="set.readme" data-tt="사용 안내 — 화면 보는 법·용어" aria-label="사용 안내 열기">?</button>
       <button id="pbtn" class="btn bp bsm no-print hide-mobile" data-act="top.print" style="display: none;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"></path></svg>인쇄</button>
     </div>
   </header>
