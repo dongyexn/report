@@ -4198,7 +4198,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 스냅샷';
     rTeamSel();rNav();
     go('dashboard');
-    progHide();
+    hideCover();progHide(); // 골격 fetch 방식의 coverGate는 기본 표시 상태 — 명시적으로 걷어야 함(라이브 DOM 박제 시절엔 숨김 상태가 우연히 담겨 있었음)
     return;
   }catch(e){console.error('[snap] boot failed',e);}}
   // 저장소 영속화 요청 — 하자 원본의 유일 보관소인 IndexedDB가 디스크 압박 시 브라우저에 의해
