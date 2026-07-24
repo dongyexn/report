@@ -4025,17 +4025,36 @@ function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.c
 // INIT
 async function exportSnapshot(){
   try{
-    if(!Object.keys(S.def||{}).length){toast('데이터가 없습니다');return;}
     if(typeof LZString==='undefined'){toast('스냅샷 생성 불가 · 데이터 압축 라이브러리(lz-string CDN) 미로드');return;}
+    // 기준 데이터는 '사내 게시본' — 뷰어가 실제로 보는 것과 같은 파일을 만들기 위함.
+    //   로컬 원본(S.def)은 업로드한 PC의 IndexedDB에만 있어, 다른 PC에서 만들면 뷰어와 내용이 어긋난다.
+    //   게시본을 아직 열지 않은 상태면 뷰어 시점으로 전환한 뒤 내보낸다(화면 = 파일 내용 보장).
+    if(!window.__SNAP__&&FB2.ready&&FB2.db){
+      toast('게시본을 불러오는 중…');
+      try{await fb2ViewAsViewer();}catch(e){console.warn('[snap] 게시본 로드 실패',e);}
+      if(window.__SNAP__)await nextFrame();
+    }
+    const P=window.__SNAP__;
+    if(!P&&!Object.keys(S.def||{}).length){toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;}
     toast('스냅샷 생성 중…');
-    const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
-    go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화
-    await nextFrame();
-    const insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
-    const st={};
-    // 뷰어 시점과 동일한 정보량만 담는다 — 목록은 슬림 필드, lul은 열 때 ul에서 파생(중복 저장 금지), critUl은 뷰어와 같은 캡(300).
-    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:slimUL(r.ul),lul:null,critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 · PII 마스킹
-    const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
+    let payload;
+    if(P){
+      // 게시본 기준 — 뷰어가 보고 있는 집계·목록을 재계산 없이 그대로 담는다(수치 불일치 원천 차단).
+      const st={};
+      for(const sid in (P.st||{})){const k=Object.assign({},P.st[sid]);k.lul=null;st[sid]=k;} // lul은 열 때 ul에서 파생
+      payload={rm:P.rm||S.rm,sites:P.sites||S.sites,teams:P.teams||S.teams,cmt:S.cmt,ana:S.ana,st,wks:P.wks||[],am:P.am||{},siteWks:P.siteWks||{},siteAm:P.siteAm||{},insightsHTML:P.insightsHTML||''};
+    }else{
+      // 폴백 — 네트워크 불가·미게시 상태에서는 이 PC의 로컬 원본으로 계산(내용이 뷰어와 다를 수 있음).
+      toast('게시본에 연결할 수 없어 이 PC의 로컬 데이터로 생성합니다',6000);
+      const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
+      go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화
+      await nextFrame();
+      const insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
+      const st={};
+      // 뷰어 시점과 동일한 정보량만 담는다 — 목록은 슬림 필드, lul은 열 때 ul에서 파생(중복 저장 금지), critUl은 뷰어와 같은 캡(300).
+      teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:slimUL(r.ul),lul:null,critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 · PII 마스킹
+      payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
+    }
     // 뷰어 동등 정보량 — 게시본(ulz)과 같은 LZ 압축으로 임베드. 비압축 JSON은 수십 MB로 커져 파일이 사실상 못 쓰게 됨.
     const packed=LZString.compressToBase64(JSON.stringify(payload)); // base64 — <, U+2028/9, $& 등 위험 문자 원천 배제
     // 골격은 라이브 DOM 직렬화가 아니라 배포 원본을 새로 fetch — 라이브 DOM에는 reCAPTCHA가 런타임에
@@ -4060,10 +4079,10 @@ async function exportSnapshot(){
     docHtml=docHtml.replace("script-src 'self' ","script-src 'self' 'sha256-"+hInj+"' 'sha256-"+hApp+"' ");
     const html=docHtml.replace('</head>',()=>'<scr'+'ipt>'+injectBody+'</scr'+'ipt>\n</head>'); // 함수 치환 — 방어적 유지
     const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+S.rm+'.html';
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='하자대시보드_스냅샷_'+(payload.rm||S.rm)+'.html';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
-    toast('스냅샷 저장됨 · '+(html.length/1048576).toFixed(2)+'MB');
+    toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+(payload.rm||S.rm)+' · '+(html.length/1048576).toFixed(2)+'MB'+(P?' · 편집 모드 복귀는 새로고침(F5)':''),7000);
   }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
 }
 window.exportSnapshot=exportSnapshot;
