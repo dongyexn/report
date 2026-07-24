@@ -3712,9 +3712,13 @@ function undoDelS(){
 }
 
 // MONTH PICKER
-function openMP(){document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
+function openMP(){
+  if(document.body.classList.contains('snap')){toast('스냅샷은 내보낸 시점의 기준월로 고정된 문서입니다');return;}
+  if(document.body.classList.contains('viewer')){toast('게시본은 기준월 선택기로 전환하세요');return;}
+  document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
 function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;document.getElementById('mchip').textContent='기준월 '+v;lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
 function stepMonth(delta){
+  if(document.body.classList.contains('snap')||document.body.classList.contains('viewer'))return; // 게시본·스냅샷은 기준월 고정(집계가 박제됨)
   const [y,m]=S.rm.split('-').map(Number);
   const d=new Date(y,m-1+delta,1);
   const ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -4067,8 +4071,9 @@ async function exportSnapshot(){
     // ⚠ CSP 해시는 HTML 파서의 줄바꿈 정규화(CRLF→LF) "이후" 본문을 기준으로 검사된다.
     //   CRLF 그대로 해시하면 브라우저 계산값과 어긋나 인라인 앱이 차단됨(스냅샷 전체 먹통의 근본 원인이었음).
     //   → 해시 대상과 삽입 본문을 모두 LF로 정규화해 일치시킨다.
-    docHtml=docHtml.replace(/\r\n/g,'\n');
-    appTxt=appTxt.replace(/\r\n/g,'\n').replace(/<\/script/gi,'<\\/script'); // 종료태그 방어(현재 0건 — 안전망)
+    //   HTML 파서는 CR·CRLF를 모두 LF로 정규화하므로 /\r\n?/ 로 동일하게 맞춘다(\r\n만 치환하면 \r\r\n·단독 CR이 남아 해시가 어긋남).
+    docHtml=docHtml.replace(/\r\n?/g,'\n');
+    appTxt=appTxt.replace(/\r\n?/g,'\n').replace(/<\/script/gi,'<\\/script'); // 종료태그 방어(현재 0건 — 안전망)
     // 스냅샷은 Firebase를 전혀 쓰지 않음(부팅이 __SNAP__ 분기로 빠짐) — SDK·App Check 태그 제거로 reCAPTCHA 원천 차단
     docHtml=docHtml.replace(/[ \t]*<script[^>]*firebase-(?:app|auth|database|app-check)-compat\.js[^>]*><\/script>\n?/g,'');
     if(docHtml.indexOf('<script src="./app.js"></script>')<0){toast('스냅샷 생성 실패 · index.html 구조 불일치(app.js 태그 없음)');return;}
@@ -4206,9 +4211,98 @@ function __runSelfTest(){
   try{hideCover();progHide();}catch(_){}
 }
 window.__runSelfTest=__runSelfTest;
+// 전역 UI 바인딩(툴팁·우클릭 메뉴·단축키·피벗 드래그) — 스냅샷·뷰어·편집자 모두 동일하게 필요.
+// 과거 부팅 말미에 있어 스냅샷 조기 return 뒤로 밀렸고, 그 결과 스냅샷에서 목록 컬럼 우클릭·
+// 사이드바/제목 툴팁·Esc·피벗 드래그가 전부 죽어 있었다. 멱등 가드 후 조기 return 이전에 호출한다.
+function bindGlobalUi(){
+  if(window._globalUiBound)return;window._globalUiBound=true;
+  attachSBTip();attachTitleTip();
+
+  attachKpiTap();
+
+  // 창 크기 변경 시 첫 슬롯 현장명 폰트 재적합
+
+  let _fitT;window.addEventListener('resize',()=>{clearTimeout(_fitT);_fitT=setTimeout(()=>{try{fitSiteName();}catch(e){}},150);});
+
+  document.addEventListener('keydown',e=>{
+
+    if(shEditing())return;
+
+    const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open'))return;
+
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+
+    if(e.key==='['){e.preventDefault();stepMonth(-1);}
+
+    else if(e.key===']'){e.preventDefault();stepMonth(1);}
+
+    else if(e.key==='?'){e.preventDefault();toggleShortcutHelp();}
+
+  });
+
+  document.addEventListener('contextmenu',e=>{
+
+    if(!window.__REC)return;
+
+    const th=e.target.closest('.rl-table thead th[data-key]');
+
+    if(!th||th.dataset.key==='__no')return;
+
+    e.preventDefault();
+
+    recOpenMenu(th.dataset.key,e.clientX,e.clientY);
+
+  });
+
+  document.addEventListener('mousedown',e=>{if(window.__RECMENU&&!e.target.closest('#rlMenu'))recCloseMenu();});
+
+  document.addEventListener('mousedown',e=>{if(window.__PVMENU&&!e.target.closest('#pvMenu')&&!e.target.closest('[data-act="rec.pivotAdd"]'))recClosePvMenu();});
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&window.__RECMENU){e.stopImmediatePropagation();e.preventDefault();recCloseMenu();}},true);
+
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&window.__PVMENU){e.stopImmediatePropagation();e.preventDefault();recClosePvMenu();}},true);
+
+  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open'))return;if(typeof insCollapseAll==='function'&&insCollapseAll())e.preventDefault();}); // Esc — 주요 이슈 확장 카드 접기(모달 열림 시 모달 우선)
+
+  // 행 칩 드래그 재정렬 — 네이티브 HTML5 DnD + 라이브 재배치(드래그 중 다른 칩이 실시간으로 비켜남, FLIP 슬라이드)
+
+  let pvDragged=null;
+
+  const pvRowChip=t=>t&&t.closest?t.closest('.pv-chip.pv-drag[data-zone="rows"]'):null;
+
+  document.addEventListener('dragstart',e=>{const c=pvRowChip(e.target);if(!c)return;pvDragged=c;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','');}catch(_){}setTimeout(()=>{if(pvDragged)pvDragged.classList.add('pv-dragging');},0);});
+
+  document.addEventListener('dragover',e=>{
+
+    if(!pvDragged)return;
+
+    const zone=e.target.closest&&e.target.closest('.pv-zone');
+
+    if(!zone||!zone.contains(pvDragged))return;
+
+    e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(_){}
+
+    const over=pvRowChip(e.target);if(!over||over===pvDragged)return;
+
+    const r=over.getBoundingClientRect(),after=e.clientX>r.left+r.width/2;
+
+    if(after&&over.nextElementSibling===pvDragged)return;
+
+    if(!after&&over.previousElementSibling===pvDragged)return;
+
+    pvFlip(zone,()=>{after?over.after(pvDragged):over.before(pvDragged);});
+
+  });
+
+  document.addEventListener('drop',e=>{if(!pvDragged)return;e.preventDefault();const d=pvDragged;pvDragged=null;d.classList.remove('pv-dragging');pvCommitOrder();});
+
+  document.addEventListener('dragend',()=>{if(pvDragged){pvDragged.classList.remove('pv-dragging');pvDragged=null;pvCommitOrder();}});
+
+}
 document.addEventListener('DOMContentLoaded',async()=>{
   applyChartTheme();
   bindDelegatedEvents(); // 위임 리스너 — 스냅샷·일반 경로 모두 커버 (조기 return 이전, 멱등)
+  bindGlobalUi();        // 툴팁·우클릭·단축키·드래그 — 동일 이유로 조기 return 이전(멱등)
   if(/[?&]selftest=1(?:&|$)/.test(location.search)){__runSelfTest();return;} // 셀프테스트 모드 — 일반 부팅 생략
   if(window.__SNAPZ__&&!window.__SNAP__){ // 압축 스냅샷 — lz-string(CDN)으로 해제. 오프라인이면 명시적으로 알림
     try{
@@ -4242,47 +4336,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // 제외 키워드: localStorage 값이 있으면 (빈 문자열 포함) 그것을 사용, 없으면 기본값 'dummy' 유지
   if(exTk!==null)S.exTk=exTk;
   const ulex=document.getElementById('ulex');if(ulex)ulex.value=S.exTk;
-  attachSBTip();attachTitleTip();
-  attachKpiTap();
-  // 창 크기 변경 시 첫 슬롯 현장명 폰트 재적합
-  let _fitT;window.addEventListener('resize',()=>{clearTimeout(_fitT);_fitT=setTimeout(()=>{try{fitSiteName();}catch(e){}},150);});
-  document.addEventListener('keydown',e=>{
-    if(shEditing())return;
-    const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open'))return;
-    if(e.metaKey||e.ctrlKey||e.altKey)return;
-    if(e.key==='['){e.preventDefault();stepMonth(-1);}
-    else if(e.key===']'){e.preventDefault();stepMonth(1);}
-    else if(e.key==='?'){e.preventDefault();toggleShortcutHelp();}
-  });
-  document.addEventListener('contextmenu',e=>{
-    if(!window.__REC)return;
-    const th=e.target.closest('.rl-table thead th[data-key]');
-    if(!th||th.dataset.key==='__no')return;
-    e.preventDefault();
-    recOpenMenu(th.dataset.key,e.clientX,e.clientY);
-  });
-  document.addEventListener('mousedown',e=>{if(window.__RECMENU&&!e.target.closest('#rlMenu'))recCloseMenu();});
-  document.addEventListener('mousedown',e=>{if(window.__PVMENU&&!e.target.closest('#pvMenu')&&!e.target.closest('[data-act="rec.pivotAdd"]'))recClosePvMenu();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&window.__RECMENU){e.stopImmediatePropagation();e.preventDefault();recCloseMenu();}},true);
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&window.__PVMENU){e.stopImmediatePropagation();e.preventDefault();recClosePvMenu();}},true);
-  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open'))return;if(typeof insCollapseAll==='function'&&insCollapseAll())e.preventDefault();}); // Esc — 주요 이슈 확장 카드 접기(모달 열림 시 모달 우선)
-  // 행 칩 드래그 재정렬 — 네이티브 HTML5 DnD + 라이브 재배치(드래그 중 다른 칩이 실시간으로 비켜남, FLIP 슬라이드)
-  let pvDragged=null;
-  const pvRowChip=t=>t&&t.closest?t.closest('.pv-chip.pv-drag[data-zone="rows"]'):null;
-  document.addEventListener('dragstart',e=>{const c=pvRowChip(e.target);if(!c)return;pvDragged=c;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','');}catch(_){}setTimeout(()=>{if(pvDragged)pvDragged.classList.add('pv-dragging');},0);});
-  document.addEventListener('dragover',e=>{
-    if(!pvDragged)return;
-    const zone=e.target.closest&&e.target.closest('.pv-zone');
-    if(!zone||!zone.contains(pvDragged))return;
-    e.preventDefault();try{e.dataTransfer.dropEffect='move';}catch(_){}
-    const over=pvRowChip(e.target);if(!over||over===pvDragged)return;
-    const r=over.getBoundingClientRect(),after=e.clientX>r.left+r.width/2;
-    if(after&&over.nextElementSibling===pvDragged)return;
-    if(!after&&over.previousElementSibling===pvDragged)return;
-    pvFlip(zone,()=>{after?over.after(pvDragged):over.before(pvDragged);});
-  });
-  document.addEventListener('drop',e=>{if(!pvDragged)return;e.preventDefault();const d=pvDragged;pvDragged=null;d.classList.remove('pv-dragging');pvCommitOrder();});
-  document.addEventListener('dragend',()=>{if(pvDragged){pvDragged.classList.remove('pv-dragging');pvDragged=null;pvCommitOrder();}});
   // 부팅 순서:
   // (1) IndexedDB에서 메타(팀·현장·처리계획·분석)·def 로드 (로컬 캐시 — 로그인 후 즉시 표시)
   // (2) 팀 모델 보정(없으면 기본 팀 생성, 현장에 teamId 부여)
