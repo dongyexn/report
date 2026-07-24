@@ -177,6 +177,16 @@ function safeHTML(dirty){
 // 게시(Firebase)·스냅샷에 실리는 미처리 목록에서 입주민 자유텍스트(접수내용·민원)를 제거 — 외부 공유 시 개인정보 최소화.
 // 구조 필드(공종·하자유형·보수주체·일자 등)는 유지되어 집계/뷰어 표시에는 영향 없음.
 function redactUL(ul,all){const a=all?(ul||[]):(ul||[]).slice(0,300);return a.map(i=>Object.assign({},i,{receiptContent:maskPII(String(i.receiptContent||'')),complaint:''}));} // all=true: 캡 없이. 접수내용은 비우지 않고 PII(전화·이메일·인명)만 마스킹해 게시 — 뷰어도 내용 확인 가능
+// 게시본·스냅샷 공용 — 뷰어에게 제공하는 목록 필드만 남긴다(표시·피벗에 실제로 쓰는 것만, 접수내용은 PII 마스킹·민원 제외).
+// 원본 행에는 status·completionDate·receiptNo·siteCode 등이 더 있으나 미처리 목록에서는 쓰지 않아 제외 — 데이터량 직결.
+function slimUL(ul){return (ul||[]).map(i=>({building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,receiptContent:maskPII(String(i.receiptContent||'')),saleStatus:i.saleStatus,repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays}));}
+// 장기미처리(lul)는 ul의 부분집합이라 싣지 않고 열 때 파생한다(_calcImpl과 동일 산식 · 게시본·스냅샷 공용).
+function deriveLul(k){
+  if(!k||(Array.isArray(k.lul)&&k.lul.length))return;
+  if(!Array.isArray(k.ul)||!k.ul.length||!k.rmEnd)return;
+  const _dB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
+  k.lul=k.ul.filter(i=>_dB(i.receiptDate,k.rmEnd)>=30);
+}
 
 // ===== 이벤트 위임 인프라 (인라인 핸들러 제거 기반) =====
 // 인라인 on*= 대신 요소에 data-act + 의미 data-* 속성을 부여하고, 문서 루트의 위임 리스너 1개가
@@ -903,11 +913,8 @@ function fb2ApplyReport(rm,rep){
        try{const full=JSON.parse(LZString.decompressFromBase64(n.ulz)||'null');if(Array.isArray(full)){k.ul=full;k.lul=null;}}
        catch(e){console.warn('[FB2] ulz 해제 실패 — 캡 목록 폴백',sid,e);}
      }
-     // lul 파생: ulz 대체 후 또는 구버전 게시본(lul 빈 배열)에서 ul의 지연 30일+ 필터로 산출(_calcImpl과 동일 산식)
-     if((!Array.isArray(k.lul)||!k.lul.length)&&Array.isArray(k.ul)&&k.ul.length&&k.rmEnd){
-       const _dB=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
-       k.lul=k.ul.filter(i=>_dB(i.receiptDate,k.rmEnd)>=30);
-     }}
+     deriveLul(k); // ulz 대체 후 또는 구버전 게시본(lul 빈 배열)에서 ul의 지연 30일+ 필터로 산출
+    }
     siteWks[sid]=n.siteWks||[];
     siteAm[sid]=n.siteAm||{};
     if(n.vac){ // 공가/상가 상태(미분양·미키불출)는 게시 데이터 — S.cmt에 병합(실시간 plans와 충돌 없음)
@@ -1147,7 +1154,7 @@ async function fb2Publish(){
       let ulz='';
       try{
         if(typeof LZString!=='undefined'){
-          const slim=(r.ul||[]).map(function(i){return{building:i.building,unit:i.unit,receiptDate:i.receiptDate,defectClass:i.defectClass,space:i.space,trade:i.trade,defectType:i.defectType,receiptContent:maskPII(String(i.receiptContent||'')),saleStatus:i.saleStatus,repairParty:i.repairParty,contractor:i.contractor,repairContractor:i.repairContractor,delayDays:i.delayDays};});
+          const slim=slimUL(r.ul);
           ulz=LZString.compressToBase64(JSON.stringify(slim));
         }
       }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
@@ -3142,6 +3149,7 @@ function rSite(sid){
   (()=>{
     const su=document.getElementById('tbsu');if(!su)return;
     const base=`${esc(site.region||'')}  ›  ${esc(site.name||'')}`;
+    if(document.body.classList.contains('snap')){su.innerHTML=base;return;} // 스냅샷은 박제 문서 — 데이터 신선도('업로드 N일 전'/'데이터 없음') 표기 무의미
     const up=site.lastUploadedAt;
     if(!up||isNaN(new Date(up).getTime())){su.innerHTML=base+' <span class="tbsu-up empty">· 데이터 없음</span>';return;}
     const days=Math.floor((Date.now()-new Date(up).getTime())/86400000),lbl=days<=0?'오늘':(days+'일 전');
@@ -4025,7 +4033,8 @@ async function exportSnapshot(){
     await nextFrame();
     const insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
     const st={};
-    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:redactUL(r.ul,true),lul:redactUL(r.lul,true),critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 · PII 마스킹
+    // 뷰어 시점과 동일한 정보량만 담는다 — 목록은 슬림 필드, lul은 열 때 ul에서 파생(중복 저장 금지), critUl은 뷰어와 같은 캡(300).
+    teamSites().forEach(s2=>{const r=calc(S.def[s2.id]||[],s2,S.rm);st[s2.id]=Object.assign({},r,{ul:slimUL(r.ul),lul:null,critUl:redactUL(r.critUl)});}); // 인수 전 현장 포함 · PII 마스킹
     const payload={rm:S.rm,sites:S.sites,teams:S.teams,cmt:S.cmt,ana:S.ana,st,wks:cap.wks||[],am:cap.am||{},siteWks:cap.siteWks||{},siteAm:cap.siteAm||{},insightsHTML};
     // 뷰어 동등 정보량 — 게시본(ulz)과 같은 LZ 압축으로 임베드. 비압축 JSON은 수십 MB로 커져 파일이 사실상 못 쓰게 됨.
     const packed=LZString.compressToBase64(JSON.stringify(payload)); // base64 — <, U+2028/9, $& 등 위험 문자 원천 배제
@@ -4191,9 +4200,11 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(window.__SNAP__){try{
     const P=window.__SNAP__;
     S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};Object.keys(S.def).forEach(_k=>delete S.def[_k]);
+    for(const _sid in (P.st||{}))deriveLul(P.st[_sid]); // 장기미처리는 미저장 — 뷰어와 동일하게 여기서 파생
     if(P.rm)S.rm=P.rm;
     anaNormalize(); // 구버전 스냅샷(문자열 ana) 호환
     document.body.classList.add('snap');
+    document.body.classList.add('viewer'); // 뷰어 시점 — 실제 뷰어 화면과 동일한 숨김 규칙 공유(업로드 탭·관리 편집 요소 등)
     ensureTeams();
     const chip=document.getElementById('mchip');if(chip)chip.textContent='기준월 '+S.rm+' · 스냅샷';
     rTeamSel();rNav();
