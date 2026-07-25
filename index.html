@@ -599,6 +599,16 @@ table.dt-detail th{text-align:center!important;}
 .md-doc th{background:var(--fill);font-weight:700;}
 .md-doc hr{border:none;border-top:1px solid var(--sep);margin:20px 0;}
 .md-doc blockquote{margin:10px 0;padding:6px 14px;border-left:3px solid var(--b200);color:var(--lbl2);}
+/* 사용 안내 첫 화면(소개) — 처음 보는 문서라 도입부를 조금 더 또렷하게 */
+.rd-sec:first-child h1{font-size:24px;margin:2px 0 6px;letter-spacing:-.02em;}
+.rd-sec:first-child h1+p{font-size:15.5px;font-weight:700;color:var(--b800);margin:0 0 12px;letter-spacing:-.01em;}
+.rd-sec:first-child h1+p+p{font-size:13.5px;color:var(--lbl2);max-width:760px;}
+.rd-sec:first-child table{border:none;}
+.rd-sec:first-child thead{display:none;}
+.rd-sec:first-child tbody td{border:none;border-bottom:1px solid var(--sep);padding:10px 0;}
+.rd-sec:first-child tbody td:first-child{width:120px;white-space:nowrap;color:var(--b800);}
+.rd-sec:first-child tbody tr:last-child td{border-bottom:none;}
+.rd-sec:first-child blockquote{background:var(--b50);border-left:3px solid var(--b400);border-radius:0 10px 10px 0;padding:10px 14px;color:var(--lbl);}
 /* 우클릭 컨텍스트 메뉴 — 필터 메뉴와 동일 톤 */
 .ctxmenu{position:fixed;z-index:3000;min-width:172px;max-width:280px;background:#fff;border:1px solid var(--sep);border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.16);padding:5px;display:flex;flex-direction:column;}
 .ctx-it{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--lbl);padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
