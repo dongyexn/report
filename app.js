@@ -147,6 +147,12 @@ function html(strings,...vals){
 }
 // AI·외부 생성 HTML 살균 — DOMPurify(성숙 OSS)로 XSS 차단. CDN 차단 등으로 미로드 시 보수적 폴백.
 // innerHTML 주입 직전에만 호출(출력 시점 살균). 저장은 원본 유지.
+// 이슈 카드 아이콘 — ICON 값은 <path> 마크업. 구버전 게시본에 저장된 'M…' 단일 path 문자열도 감싸서 호환.
+function icoSVG(v){
+  const s=String(v||'');
+  const inner=/^\s*[Mm][\s\d.-]/.test(s)?'<path d="'+s+'"/>':s;
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg>';
+}
 function safeHTML(dirty){
   const s=String(dirty==null?'':dirty);
   if(window.DOMPurify&&DOMPurify.sanitize){
@@ -246,12 +252,13 @@ registerActions('click', {
     const sc=mb.querySelector('.md-scroll');if(sc)sc.scrollTop=0;},
   'snapPick.all':()=>{document.querySelectorAll('#mbody .snap-mo').forEach(c=>{c.checked=true;});},
   'snapPick.cancel':()=>{closeMo();},
-  'snapPick.ok':()=>{const v=Array.from(document.querySelectorAll('#mbody .snap-mo:checked')).map(c=>c.value);
-    if(!v.length){toast('한 개 이상 선택하세요');return;}
-    const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r(v);},
+  'snapPick.ok':()=>{const box=document.querySelectorAll('#mbody .snap-mo');
+    const v=Array.from(document.querySelectorAll('#mbody .snap-mo:checked')).map(c=>c.value);
+    if(box.length&&!v.length){toast('기준월을 한 개 이상 선택하세요');return;}
+    const fc=document.getElementById('snapFontChk'),font=!!(fc&&fc.checked);
+    try{if(font)localStorage.setItem('snapFont','1');else localStorage.removeItem('snapFont');}catch(_){} // 다음 내보내기 기본값으로 기억
+    const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r({months:v,font:font});},
   'snap.rm':(el)=>snapSwitchMonth(el.value),
-  'set.snapFont':(el)=>{try{if(el.checked)localStorage.setItem('snapFont','1');else localStorage.removeItem('snapFont');}catch(_){}
-    toast(el.checked?'스냅샷에 글꼴을 포함합니다 · 파일이 커집니다':'스냅샷에서 글꼴을 제외합니다');},
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
@@ -885,15 +892,21 @@ async function fb2ListReportMonths(){
   const idx=snap.val()||{};
   return Object.keys(idx).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort().reverse();
 }
-// 스냅샷에 담을 기준월 선택 — 여러 달을 담으면 파일 안에서 월 전환이 가능해진다(그만큼 커진다).
-//   resolve: 선택한 월 배열 / 취소 시 null. 모달을 닫아도(Esc·배경) 취소로 처리된다.
+// 스냅샷 내보내기 옵션 — 포함할 기준월(여러 달이면 파일 안에서 전환 가능)과 글꼴 포함 여부.
+//   resolve: {months:[...], font:bool} / 취소 시 null. 모달을 닫아도(Esc·배경) 취소로 처리된다.
 function pickSnapMonths(list,defRm){
   return new Promise(resolve=>{
     window.__SNAPPICK__=resolve;
-    document.getElementById('mt').textContent='스냅샷에 포함할 기준월';
+    document.getElementById('mt').textContent='스냅샷 내보내기';
+    let fontOn=false;try{fontOn=!!localStorage.getItem('snapFont');}catch(_){}
     const rows=list.map(m=>`<label class="share-row" style="cursor:pointer"><span class="share-info"><b>${esc(m)}</b>${m===defRm?'<span style="margin-left:8px;font-size:11px;color:var(--b700)">현재</span>':''}</span><input type="checkbox" class="snap-mo" value="${esc(m)}"${m===defRm?' checked':''} style="width:17px;height:17px;accent-color:var(--b600)"></label>`).join('<div class="share-sep"></div>');
-    document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:52vh"><p style="font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 12px">담은 달은 파일을 열었을 때 <b>기준월을 바꿔가며</b> 볼 수 있습니다. 여러 달을 담으면 파일 크기도 그만큼 커집니다(월당 수백 KB~수 MB).</p>'+rows+'</div>';
-    document.getElementById('mf').innerHTML='<button class="btn bo bsm" data-act="snapPick.all">전체 선택</button><div style="flex:1"></div><button class="btn bg2 bsm" data-act="snapPick.cancel">취소</button><button class="btn bp bsm" data-act="snapPick.ok">내보내기</button>';
+    const moBlock=list.length>1
+      ? '<p style="font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 10px">담을 <b>기준월</b>을 고르세요. 두 달 이상 담으면 파일 안에서 기준월을 바꿔가며 볼 수 있고, 그만큼 파일이 커집니다(월당 수백 KB~수 MB).</p>'+rows+'<div style="height:14px"></div>'
+      : '';
+    document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:52vh">'+moBlock+
+      '<label class="share-row" style="cursor:pointer"><span class="share-info"><b>글꼴 포함</b><span>어느 PC에서 열어도 화면과 같은 글꼴로 보입니다 · 파일이 약 1.5MB 커집니다</span></span>'+
+      '<input type="checkbox" id="snapFontChk"'+(fontOn?' checked':'')+' style="width:18px;height:18px;accent-color:var(--b600)"></label></div>';
+    document.getElementById('mf').innerHTML=(list.length>1?'<button class="btn bo bsm" data-act="snapPick.all">전체 선택</button>':'')+'<div style="flex:1"></div><button class="btn bg2 bsm" data-act="snapPick.cancel">취소</button><button class="btn bp bsm" data-act="snapPick.ok">내보내기</button>';
     const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
     openMo();
   });
@@ -2715,7 +2728,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     return;}
   if(!all.length){el.innerHTML='<div class="ic warn"><div class="ic-t"><div class="ic-ttl">데이터 없음</div><div class="ic-sub">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</div></div></div>';return;}
   const C={gn:'#1A7A3C',rd:'#C0392B'};
-  const ICON={up:'M3 17l6-6 4 4 7-7M21 10V4h-6',clock:'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2',wrench:'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 11-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z',user:'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',layers:'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',box:'M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z',home:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z'};
+  const ICON={up:'<path d="M22 L7 L13.5 L15.5 L8.5 L10.5 L2 L17"/><path d="M16 L7 L22 L7 L22 L13"/>',clock:'<path d="M2.0 12.0a10.0 10.0 0 1 0 20.0 0a10.0 10.0 0 1 0 -20.0 0"/><path d="M12 L6 L12 L12 L16 L14"/>',wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',user:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M5.0 7.0a4.0 4.0 0 1 0 8.0 0a4.0 4.0 0 1 0 -8.0 0"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',layers:'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',box:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>',home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'}; // Lucide(ISC) — path만 사용(safeHTML 허용 태그 제약)
   const fmt=n=>Math.round(n).toLocaleString();
   const sgn=n=>(n>=0?'+':'−')+fmt(Math.abs(n));
   const pct=(n,d)=>d>0?(n/d*100):0;
@@ -2884,7 +2897,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     // 그냥 점수순 상위 3
     for(const c of allItems){items.push(c);if(items.length===3)break;}
   }
-  el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
+  el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i">${icoSVG(x.icon)}</div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
   insBindCards(); // 살균으로 제거된 토글 속성을 DOM에서 부착
   // AI 재작성 입력용으로 선정 결과 보관 (수치·맥락은 규칙기반 결과를 그대로 사용)
   S._dashIns=items.map(x=>({cls:x.cls,icon:x.icon,ttl:x.ttl,sub:x.sub}));
@@ -3491,12 +3504,12 @@ async function runDashAI(){
     let txt=(d.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```$/,'').trim();
     const arr=JSON.parse(txt);
     if(!Array.isArray(arr)||arr.length<items.length)throw new Error('형식 오류');
-    el.innerHTML=items.map((x,i)=>{const a=arr[i]||{};const l1=safeHTML(a.line1||''),l2=safeHTML(a.line2||'');return `<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${l1}<br>${l2}</div></div></div>`;}).join('');
+    el.innerHTML=items.map((x,i)=>{const a=arr[i]||{};const l1=safeHTML(a.line1||''),l2=safeHTML(a.line2||'');return `<div class="ic ${x.cls}"><div class="ic-i">${icoSVG(x.icon)}</div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${l1}<br>${l2}</div></div></div>`;}).join('');
     insBindCards();
     toast('AI 분석 완료');
   }catch(e){
     // 실패 시 규칙기반 원본 복원
-    el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${x.icon}"/></svg></div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
+    el.innerHTML=safeHTML(items.map(x=>`<div class="ic ${x.cls}"><div class="ic-i">${icoSVG(x.icon)}</div><div class="ic-t"><div class="ic-ttl">${x.ttl}</div><div class="ic-sub">${x.sub}</div></div></div>`).join(''));
     insBindCards();
     toast('AI 분석 실패: '+e.message);
   }
@@ -3791,7 +3804,6 @@ function nd(v){
 
 // SETTINGS
 function loadSettings(){
-  {const fc=document.getElementById('snapFont');if(fc){try{fc.checked=!!localStorage.getItem('snapFont');}catch(_){}}} // 스냅샷 글꼴 포함 토글 상태 복원
   document.getElementById('cfgc').value=S.ck||'';
   const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
@@ -4153,26 +4165,31 @@ async function exportSnapshot(){
     //   이미 게시본을 보고 있으면(뷰어·게시본 열람) 그대로 쓰고, 편집 모드면 게시본을 '조회만' 해서 쓴다.
     //   (과거엔 뷰어 시점으로 전환했는데, 편집자가 화면을 잃어 새로고침이 필요했다 — 상태는 건드리지 않는다.)
     const _stripLul=Q=>{const st={};for(const sid in (Q.st||{})){const k=Object.assign({},Q.st[sid]);k.lul=null;st[sid]=k;}Q.st=st;return Q;}; // 장기미처리는 열 때 파생
-    let pub=null,months=null,defRm=null;
-    if(FB2.ready&&FB2.db){
-      try{
-        const list=await fb2ListReportMonths();
-        const cur=(window.__SNAP__&&window.__SNAP__.rm)||S.rm;
-        if(list.length>1){ // 게시월이 둘 이상이면 어떤 달을 담을지 물어본다(여러 달이면 파일 안에서 전환 가능)
-          const picked=await pickSnapMonths(list,list.includes(cur)?cur:list[0]);
-          if(picked===null)return; // 취소
-          toast('게시본을 불러오는 중…');
-          months={};
-          for(const rm of picked){
-            const d=(await FB2.db.ref('report/'+rm).once('value')).val();
-            if(d)months[rm]=_stripLul(buildSnapFromReport(rm,d).P);
-          }
-          const keys=Object.keys(months);
-          if(!keys.length){toast('선택한 월의 게시본을 불러오지 못했습니다');return;}
-          defRm=keys.includes(cur)?cur:keys.sort().reverse()[0];
-          if(keys.length===1){pub=months[defRm];months=null;} // 한 달만 골랐으면 기존 단일 구조
-        }
-      }catch(e){console.warn('[snap] 게시월 목록 조회 실패',e);}
+    let pub=null,months=null,defRm=null,list=[];
+    if(FB2.ready&&FB2.db){try{list=await fb2ListReportMonths();}catch(e){console.warn('[snap] 게시월 목록 조회 실패',e);}}
+    // 담을 것이 하나도 없으면 옵션 창을 띄우기 전에 알린다(빈 창을 보여주지 않기 위해)
+    if(!list.length&&!window.__SNAP__&&!Object.keys(S.def||{}).length){
+      toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;
+    }
+    const cur=(window.__SNAP__&&window.__SNAP__.rm)||S.rm;
+    const opt=await pickSnapMonths(list,list.includes(cur)?cur:(list[0]||cur)); // 옵션 모달(기준월·글꼴)
+    if(!opt)return; // 취소
+    const _fontOn=!!opt.font;
+    if(opt.months&&opt.months.length>1){ // 두 달 이상 → 파일 안에서 전환 가능한 구조
+      toast('게시본을 불러오는 중…');
+      months={};
+      for(const rm of opt.months){
+        const d=(await FB2.db.ref('report/'+rm).once('value')).val();
+        if(d)months[rm]=_stripLul(buildSnapFromReport(rm,d).P);
+      }
+      const keys=Object.keys(months);
+      if(!keys.length){toast('선택한 월의 게시본을 불러오지 못했습니다');return;}
+      defRm=keys.includes(cur)?cur:keys.sort().reverse()[0];
+      if(keys.length===1){pub=months[defRm];months=null;}
+    }else if(opt.months&&opt.months.length===1&&FB2.ready&&FB2.db){
+      toast('게시본을 불러오는 중…');
+      try{const d=(await FB2.db.ref('report/'+opt.months[0]).once('value')).val();
+          if(d)pub=buildSnapFromReport(opt.months[0],d).P;}catch(e){console.warn('[snap] 게시본 로드 실패',e);}
     }
     if(!months&&!pub&&!window.__SNAP__&&FB2.ready&&FB2.db){
       toast('게시본을 불러오는 중…');
@@ -4223,7 +4240,6 @@ async function exportSnapshot(){
     if(docHtml.indexOf('<script src="./app.js"></script>')<0){toast('스냅샷 생성 실패 · index.html 구조 불일치(app.js 태그 없음)');return;}
     // 글꼴 포함(옵션) — 스냅샷은 단일 파일이라 상대경로 woff2를 못 찾고 시스템 글꼴로 폴백된다.
     //   켜져 있으면 base64로 심어 어느 PC에서나 화면과 같은 모양이 되게 한다(파일이 커짐).
-    let _fontOn=false;try{_fontOn=!!localStorage.getItem('snapFont');}catch(_){}
     if(_fontOn&&docHtml.indexOf("url('./PretendardVariable.woff2')")>=0){
       try{
         const fb=await(await fetch('./PretendardVariable.woff2',{cache:'force-cache'})).arrayBuffer();
