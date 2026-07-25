@@ -298,7 +298,6 @@ registerActions('click', {
   'rec.menuShowCols':()=>{const R=window.__REC;if(!R||!R.hidden)return;R.hidden.clear();recCloseMenu();recRenderModalBody();},
   'rec.pivotToggle':()=>{const R=window.__REC;if(!R)return;R.pivotOn=!R.pivotOn;recRenderModalBody();const b=document.querySelector('[data-act="rec.pivotToggle"]');if(b)b.textContent=R.pivotOn?'목록':'피벗';const hd=document.querySelector('.rl-thead');if(hd)hd.classList.toggle('pivot-mode',R.pivotOn);},
   'rec.clearTrade':()=>{const R=window.__REC;if(!R||!R._args)return;openRecList(R._args.sid,R._args.scope,'',R._args.vac);}, // 공종 필터 해제 — 동일 범위 재오픈
-  'rec.pivotExport':()=>recPivotExport(),
   'rec.pivotAdd':(el)=>{const r=el.getBoundingClientRect();recPivotAddMenu(el.dataset.zone,r.left,r.bottom+4);},
   'rec.pivotPick':(el)=>{const R=window.__REC,M=window.__PVMENU;if(!R||!M)return;if(M.zone==='rows'){if(R.pivot.rows.length<3&&!R.pivot.rows.includes(el.dataset.key))R.pivot.rows.push(el.dataset.key);}else{R.pivot.col=el.dataset.key;}recClosePvMenu();recRenderModalBody();},
   'rec.pivotRemove':(el)=>{const R=window.__REC;if(!R)return;if(el.dataset.zone==='rows')R.pivot.rows.splice(+el.dataset.i,1);else R.pivot.col=null;recRenderModalBody();},
@@ -1305,8 +1304,6 @@ async function fb2SeedPlansAnalysis(){
   if(Object.keys(upd).length)await FB2.db.ref().update(upd);
 }
 function fb2RefreshMeta(){
-  const rmEl=document.getElementById('fbPubRm');if(rmEl)rmEl.textContent=S.rm;
-  const ac=document.getElementById('fbAcct');if(ac&&FB2.user)ac.textContent=(FB2.user.email||'')+' · '+fb2RoleLabel(FB2.role);
   if(FB2.ready&&FB2.db){
     FB2.db.ref('report/'+S.rm+'/_meta').once('value').then(function(s){
       const m=s.val(),el=document.getElementById('fbPubAt');
@@ -2728,7 +2725,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     return;}
   if(!all.length){el.innerHTML='<div class="ic warn"><div class="ic-t"><div class="ic-ttl">데이터 없음</div><div class="ic-sub">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</div></div></div>';return;}
   const C={gn:'#1A7A3C',rd:'#C0392B'};
-  const ICON={up:'<path d="M22 L7 L13.5 L15.5 L8.5 L10.5 L2 L17"/><path d="M16 L7 L22 L7 L22 L13"/>',clock:'<path d="M2.0 12.0a10.0 10.0 0 1 0 20.0 0a10.0 10.0 0 1 0 -20.0 0"/><path d="M12 L6 L12 L12 L16 L14"/>',wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',user:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M5.0 7.0a4.0 4.0 0 1 0 8.0 0a4.0 4.0 0 1 0 -8.0 0"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',layers:'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',box:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>',home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'}; // Lucide(ISC) — path만 사용(safeHTML 허용 태그 제약)
+  const ICON={up:'<path d="M22.0 7.0L13.5 15.5L8.5 10.5L2.0 17.0"/><path d="M16.0 7.0L22.0 7.0L22.0 13.0"/>',clock:'<path d="M2.0 12.0a10.0 10.0 0 1 0 20.0 0a10.0 10.0 0 1 0 -20.0 0"/><path d="M12.0 6.0L12.0 12.0L16.0 14.0"/>',wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',user:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M5.0 7.0a4.0 4.0 0 1 0 8.0 0a4.0 4.0 0 1 0 -8.0 0"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',layers:'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',box:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/>',home:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'}; // Lucide(ISC) — path만 사용(safeHTML 허용 태그 제약) // Lucide(ISC) — path만 사용(safeHTML 허용 태그 제약)
   const fmt=n=>Math.round(n).toLocaleString();
   const sgn=n=>(n>=0?'+':'−')+fmt(Math.abs(n));
   const pct=(n,d)=>d>0?(n/d*100):0;
@@ -3805,7 +3802,6 @@ function nd(v){
 // SETTINGS
 function loadSettings(){
   document.getElementById('cfgc').value=S.ck||'';
-  const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
 }
