@@ -212,6 +212,38 @@ function deriveLul(k){
 // 인라인 on*= 대신 요소에 data-act + 의미 data-* 속성을 부여하고, 문서 루트의 위임 리스너 1개가
 // closest('[data-act]')로 대상을 찾아 디스패치한다. 동적 innerHTML로 요소가 재생성돼도 위임은
 // 루트에 고정이라 재바인딩이 불필요하다.
+
+// ── 라이브러리 보장 — vendor/ 로컬 로드가 실패하면(미배포·경로 오류) CDN에서 한 번 더 시도한다.
+//   과거 사고: vendor/ 폴더를 커밋하지 않아 4종이 404 → LZString 부재로 로컬 데이터가 '압축 해제 없이'
+//   JSON.parse 되어 원인 불명 오류가 쏟아졌다. 실패를 조용히 넘기지 않고 명확히 알린다.
+const VENDOR_LIBS=[
+  {g:'LZString',        url:'https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js',                             sri:'sha384-0d+Gr7vM4Drod8E3hXKgciWJSWbjD/opKLLygI9ktiWbuvlDwQLzU46wJ9s5gsp7', name:'데이터 압축'},
+  {g:'DOMPurify',       url:'https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js',                                 sri:'sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu', name:'HTML 살균'},
+  {g:'Chart',           url:'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',                               sri:'sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ', name:'차트'},
+  {g:'ChartDataLabels', url:'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js', sri:'sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y', name:'차트 라벨'},
+];
+function loadScriptOnce(url,integrity){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=url;if(integrity){s.integrity=integrity;s.crossOrigin='anonymous';}
+    s.onload=()=>res(true);s.onerror=()=>rej(new Error('load fail '+url));
+    document.head.appendChild(s);
+  });
+}
+async function ensureVendors(){
+  const missing=VENDOR_LIBS.filter(l=>typeof window[l.g]==='undefined');
+  if(!missing.length)return [];
+  console.warn('[vendor] 로컬 로드 실패 — CDN 폴백 시도:',missing.map(l=>l.g).join(', '));
+  for(const l of missing){
+    try{await loadScriptOnce(l.url,l.sri);}catch(e){console.error('[vendor] 폴백 실패',l.g,e);}
+  }
+  const still=VENDOR_LIBS.filter(l=>typeof window[l.g]==='undefined');
+  if(still.length){
+    const names=still.map(l=>l.name).join(', ');
+    setTimeout(()=>{try{toast('필수 라이브러리 로드 실패('+names+') · vendor 폴더가 배포되었는지, 사내망이 CDN을 막는지 확인하세요',9000);}catch(_){}} ,600);
+  }
+  return still;
+}
 // ── 새 모듈 전환 절차(2단계) ──
 //   ① 마크업: on*="fn(args)" 제거 → data-act="모듈.액션" 부여 (+ 필요한 의미 data-* 부여, 동적값은 esc())
 //   ② 등록:   registerActions('click'|'input'|'change'|'keydown', {'모듈.액션': (el,e)=>{ ... }})

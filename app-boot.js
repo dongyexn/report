@@ -989,6 +989,7 @@ function bindGlobalUi(){
 
 }
 document.addEventListener('DOMContentLoaded',async()=>{
+  await ensureVendors(); // vendor/ 로컬 실패 시 CDN 폴백 — 이후 로직이 LZString·Chart 존재를 전제한다
   applyChartTheme();
   bindDelegatedEvents(); // 위임 리스너 — 스냅샷·일반 경로 모두 커버 (조기 return 이전, 멱등)
   bindGlobalUi();        // 툴팁·우클릭·단축키·드래그 — 동일 이유로 조기 return 이전(멱등)

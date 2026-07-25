@@ -90,7 +90,14 @@ function defEncode(json){
 }
 function defDecode(row){
   if(!row)return null;
-  if(typeof LZString==='undefined')return row.data;
+  if(typeof LZString==='undefined'){
+    // 압축 저장분을 압축 해제 없이 JSON.parse 하면 정체불명 오류가 난다 → 원인을 명확히 남기고 중단
+    if(row.enc==='b64'||row.enc==='utf16'||row.compressed){
+      if(!defDecode._warned){defDecode._warned=true;console.error('[store] 압축 해제 라이브러리(LZString) 미로드 — 로컬 데이터를 읽을 수 없습니다. vendor/lz-string.min.js 배포를 확인하세요.');}
+      return null;
+    }
+    return row.data;
+  }
   // enc 명시 우선, 없으면 과거 데이터(compressed:true=utf16) 추정
   const enc=row.enc||(row.compressed?'utf16':'raw');
   try{

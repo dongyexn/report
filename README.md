@@ -282,7 +282,7 @@ HCS 엑셀 다운로드
 | `README.md` | 이 문서 — 앱의 `?` 버튼(사용 안내)에서 그대로 렌더 |
 | `docs/guide-*.png` | 사용 안내에 들어가는 화면 안내 이미지 |
 | `PretendardVariable.woff2` | 본문 글꼴(자체 호스팅) |
-| `vendor/` | 차트·압축·살균 라이브러리 자체 호스팅본(Chart.js, LZ-String, DOMPurify, marked) |
+| `vendor/` | 차트·압축·살균 라이브러리 자체 호스팅본(Chart.js, LZ-String, DOMPurify, marked) — **필수 배포** |
 | `tests/ci.mjs` | 검증 스크립트 — 셀프테스트·클릭 전수·집계 불변식·스냅샷 왕복 |
 | `.github/workflows/verify.yml` | push·PR마다 위 검증을 자동 실행 |
 
@@ -296,6 +296,9 @@ HCS 엑셀 다운로드
 최상위 실행문은 순서에 의존합니다. 순서를 바꾸거나 파일을 추가하면 `index.html`의 script 태그와
 `app-boot.js`의 `APP_PARTS`(스냅샷 인라인 목록)를 **함께** 고쳐야 합니다.
 `index.html`과 네 파일은 항상 **같은 커밋으로 함께 배포**하세요(배포 직후엔 `Ctrl+F5`).
+**배포 시 `vendor/` 폴더(5개 파일)를 반드시 함께 커밋하세요.** 빠지면 라이브러리가 404가 되고,
+압축 저장된 로컬 데이터를 읽지 못해 원인 불명 오류가 납니다(현재는 CDN 폴백 + 안내 토스트로 방어).
+
 차트·압축·살균 라이브러리는 저장소의 `vendor/`에서 로드합니다(사내망 CDN 차단·버전 소멸에 영향받지 않음).
 Firebase SDK만 jsdelivr + SRI로 남겼습니다 — 네트워크가 있어야 동작하는 기능이라서입니다.
 SheetJS는 저장소 파일을 우선 로드하고 없으면 CDN으로 폴백하며, **폴백이 남아 있는 동안
