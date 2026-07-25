@@ -648,6 +648,30 @@ function donutPalette(){return ['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2
 function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 // 테마 갱신 진입점 — 색 토큰(CSS 변수)을 바꾼 뒤 이걸 호출하면 차트까지 새 색으로 다시 그린다.
 //   차트는 생성 시 색을 굽기 때문에 인스턴스를 파기하고 현재 화면만 재렌더한다. (다크모드 전환에서 사용)
+// 인쇄는 항상 라이트 — @media print가 CSS 색은 되돌리지만 차트는 캔버스라 그리는 시점의 색이 박힌다.
+//   그래서 인쇄 직전에 테마를 라이트로 바꾸고 현재 화면을 '동기'로 다시 그린 뒤, 인쇄가 끝나면 되돌린다.
+let _printWasDark=false;
+function printThemeSwap(toLight){
+  const html=document.documentElement;
+  if(toLight){
+    _printWasDark=html.classList.contains('dark');
+    if(!_printWasDark)return;
+    html.classList.remove('dark');
+  }else{
+    if(!_printWasDark)return;
+    html.classList.add('dark');_printWasDark=false;
+  }
+  CSSVAR.clear();
+  try{applyChartTheme();}catch(_){}
+  try{Object.keys(S.charts||{}).forEach(k=>dC(k));}catch(_){}
+  try{
+    if(S.view==='site'&&S.sid)rSite(S.sid);
+    else{rDash();if(typeof rDash._flush==='function')rDash._flush();} // 지연 렌더분까지 즉시 완결
+  }catch(e){console.warn('[print] 테마 재렌더 실패',e);}
+}
+window.addEventListener('beforeprint',()=>printThemeSwap(true));
+window.addEventListener('afterprint',()=>printThemeSwap(false));
+
 function themeRefresh(){
   CSSVAR.clear();
   try{Object.keys(S.charts||{}).forEach(k=>dC(k));}catch(e){console.warn('[theme] chart reset',e);}
