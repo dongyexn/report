@@ -273,16 +273,16 @@ HCS 엑셀 다운로드
 | 파일 | 역할 |
 |---|---|
 | `index.html` | 마크업 + CSS (인라인 스크립트 없음) |
-| `app-core.js` | 상태(S)·공용 유틸·이벤트 액션 디스패처와 등록 |
-| `app-data.js` | 저장소(IndexedDB)·Firebase 동기화/게시/뷰어·목록/피벗 모달·엑셀 내보내기 |
-| `app-view.js` | 집계 엔진(calc)·AI 분석·내비게이션·대시보드·현장 패널·저장/PII |
-| `app-boot.js` | 업로드·설정·인쇄·모달/토스트·차트 테마·부팅·셀프테스트·스냅샷 |
-| `xlsx.full.min.js` | SheetJS 0.20.x 자체 호스팅본. 없으면 CDN 0.18.5로 폴백 |
+| `app/app-core.js` | 상태(S)·공용 유틸·이벤트 액션 디스패처와 등록 |
+| `app/app-data.js` | 저장소(IndexedDB)·Firebase 동기화/게시/뷰어·목록/피벗 모달·엑셀 내보내기 |
+| `app/app-view.js` | 집계 엔진(calc)·AI 분석·내비게이션·대시보드·현장 패널·저장/PII |
+| `app/app-boot.js` | 업로드·설정·인쇄·모달/토스트·차트 테마·부팅·셀프테스트·스냅샷 |
+| `vendor/xlsx.full.min.js` | SheetJS 0.20.x 자체 호스팅본. 없으면 CDN 0.18.5로 폴백 |
 | `database.rules` | RTDB 보안 규칙(주석에 설계 의도·수용 리스크 문서화) |
 | `README.md` | 이 문서 — 앱의 `?` 버튼(사용 안내)에서 그대로 렌더 |
 | `docs/guide-*.png` | 사용 안내에 들어가는 화면 안내 이미지 |
-| `PretendardVariable.woff2` | 본문 글꼴(자체 호스팅) |
-| `vendor/` | 차트·압축·살균 라이브러리 자체 호스팅본(Chart.js, LZ-String, DOMPurify, marked) — **필수 배포** |
+| `vendor/PretendardVariable.woff2` | 본문 글꼴(자체 호스팅) |
+| `vendor/` | 외부 자산 일체 — Chart.js·LZ-String·DOMPurify·marked·SheetJS·글꼴. **필수 배포** |
 | `tests/ci.mjs` | 검증 스크립트 — 셀프테스트·클릭 전수·집계 불변식·스냅샷 왕복 |
 | `.github/workflows/verify.yml` | push·PR마다 위 검증을 자동 실행 |
 
