@@ -693,7 +693,15 @@ function printThemeSwap(toLight){
       _swapColors(ch.options.plugins,map,0);
       const ct=ch.options.plugins&&ch.options.plugins.centerText;
       if(ct){ct.valueColor=toLight?'#1C1C1E':'#ECECEC';ct.labelColor=toLight?'rgba(60,60,67,.42)':'rgba(236,236,236,.42)';}
-      ch.update('none'); // 애니메이션 없이 즉시 — 인쇄 캡처 전에 그려져야 한다
+      ch.update('none');   // 축·라벨 등 재계산(애니메이션 없음)
+      // Chart.js는 막대·점의 색을 '요소'에 캐시해 두기 때문에 데이터셋만 바꾸면 화면이 그대로다.
+      //   → 요소 옵션까지 직접 갈아끼운 뒤 즉시 draw. (update 후에 해야 캐시가 되덮지 않는다)
+      try{ch.getSortedVisibleDatasetMetas().forEach(m=>(m.data||[]).forEach(el=>{
+        if(!el||!el.options)return;
+        if(isDonut){ if(map[el.options.borderColor])el.options.borderColor=map[el.options.borderColor]; } // 조각 색은 고정 팔레트라 건드리지 않음
+        else _swapColors(el.options,map,4);
+      }));}catch(e){console.warn('[print] 요소 색 교체 실패',e);}
+      try{ch.draw();}catch(_){} // 다음 프레임을 기다리지 않고 지금 칠한다(Ctrl+P는 대기 시간이 없다)
     });
   }catch(e){console.warn('[print] 차트 색 전환 실패',e);}
 }
@@ -798,13 +806,18 @@ async function exportSnapshot(){
     for(const f of APP_PARTS)if(docHtml.indexOf('<script src="'+f+'"></script>')<0){toast('스냅샷 생성 실패 · index.html 구조 불일치('+f+' 태그 없음)');return;}
     // 글꼴 포함(옵션) — 스냅샷은 단일 파일이라 상대경로 woff2를 못 찾고 시스템 글꼴로 폴백된다.
     //   켜져 있으면 base64로 심어 어느 PC에서나 화면과 같은 모양이 되게 한다(파일이 커짐).
+    if(_fontOn&&docHtml.indexOf("url('./vendor/PretendardVariable.woff2')")<0){ // 경로가 바뀌었는데 코드가 못 찾는 경우를 드러냄
+      console.warn('[snap] @font-face 경로 불일치 — 글꼴 포함 건너뜀');
+      toast('글꼴 포함을 건너뛰었습니다 · index.html의 글꼴 경로가 예상과 다릅니다',7000);
+    }
     if(_fontOn&&docHtml.indexOf("url('./vendor/PretendardVariable.woff2')")>=0){
       try{
         const fb=await(await fetch('./vendor/PretendardVariable.woff2',{cache:'force-cache'})).arrayBuffer();
         let bin='';const u8=new Uint8Array(fb);const CH=0x8000;
         for(let i=0;i<u8.length;i+=CH)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));
         docHtml=docHtml.replace("url('./vendor/PretendardVariable.woff2')",()=>"url('data:font/woff2;base64,"+btoa(bin)+"')");
-      }catch(e){console.warn('[snap] 글꼴 포함 실패 — 시스템 글꼴로 표시됩니다',e);}
+      }catch(e){console.warn('[snap] 글꼴 포함 실패 — 시스템 글꼴로 표시됩니다',e);
+        toast('글꼴을 파일에 담지 못했습니다 · vendor/PretendardVariable.woff2 배포 여부를 확인하세요',7000);}
     }
     const injectBody='window.__SNAPZ__='+JSON.stringify(packed)+';'; // 한 줄 — 줄바꿈 정규화 무관
     const _h256=async s=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return btoa(String.fromCharCode.apply(null,new Uint8Array(d)));};
