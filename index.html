@@ -30,6 +30,8 @@
 --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434;   /* 데이터라벨 */
 --ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42);  /* 격자·축 제목 */
 --ch-seg:#fff;                          /* 도넛 조각 사이 테두리 = 카드 배경색 */
+--ch-stroke:#fff;                       /* 데이터라벨 외곽선 = 차트 배경색 */
+--pv-grp:#F4F6F9;                       /* 피벗 그룹(상위 행) 배경 */
 --ch-dlr:#2C437C; --ch-dld:#A0590A;     /* 라인 끝 데이터라벨(접수·처리) */
 --ch-ink:#1C1C1E;                      /* 축·범례 글자 */
 --ch-bg:#fff;                          /* 포인트·라벨 배경 */
@@ -81,10 +83,12 @@ html.dark{
   --ct:rgba(236,236,236,.82);      /* 사이드바 현장명 등 보조 글자 */
   --gn:#4ADE80; --rd:#F87171; --am:#FBBF24;
   --ch-d60:#B4544B; --ch-d60h:#CB6B62; --ch-d30:#C98C86; --ch-d30h:#DCA5A0;
-  --ch-d0:#7B90A8; --ch-d0h:#93A8BF; --ch-recv:#8FB5E8; --ch-done:#E8BE62;
+  --ch-d0:#6E9BD6; --ch-d0h:#87ACE0; --ch-recv:#8FB5E8; --ch-done:#E8BE62;   /* 30일 미만 — 어둡게가 아니라 채도를 올려 또렷하게 */
   --ch-lbl:#E8EEF8; --ch-lbl2:#F2C9C7; --ch-ink:#D8D8D8; --ch-bg:#212121;
   --ch-grid:rgba(255,255,255,.09); --ch-axis:rgba(236,236,236,.42);
   --ch-seg:#212121;                      /* 흰 테두리 대신 카드 배경색 — 조각이 서로 붙어 보이지 않게 */
+  --ch-stroke:#212121;                   /* 라벨 외곽선도 배경색 — 흰 테두리가 도드라지지 않게 */
+  --pv-grp:#2E2E2E;                      /* 피벗 그룹 행 — 본문보다 살짝 밝은 회색 */
   --ch-dlr:#A9C7EE; --ch-dld:#EFC873;
   --glass:rgba(33,33,33,.88); --glass2:rgba(25,25,25,.80); --glass3:rgba(33,33,33,.92);
   color-scheme:dark;
@@ -105,6 +109,7 @@ html.dark .md-doc code,html.dark .md-doc pre{background:var(--surf3);}
     --ch-d60:#DA6A60; --ch-d30:#E89C9A; --ch-d0:#B3C7DD; --ch-recv:#3E71D2; --ch-done:#F0B144;
     --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434; --ch-ink:#1C1C1E; --ch-bg:#fff;
     --ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42); --ch-seg:#fff; --ch-dlr:#2C437C; --ch-dld:#A0590A;
+    --ch-stroke:#fff; --pv-grp:#F4F6F9;
     --glass:rgba(255,255,255,.88); --glass2:rgba(255,255,255,.75); --glass3:rgba(255,255,255,.92);
     color-scheme:light;
   }
@@ -349,7 +354,7 @@ table.dt-detail th{text-align:center!important;}
 .ltrbar:hover .seg{filter:brightness(0.92) saturate(1.15);}
 .ltrbar .seg.s60{background:#DA6A60;}/* 추이차트 60일+ 색과 통일 */
 .ltrbar .seg.s30{background:#E89C9A;}
-.ltrbar .seg.s0{background:#B3C7DD;}
+.ltrbar .seg.s0{background:var(--ch-d0);}
 .ltrbar-pct{font-size:11.5px;font-weight:600;color:var(--bt1);font-variant-numeric:tabular-nums;min-width:42px;text-align:right;}
 
 /* LTR-MOM — 장기미처리 비율 현황 (전월/금월 가로 누적 바, 탭 상단) */
@@ -371,7 +376,7 @@ table.dt-detail th{text-align:center!important;}
 .ltrmom-bar .seg .seg-v{font-size:10.5px;font-weight:600;color:#fff;display:inline-block;transition:transform .15s ease;transform-origin:center;}
 .ltrmom-row.cur .ltrmom-bar .seg .seg-v{font-weight:700;}
 .ltrmom-bar .seg:hover .seg-v{transform:scale(1.1);}
-.ltrmom-bar .seg.s0{background:#B3C7DD;}
+.ltrmom-bar .seg.s0{background:var(--ch-d0);}
 .ltrmom-bar .seg.s0 .seg-v{color:var(--bt1);}
 .ltrmom-row.cur .ltrmom-bar .seg.s0 .seg-v{color:var(--bt2);}
 .ltrmom-bar .seg.s30{background:#E89C9A;}
@@ -609,7 +614,7 @@ table.dt-detail th{text-align:center!important;}
 .rl-band.d60.on{background:#DA6A60;border-color:#DA6A60;}
 .rl-band.d30.on{background:#E89C9A;border-color:#E89C9A;color:var(--rd);}
 .rl-band.d30.on b{color:var(--rd);}
-.rl-band.d0.on{background:#B3C7DD;border-color:#B3C7DD;color:var(--bt2);}
+.rl-band.d0.on{background:var(--ch-d0);border-color:var(--ch-d0);color:var(--bt2);}
 .rl-band.d0.on b{color:var(--bt2);}
 /* 표시 건수 필터 (밴드 바 우측, iOS 세그먼트) */
 .rl-lim{display:inline-flex;align-items:center;margin-left:auto;background:var(--fill);border-radius:var(--rp);padding:2px;gap:2px;}
@@ -684,7 +689,7 @@ table.dt-detail th{text-align:center!important;}
 .rl-rz{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2;touch-action:none;}
 .rl-rz:hover{background:linear-gradient(to right,transparent 3px,var(--b200) 3px,var(--b200) 5px,transparent 5px);}
 .pv-table thead th.pv-tot{background:var(--surf3);color:var(--lbl);}
-.pv-table tbody .pv-grp>td{font-weight:700;background:#F4F6F9;}
+.pv-table tbody .pv-grp>td{font-weight:700;background:var(--pv-grp);}
 .pv-table tbody .pv-grp>td.pv-tot{background:var(--surf2);}
 .pv-table tbody .pv-row:hover>td{background:var(--b50);}
 .pv-table tbody .pv-row.pv-grp:hover>td{background:var(--b100);}
@@ -1608,7 +1613,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     </div>
     <div id="view-dashboard" class="view act">
       <div id="dkpi" class="akpi"></div>
-      <div class="card mb12 main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct cardttl">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="dtrend-yr" data-act="dash.trendYear" aria-label="추이 연도 선택"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#DA6A60"></span>60일 이상</div><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>30~59일</div><div class="li"><span class="mk-bar" style="background:#B3C7DD"></span>30일 미만</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
+      <div class="card mb12 main-chart-card"><div class="sh" style="margin-bottom:6px;flex-shrink:0"><div class="ct cardttl">하자접수 · 처리 주차별 추이</div><select class="yr-sel no-print" id="dtrend-yr" data-act="dash.trendYear" aria-label="추이 연도 선택"></select></div><div class="cw" style="flex:1;min-height:0"><canvas id="c-mo"></canvas></div><div id="c-mo-lg" class="chart-lg" style="padding-left:48px;flex-shrink:0"><div class="li"><span class="mk-bar" style="background:#DA6A60"></span>60일 이상</div><div class="li"><span class="mk-bar" style="background:#E89C9A"></span>30~59일</div><div class="li"><span class="mk-bar" style="background:var(--ch-d0)"></span>30일 미만</div><div class="li"><span class="mk-ln" style="border-color:#3E71D2"></span>전체 접수</div><div class="li"><span class="mk-ln" style="border-color:#F0B144"></span>처리 완료</div></div></div>
       <div class="opsr">
         <div class="card">
           <div class="ct cardttl">전월대비 실적 현황</div>

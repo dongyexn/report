@@ -632,7 +632,7 @@ function chartSegBorder(){return cvar('--ch-seg','#fff');} // 다크에서는 �
 function dlBlue(){return cvar('--ch-dlr','#2C437C');}
 function dlAmber(){return cvar('--ch-dld','#A0590A');}
 function dlInk(){return cvar('--ch-ink','#1C1C1E');}
-function dlStroke(){return '#fff';}
+function dlStroke(){return cvar('--ch-stroke','#fff');} // 라벨 외곽선 = 배경색
 // 추이차트 데이터라벨 자동 조절 — 막대 실폭(catW)에 맞춰 폰트 크기·표시 정책 결정.
 // 주차가 많아 막대가 좁아지면: 폰트 축소 → 막대 안 분해값(장기/일반) 생략 → 막대 위 총합 격주 표시.
 // chartArea가 아직 없는 첫 프레임은 opacity 0이라 화면엔 안 보이므로 fallback 값으로 안전.
@@ -642,13 +642,9 @@ function moDLCfg(ctx){
   const size=catW>=50?11:catW>=42?10:catW>=34?9:catW>=27?8:7;
   return {size,catW,showInner:catW>=46,totalEvery:catW>=26?1:2};
 }
-// 도넛 팔레트 — 라이트는 진한 남색→연한 파랑, 다크는 어두운 남색이 배경에 묻히므로
-//   '밝은 하늘 → 중간 파랑' 밴드만 사용해 12조각이 모두 보이게 한다.
-function donutPalette(){
-  if(document.documentElement.classList.contains('dark'))
-    return ['#E7EFFA','#CCDDF3','#B2CBEC','#98B9E5','#7FA7DD','#6C96D0','#5D86C0','#517AB0','#476E9E','#3F638C','#38597B','#8FA3B8'];
-  return [cvar('--ch-lbl','#1F2B4C'),'#2C437C','#304D9D','#3259B6',cvar('--ch-recv','#3E71D2'),'#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC',cvar('--ch-d0','#B3C7DD')];
-}
+// 도넛 팔레트 — 라이트·다크 동일(테마별로 색이 달라지면 같은 현장이 다른 색으로 보임)
+function donutPalette(){return ['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2','#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC','#B3C7DD'];} // 테마 무관 고정 — 같은 현장이 어디서나 같은 색
+
 function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 // 테마 갱신 진입점 — 색 토큰(CSS 변수)을 바꾼 뒤 이걸 호출하면 차트까지 새 색으로 다시 그린다.
 //   차트는 생성 시 색을 굽기 때문에 인스턴스를 파기하고 현재 화면만 재렌더한다. (다크모드 전환에서 사용)
