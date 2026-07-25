@@ -112,7 +112,7 @@ function rNav(){
     const er=esc(r);
     return`<div class="rgblock" data-region="${er}">`
       +`<div class="rgh open" role="button" tabindex="0" draggable="true" data-region="${er}" data-tip="${er} (${sites.length}개)" data-act="nav.region">`
-      +`<span class="rgdrag" data-tt="권역 순서 변경" aria-label="권역 순서 변경">⠿</span>${er}<span style="margin-left:4px;font-size:9px;color:var(--lbl3)">${sites.length}</span>`
+      +`<span class="rgdrag" data-tt="순서 변경" aria-label="순서 변경">⠿</span>${er}<span style="margin-left:4px;font-size:9px;color:var(--lbl3)">${sites.length}</span>`
       +`<svg class="rgch" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5l3 3 3-3"/></svg></div>`
       +`<div class="rgs" data-region="${er}">`
       +sites.map(s=>{const en=esc(s.name);return `<div class="sti${S.sid===s.id?' act':''}" role="button" tabindex="0" draggable="true" data-site="${s.id}" data-region="${er}" data-tip="${er} · ${en}" data-act="nav.site"><span class="std"></span><span class="stl">${en}</span></div>`;}).join('')

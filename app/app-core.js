@@ -166,7 +166,7 @@ function logErr(where,e){
   try{console.error('['+where+']',e);}catch(_){}
   if(!_errToasted){
     _errToasted=true;
-    setTimeout(()=>{try{toast('일부 기능에서 오류가 발생했습니다 · 새로고침(Ctrl+F5) 후에도 계속되면 담당자에게 알려주세요',8000);}catch(_){}},400);
+    setTimeout(()=>{try{toast('일부 기능 오류 · Ctrl+F5 새로고침 · 계속되면 담당자에게 알릴 것',8000);}catch(_){}},400);
   }
 }
 function errLogText(){

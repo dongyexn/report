@@ -15,7 +15,7 @@ function findHeaderRow(rows){const sniff=['접수일','공종','처리상태','�
 function rowsToObjs(aoa){const hi=findHeaderRow(aoa),hs=(aoa[hi]||[]).map(c=>String(c||'').trim());const objs=[];for(let i=hi+1;i<aoa.length;i++){const row=aoa[i]||[];if(row.every(c=>c===''||c==null))continue;const o={};hs.forEach((h,j)=>{if(h&&h!=='__proto__'&&h!=='constructor'&&h!=='prototype')o[h]=row[j]!=null?row[j]:'';});objs.push(o);}return{rows:objs,headers:hs.filter(Boolean)};}
 function setStep(n){document.querySelectorAll('#upstepper .step').forEach((s,i)=>{const j=i+1;s.classList.toggle('done',j<n);s.classList.toggle('act',j===n);if(j<n)s.querySelector('.step-c').innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 8l3 3 7-7"/></svg>';else s.querySelector('.step-c').textContent=String(j);});}
 function onFile(f){
-  if(manageLocked()){toast('보기 전용입니다 · 관리자만 업로드할 수 있습니다');return;}
+  if(manageLocked()){toast('보기 전용 · 업로드는 관리자만 가능');return;}
   if(!f){console.warn('[upload] onFile called without file');return;}
   const e=f.name.split('.').pop().toLowerCase();
   if(e==='csv')rCSV(f);
@@ -70,7 +70,7 @@ function readWorkbookSafe(data,opts){
   }
 }
 async function rXLSX(f){
-  try{await loadXLSX();}catch(e){toast('엑셀 모듈 로딩 실패 · 네트워크/CDN 차단 확인');return;}
+  try{await loadXLSX();}catch(e){toast('엑셀 모듈 로드 실패 · 네트워크·CDN 차단 확인');return;}
   const r=new FileReader();
   r.onerror=err=>{console.error('[upload] XLSX read error',err);toast('파일 읽기 실패');};
   r.onload=e=>{
@@ -147,7 +147,7 @@ async function confirmUL(){
   for(let i=0;i<items.length;i++){const it=items[i];const k=it.siteName||'(미지정)';(byName[k]=byName[k]||[]).push(it);(rawByName[k]=rawByName[k]||[]).push(src[i]);}
   S._uploadRaw=rawByName;
   const names=Object.keys(byName);
-  if(!names.length||(names.length===1&&names[0]==='(미지정)')){progHide();toast('현장명이 식별되지 않습니다. 엑셀의 "현장" 컬럼을 확인하세요');return;}
+  if(!names.length||(names.length===1&&names[0]==='(미지정)')){progHide();toast('현장명 식별 불가 · 엑셀의 "현장" 컬럼 확인');return;}
   // 신규 현장 추출
   const unknown=names.filter(n=>n!=='(미지정)'&&!teamSites().some(s=>s.name===n));
   if(unknown.length){
@@ -301,9 +301,9 @@ function loadSettings(){
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
 }
 function openSM(sid){const site=sid?S.sites.find(s=>s.id===sid):null;document.getElementById('mt').textContent=site?'현장 수정':'현장 추가';document.getElementById('mbody').innerHTML=`<div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option ${site?.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div><div class="ig2"><label class="il" for="mn">현장명 *</label><input class="inp" id="mn" value="${esc(site?.name||'')}"></div><div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" value="${site?.units||''}"></div><div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${site?.buildings||''}"></div><div class="ig2"><label class="il" for="mcu">상가수</label><input class="inp" id="mcu" type="number" value="${site?.commercialUnits||''}"></div><div class="ig2"><label class="il" for="mc">준공일</label><input class="inp" id="mc" type="date" max="9999-12-31" data-act="util.clampYear" value="${site?.completionDate||''}"></div></div><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:6px"><input type="checkbox" id="mco" ${site?.hasCommercial?'checked':''} aria-label="공가상가 포함 현장"> 공가상가 포함 현장</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:8px"><input type="checkbox" id="mcv" ${site?.showVacant!==false?'checked':''} aria-label="공가세대 탭 표시"> 공가세대 탭 표시</label>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.confirmSM" data-sid="${esc(sid||'')}">저장</button>`;openMo();}
-function confirmSM(eid){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
+function confirmSM(eid){if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return;}const d={name:document.getElementById('mn').value.trim(),region:document.getElementById('mr').value,units:Number(document.getElementById('mu').value)||0,buildings:Number(document.getElementById('mb2').value)||0,commercialUnits:Number(document.getElementById('mcu').value)||0,completionDate:document.getElementById('mc').value,hasCommercial:document.getElementById('mco').checked,showVacant:document.getElementById('mcv')?document.getElementById('mcv').checked:true};if(!d.name){toast('현장명을 입력하세요');return;}if(eid){const old=S.sites.find(s=>s.id===eid);d.id=eid;d.teamId=old?old.teamId:S.teamId;if(old&&old.lastUploadedAt)d.lastUploadedAt=old.lastUploadedAt;const idx=S.sites.findIndex(s=>s.id===eid);if(idx>=0)S.sites[idx]=d;}else{const id='s'+Date.now();d.id=id;d.teamId=S.teamId;S.sites.push(d);}lsSave();fb2SiteConfigWrite(d.id);rNav();if(S.view==='manage')rManage();else rSMgr();closeMo();toast('현장 저장됨');}
 function delS(sid){
-  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}
+  if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return;}
   const site=S.sites.find(s=>s.id===sid);if(!site)return;
   const cnt=(S.def[sid]||[]).length;
   openConfirm('현장 삭제',`<b>${esc(site.name)}</b> 현장을 삭제합니다.${cnt?` 업로드된 하자 <b>${cnt.toLocaleString()}건</b>도 함께 삭제됩니다.`:''}<br>삭제 직후 잠시 동안 실행취소할 수 있습니다.`,'삭제',()=>doDelS(sid),true);
@@ -333,7 +333,7 @@ function undoDelS(){
 
 // MONTH PICKER
 function openMP(){
-  if(document.body.classList.contains('snap')){toast('스냅샷은 내보낸 시점의 기준월로 고정된 문서입니다');return;}
+  if(document.body.classList.contains('snap')){toast('스냅샷은 기준월 고정 문서 · 변경 불가');return;}
   if(document.body.classList.contains('viewer')){toast('게시본은 기준월 선택기로 전환하세요');return;}
   document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
 function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;setRmChip();lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
@@ -633,7 +633,7 @@ window.themeRefresh=themeRefresh;
 // INIT
 async function exportSnapshot(){
   try{
-    if(typeof LZString==='undefined'){toast('스냅샷 생성 불가 · 데이터 압축 라이브러리(lz-string CDN) 미로드');return;}
+    if(typeof LZString==='undefined'){toast('스냅샷 생성 불가 · 압축 라이브러리(lz-string) 미로드');return;}
     // 기준 데이터는 '사내 게시본' — 뷰어가 실제로 보는 것과 같은 파일을 만들기 위함.
     //   로컬 원본(S.def)은 업로드한 PC의 IndexedDB에만 있어, 다른 PC에서 만들면 뷰어와 내용이 어긋난다.
     //   이미 게시본을 보고 있으면(뷰어·게시본 열람) 그대로 쓰고, 편집 모드면 게시본을 '조회만' 해서 쓴다.
@@ -643,7 +643,7 @@ async function exportSnapshot(){
     if(FB2.ready&&FB2.db){try{list=await fb2ListReportMonths();}catch(e){console.warn('[snap] 게시월 목록 조회 실패',e);}}
     // 담을 것이 하나도 없으면 옵션 창을 띄우기 전에 알린다(빈 창을 보여주지 않기 위해)
     if(!list.length&&!window.__SNAP__&&!Object.keys(S.def||{}).length){
-      toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;
+      toast('내보낼 데이터 없음 · 리스트 업로드 또는 사내 게시 필요',7000);return;
     }
     const cur=(window.__SNAP__&&window.__SNAP__.rm)||S.rm;
     const opt=await pickSnapMonths(list,list.includes(cur)?cur:(list[0]||cur)); // 옵션 모달(기준월·글꼴)
@@ -671,7 +671,7 @@ async function exportSnapshot(){
       catch(e){console.warn('[snap] 게시본 로드 실패',e);}
     }
     const P=months?months[defRm]:(window.__SNAP__||pub);
-    if(!P&&!Object.keys(S.def||{}).length){toast('내보낼 데이터가 없습니다 · 게시본이 없으면 먼저 리스트를 업로드하거나 사내 게시를 등록하세요',7000);return;}
+    if(!P&&!Object.keys(S.def||{}).length){toast('내보낼 데이터 없음 · 리스트 업로드 또는 사내 게시 필요',7000);return;}
     toast('스냅샷 생성 중…');
     let payload;
     if(months){
@@ -684,7 +684,7 @@ async function exportSnapshot(){
       payload={rm:P.rm||S.rm,sites:P.sites||S.sites,teams:P.teams||S.teams,cmt:P.cmt||S.cmt,ana:P.ana||S.ana,st,wks:P.wks||[],am:P.am||{},siteWks:P.siteWks||{},siteAm:P.siteAm||{},insightsHTML:P.insightsHTML||''}; // cmt는 게시본의 공가·상가 상태가 병합된 P.cmt 사용(편집자 로컬 cmt 아님)
     }else{
       // 폴백 — 네트워크 불가·미게시 상태에서는 이 PC의 로컬 원본으로 계산(내용이 뷰어와 다를 수 있음).
-      toast('게시본에 연결할 수 없어 이 PC의 로컬 데이터로 생성합니다',6000);
+      toast('게시본 연결 불가 · 이 PC의 로컬 데이터로 생성',6000);
       const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3)
       go('dashboard');if(rDash._flush)rDash._flush(); // 인사이트 DOM 동기 최신화
       await nextFrame();
@@ -707,7 +707,7 @@ async function exportSnapshot(){
       docHtml=await(await fetch('index.html',{cache:'no-cache'})).text();
       for(const f of APP_PARTS)appTxt[f]=await(await fetch(f,{cache:'no-cache'})).text();
       for(const v of VENDOR)vendTxt[v]=await(await fetch(v,{cache:'no-cache'})).text();
-    }catch(e){logErr('snap.원본 fetch 실패',e);toast('스냅샷 생성 실패 · 앱·라이브러리 파일 로드 불가');return;}
+    }catch(e){logErr('snap.원본 fetch 실패',e);toast('스냅샷 생성 실패 · 앱·라이브러리 로드 불가');return;}
     // ⚠ CSP 해시는 HTML 파서의 줄바꿈 정규화(CRLF→LF) "이후" 본문을 기준으로 검사된다.
     //   CRLF 그대로 해시하면 브라우저 계산값과 어긋나 인라인 앱이 차단됨(스냅샷 전체 먹통의 근본 원인이었음).
     //   → 해시 대상과 삽입 본문을 모두 LF로 정규화해 일치시킨다.
@@ -722,7 +722,7 @@ async function exportSnapshot(){
     //   켜져 있으면 base64로 심어 어느 PC에서나 화면과 같은 모양이 되게 한다(파일이 커짐).
     if(_fontOn&&docHtml.indexOf("url('./vendor/PretendardVariable.woff2')")<0){ // 경로가 바뀌었는데 코드가 못 찾는 경우를 드러냄
       console.warn('[snap] @font-face 경로 불일치 — 글꼴 포함 건너뜀');
-      toast('글꼴 포함을 건너뛰었습니다 · index.html의 글꼴 경로가 예상과 다릅니다',7000);
+      toast('글꼴 포함 건너뜀 · index.html 글꼴 경로 불일치',7000);
     }
     if(_fontOn&&docHtml.indexOf("url('./vendor/PretendardVariable.woff2')")>=0){
       try{
@@ -731,7 +731,7 @@ async function exportSnapshot(){
         for(let i=0;i<u8.length;i+=CH)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));
         docHtml=docHtml.replace("url('./vendor/PretendardVariable.woff2')",()=>"url('data:font/woff2;base64,"+btoa(bin)+"')");
       }catch(e){console.warn('[snap] 글꼴 포함 실패 — 시스템 글꼴로 표시됩니다',e);
-        toast('글꼴을 파일에 담지 못했습니다 · vendor/PretendardVariable.woff2 배포 여부를 확인하세요',7000);}
+        toast('글꼴 미포함 · vendor/PretendardVariable.woff2 배포 확인 필요',7000);}
     }
     const injectBody='window.__SNAPZ__='+JSON.stringify(packed)+';'; // 한 줄 — 줄바꿈 정규화 무관
     const _h256=async s=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return btoa(String.fromCharCode.apply(null,new Uint8Array(d)));};
@@ -1008,7 +1008,7 @@ function switchTeam(id){
 }
 
 function addTeam(name){
-  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return null;}
+  if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return null;}
   name=(name||'').trim();if(!name){toast('팀 이름을 입력하세요');return null;}
   if(S.teams.some(t=>t.name===name)){toast('같은 이름의 팀이 있습니다');return null;}
   const t={id:uid('t'),name,regions:[],regionOrder:[]};
@@ -1028,11 +1028,11 @@ function doDeleteTeam(id){
   rTeamSel();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='dashboard')rDash();toast('팀 삭제됨');
 }
 
-function addRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();rNav();rSMgr();}
+function addRegion(name){if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();rNav();rSMgr();}
 
 function renameRegion(oldName,name){if(manageLocked())return;const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();rNav();rSMgr();if(S.view==='dashboard')rDash();}
 
-function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();rNav();rSMgr();}
+function deleteRegion(name){if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();rNav();rSMgr();}
 
 function rManage(){
   const el=document.getElementById('mgcontent');if(!el)return;
@@ -1044,7 +1044,7 @@ function rManage(){
   }).join('');
   const regRows=curRegions().map(r=>{
     const used=S.sites.filter(s=>s.teamId===t.id&&s.region===r).length;
-    if(r===PERM_REGION)return `<div class="tm-row tm-locked"><span class="tm-nameinp tm-lockname">${esc(r)}</span><span class="tm-cnt">${used}</span><span class="tm-x tm-lockicon" data-tt="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외" aria-label="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외">${ICON_LOCK}</span></div>`;
+    if(r===PERM_REGION)return `<div class="tm-row tm-locked"><span class="tm-nameinp tm-lockname">${esc(r)}</span><span class="tm-cnt">${used}</span><span class="tm-x tm-lockicon" data-tt="고정 권역 · 수정 불가 · 대시보드 집계 제외" aria-label="고정 권역 · 수정 불가 · 대시보드 집계 제외">${ICON_LOCK}</span></div>`;
     return `<div class="tm-row"><input class="mg-inp tm-nameinp" value="${esc(r)}" data-act="region.rename" data-rgn="${esc(r)}" aria-label="권역 이름"><span class="tm-cnt">${used}</span><button class="tm-x tm-del" data-act="region.del" data-rgn="${esc(r)}" data-tt="삭제" aria-label="삭제">${ICON_TRASH}</button></div>`;
   }).join('');
   el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" data-act="team.addTeam">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="team.addRegion">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card tm-upcard"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" data-act="uz"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" data-act="uz.file" aria-label="데이터 파일 선택"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" data-act="set.exToken"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="site.addModal">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
@@ -1070,7 +1070,7 @@ function setDetailYear(y){S.detailYear=y;if(S.sid)rSite(S.sid);}
 function setTrendYear(y){S.trendYear=y;const all=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));try{rCharts(all);}catch(e){console.error('rCharts(year)',e);}}
 
 function deleteTeam(id){
-  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}
+  if(manageLocked()){toast('보기 전용 · 변경은 관리자만 가능');return;}
   if(S.teams.length<=1){toast('마지막 팀은 삭제할 수 없습니다');return;}
   const t=S.teams.find(x=>x.id===id);if(!t)return;
   const cnt=S.sites.filter(s=>s.teamId===id).length;
@@ -1148,8 +1148,8 @@ registerActions('click', {
   'set.dark':(el)=>applyTheme(el.checked),
   'theme.toggle':()=>applyTheme(!isDark()),
   'set.copyErr':()=>{const s=errLogText();
-    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('버전·오류 기록을 복사했습니다'),()=>toast('복사 실패 · 콘솔을 확인하세요'));
-    else{console.log(s);toast('복사를 지원하지 않는 브라우저입니다 · 콘솔에 출력했습니다');}},
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('버전·오류 기록 복사됨'),()=>toast('복사 실패 · 콘솔을 확인하세요'));
+    else{console.log(s);toast('복사 미지원 브라우저 · 콘솔에 출력함');}},
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');}); /* 접을 때 툴팁도 원복 — 안 하면 '접기'가 남는다 */grid.classList.remove('ins-open');if(was)grid.style.height='';{const _t=document.getElementById('htooltip');if(_t)_t.classList.remove('show');} /* 표시 중이던 툴팁은 즉시 숨김 — 다음 호버에 새 문구가 뜨도록 */if(!was){el.classList.add('exp');el.dataset.tt='접기';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
@@ -1197,7 +1197,7 @@ registerActions('click', {
   'team.addTeam':()=>tmAddTeam(), 'team.addRegion':()=>tmAddRegion(), 'region.del':(el)=>tmDeleteRegion(el.dataset.rgn),
   'uz':()=>{const fi=document.getElementById('fi');if(fi)fi.click();},
   'smt.sort':(el)=>sortSMT(el.dataset.key), 'site.del':(el)=>delS(el.dataset.sid), 'site.addModal':()=>openSM(null),
-  'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('복사할 전월 계획이 없거나 이미 입력되어 있습니다');},
+  'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('가져올 전월 계획 없음 · 또는 이미 입력됨');},
   'panel.tab':(el)=>setTab(el.dataset.tab), 'panel.ai':(el)=>runAI(el.dataset.sid), 'panel.sort':(el)=>sortPanel(el.dataset.tbl, el),
   'vac.edit':(el)=>openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf),
   'ul.cancel':()=>{cancelUL();closeMo();}, 'ul.confirmSite':(el)=>confirmNewSite(el.dataset.name, Number(el.dataset.idx), Number(el.dataset.total))

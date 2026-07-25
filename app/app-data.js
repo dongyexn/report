@@ -393,7 +393,7 @@ async function acctChangePw(){
     await u.reauthenticateWithCredential(cred);
     await u.updatePassword(n1);
     ['acctPwCur','acctPwNew','acctPwNew2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-    toast('비밀번호가 변경되었습니다');
+    toast('비밀번호 변경됨');
   }catch(e){toast(fbAuthErr(e));}
 }
 function acctSignout(){
@@ -502,13 +502,13 @@ async function fb2ViewAsViewer(){
     if(!r){toast('아직 게시된 집계가 없습니다');return;}
     const rm=r.rm,data=r.data;
     fb2ApplyReport(rm,data);fb2SubReport(rm);fb2InitViewerRmSel(rm);fb2SubReportIndex();
-    toast('뷰어 시점으로 열람 중 · 편집 모드로 돌아가려면 새로고침(F5)',7000);
+    toast('뷰어 시점 열람 중 · 편집 모드 복귀는 F5',7000);
   }catch(e){console.error('[FB2] 뷰어 시점 열람 실패',e);toast('게시본 열람 실패');}
 }
 function fb2ViewerEmpty(){
   document.body.classList.add('viewer');
   hideCover();
-  toast('아직 게시된 집계가 없습니다. 관리자의 첫 등록을 기다려 주세요.',6000);
+  toast('게시된 집계 없음 · 관리자의 첫 등록 대기 중',6000);
 }
 
 // ----- report/{기준월} 로드 → __SNAP__ 배선 재사용 -----
@@ -1099,7 +1099,7 @@ function pvChips(zone){
   return html;
 }
 function recPivotHTML(){
-  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><button class="pv-chip pv-val" data-act="rec.pivotVal"${(window.__REC.pivot.val||'count')==='avgDelay'?' data-tt="기준월 말일 − 접수일의 평균 (KPI 지연구간과 동일 기준)"':''}>${(window.__REC.pivot.val||'count')==='avgDelay'?'평균 지연일':'건수'} <span class="pv-caret">▾</span></button></div>${(window.__REC.pivot.val||'count')==='count'?`<div class="pv-zone" style="margin-left:auto"><button class="pv-chip pv-pct-tg${window.__REC.showPct?' on':''}" data-act="rec.pivotPct" data-tt="건수 옆에 전체 대비 비중(%) 표시" aria-pressed="${window.__REC.showPct?'true':'false'}">%</button></div>`:''}</div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
+  return `<div class="pv-bar"><div class="pv-zone"><span class="pv-zlbl">행</span>${pvChips('rows')}</div><div class="pv-zone"><span class="pv-zlbl">열</span>${pvChips('col')}</div><div class="pv-zone"><span class="pv-zlbl">값</span><button class="pv-chip pv-val" data-act="rec.pivotVal"${(window.__REC.pivot.val||'count')==='avgDelay'?' data-tt="평균 지연일 · 기준월 말일 기준"':''}>${(window.__REC.pivot.val||'count')==='avgDelay'?'평균 지연일':'건수'} <span class="pv-caret">▾</span></button></div>${(window.__REC.pivot.val||'count')==='count'?`<div class="pv-zone" style="margin-left:auto"><button class="pv-chip pv-pct-tg${window.__REC.showPct?' on':''}" data-act="rec.pivotPct" data-tt="비중(%) 함께 표시" aria-pressed="${window.__REC.showPct?'true':'false'}">%</button></div>`:''}</div><div class="pv-scroll" id="pvBody">${recPivotTableHTML()}</div>`;
 }
 function recBandBarHTML(){
   const R=window.__REC;if(!R||!R.bandCnt)return'';
@@ -1109,7 +1109,7 @@ function recBandBarHTML(){
   const cur=(R.limit===Infinity||!R.limit)?0:R.limit;
   const limHTML=R.pivotOn?'':`<span class="rl-lim-lbl">표시</span><span class="rl-lim">${lims.map(([n,l])=>`<button class="${cur===n?'on':''}" data-act="rec.limit" data-n="${n}">${l}</button>`).join('')}</span>`; // 피벗은 집계라 표시건수 무의미 — 숨김
   const vc=R.vacCnt||{unit:0,store:0};
-  const vacHTML=`<span class="rl-vsep"></span><button class="rl-band${R.vac==='unit'?' on':''}" data-act="rec.vac" data-vac="unit" data-tt="공가세대(미분양·미납)만 표시">공가세대 <b>${vc.unit.toLocaleString()}</b></button>`+(R.hasHC?`<button class="rl-band${R.vac==='store'?' on':''}" data-act="rec.vac" data-vac="store" data-tt="공가상가만 표시">공가상가 <b>${vc.store.toLocaleString()}</b></button>`:'');
+  const vacHTML=`<span class="rl-vsep"></span><button class="rl-band${R.vac==='unit'?' on':''}" data-act="rec.vac" data-vac="unit" data-tt="공가세대만 보기">공가세대 <b>${vc.unit.toLocaleString()}</b></button>`+(R.hasHC?`<button class="rl-band${R.vac==='store'?' on':''}" data-act="rec.vac" data-vac="store" data-tt="공가상가만 보기">공가상가 <b>${vc.store.toLocaleString()}</b></button>`:'');
   return `<div class="rl-band-bar">`+B.map(b=>`<button class="rl-band${(R.band||'')===b.k?' on':''}${b.k?' '+b.k:''}" data-act="rec.band" data-band="${b.k}">${b.l} <b>${b.c.toLocaleString()}</b></button>`).join('')+vacHTML+limHTML+`</div>`;
 }
 function recRowsCapped(R){
@@ -1177,7 +1177,7 @@ function recHeadHTML(){
     const sortable=c.key!=='__no';
     const arr=R.sort.key===c.key?(R.sort.dir>0?' ▲':' ▼'):'';
     const act=sortable?rawHTML(' tabindex="0" data-act="rec.sort"'):'';
-    return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}${rawHTML(`<span class="rl-rz" data-rzk="${esc(c.key)}" data-tt="드래그로 열 너비 조절"></span>`)}</th>`;
+    return html`<th class="${sortable?'rl-th':''}" data-key="${c.key}"${act}>${c.label}${arr}${rawHTML(`<span class="rl-rz" data-rzk="${esc(c.key)}" data-tt="열 너비 조절"></span>`)}</th>`;
   }).join('');
   const fins=recVisCols().map(recFilterCellHTML).join('');
   return html`<thead><tr>${rawHTML(ths)}</tr><tr class="rl-frow${R.filterRow?' open':''}">${rawHTML(fins)}</tr></thead>`;
@@ -1242,8 +1242,8 @@ function openRecList(sid,scope,trade,vac){
    rows.forEach(r=>{bc[recBandOf(recDelayDays(r,R))]++;if(isVacUnit(r))vc.unit++;if(isVacStore(r,{hasCommercial:(r.__hc!==undefined?r.__hc:R.vacHC)}))vc.store++;});
    R.bandCnt=bc;R.vacCnt=vc;}
   const scopeLabel=scope==='lul'?'장기미처리(30일+)':'미처리';
-  const title=`${esc(dispName)} · ${scopeLabel}${trade?(` · <button class="rl-fchip" data-act="rec.clearTrade" data-tt="공종 필터 해제 — 전체 목록으로">${esc(trade)} ×</button>`):''}`;
-  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm no-print" data-act="rec.copyTable" data-tt="현재 표를 클립보드로 복사 — 엑셀·메일에 바로 붙여넣기(Ctrl+V)">표 복사</button><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
+  const title=`${esc(dispName)} · ${scopeLabel}${trade?(` · <button class="rl-fchip" data-act="rec.clearTrade" data-tt="공종 필터 해제">${esc(trade)} ×</button>`):''}`;
+  document.getElementById('mt').innerHTML=`<div class="rl-thead"><span class="rl-title">${title}</span><label class="rl-qsrch no-print"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" enterkeyhint="search" placeholder="동·호·공종·내용 검색" aria-label="목록 내 검색 — 동, 호, 공종, 접수내용" data-act="rec.qsearch" value=""></label><span class="rl-count">결과 <b id="rlCnt">${rows.length.toLocaleString()}</b> / 전체 <b id="rlTot">${rows.length.toLocaleString()}</b></span><button class="btn bo bsm no-print" data-act="rec.copyTable" data-tt="표 복사 · 엑셀에 바로 붙여넣기">표 복사</button><button class="btn bo bsm rl-list-export" data-act="rec.export">엑셀</button><button class="btn bo bsm" data-act="rec.pivotToggle">피벗</button><button class="btn bg2 bsm" data-act="modal.close">닫기</button></div>`;
   recRenderModalBody();
   document.getElementById('mf').innerHTML='';
   const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
@@ -1290,7 +1290,7 @@ function ctxCopyCanvas(cv){
   const c=_canvasWhite(cv);
   if(navigator.clipboard&&window.ClipboardItem){
     c.toBlob(b=>{if(!b){toast('이미지 생성 실패');return;}
-      navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('차트 이미지가 복사되었습니다 · 보고서에 붙여넣기(Ctrl+V) 하세요')).catch(()=>{ctxSaveCanvas(cv);});
+      navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>toast('차트 이미지 복사됨 · Ctrl+V로 붙여넣기')).catch(()=>{ctxSaveCanvas(cv);});
     },'image/png');
   }else ctxSaveCanvas(cv); // 클립보드 이미지 미지원 브라우저 — 저장으로 폴백
 }
@@ -1337,7 +1337,7 @@ document.addEventListener('contextmenu',function(e){
         if(rp)rp.forEach((v,i)=>{const k=(P.rows||[])[i];if(k)R.valueFilters[k]=new Set([v==='(빈값)'?'':String(v)]);});
         if(cvv!=null)R.valueFilters[P.col]=new Set([cvv==='(빈값)'?'':String(cvv)]);
         recRenderModalBody();
-        toast('피벗 조건으로 목록을 필터했습니다 · 헤더의 필터 표시에서 해제 가능');
+        toast('피벗 조건으로 필터됨 · 헤더에서 해제 가능');
       }});
       items.push({sep:true});
     }
@@ -1495,7 +1495,7 @@ async function openReadme(){
     openMo();
   }catch(e){
     console.warn('[README] 열기 실패',e);
-    toast('사용 안내를 불러오지 못했습니다 · 저장소에 README.md가 배포되어 있는지 확인하세요');
+    toast('사용 안내 로드 실패 · 저장소의 README.md 배포 확인');
   }
 }
 function loadXLSX(){
@@ -1519,7 +1519,7 @@ function loadXLSX(){
   return _xlsxPromise;
 }
 async function exportXlsx(filename,aoa,sheetName){
-  try{await loadXLSX();}catch(e){toast('엑셀 모듈을 불러오지 못했습니다 · 네트워크 확인');return;}
+  try{await loadXLSX();}catch(e){toast('엑셀 모듈 로드 실패 · 네트워크 확인');return;}
   try{
     const ws=XLSX.utils.aoa_to_sheet(aoa);
     const wb=XLSX.utils.book_new();
@@ -1626,7 +1626,7 @@ function fb2Rerender(){
 async function fb2Publish(){
   if(!fb2IsEditor()){toast('등록 권한이 없습니다(편집자 전용)');return;}
   if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다.');return;}
-  if(!Object.keys(S.def||{}).length){toast('등록할 데이터가 없습니다 · 먼저 리스트를 업로드하세요');return;}
+  if(!Object.keys(S.def||{}).length){toast('등록할 데이터 없음 · 리스트 업로드 필요');return;}
   const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
   try{
     toast('등록 준비 중…');
