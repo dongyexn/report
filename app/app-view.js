@@ -636,7 +636,7 @@ function insDetailHTML(ttl){
 }
 // 카드에 확장 토글 속성 부착 — safeHTML(ALLOW_DATA_ATTR:false·속성 화이트리스트)이 data-act를 제거하므로 살균 후 DOM에서 부여.
 // 제목은 .ic-ttl 텍스트에서 읽어 세 렌더 경로(규칙 선정·AI 재작성·스냅샷 임베드) 공통으로 동작.
-function insCollapseAll(){const g=document.getElementById('d-insight');if(!g)return false;const c=g.querySelector('.ic.exp');if(!c)return false;c.classList.remove('exp');c.dataset.tt='펼치기 — 현장·공종별 상세';c.setAttribute('aria-expanded','false');g.classList.remove('ins-open');g.style.height='';return true;}
+function insCollapseAll(){const g=document.getElementById('d-insight');if(!g)return false;const c=g.querySelector('.ic.exp');if(!c)return false;c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');g.classList.remove('ins-open');g.style.height='';return true;}
 function insBindCards(){
   const el=document.getElementById('d-insight');if(!el)return;
   el.classList.remove('ins-open');el.style.height=''; // 재렌더 시 확장 잔여 상태 초기화 — 남으면 전 카드가 투명·클릭불가로 잠김
@@ -645,7 +645,7 @@ function insBindCards(){
     const t=tt.textContent.trim();
     if(t==='데이터 없음'||t==='주요 이슈 없음')return; // 안내 카드는 확장 대상 아님
     c.dataset.act='dash.insToggle';c.dataset.instt=t;
-    c.dataset.tt='펼치기 — 현장·공종별 상세'; // 접힌 상태 안내(펼치면 제거)
+    c.dataset.tt='펼치기'; // 접힌 상태 안내(펼치면 제거)
     c.setAttribute('role','button');c.setAttribute('tabindex','0');c.setAttribute('aria-expanded','false');
   });
 }

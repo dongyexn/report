@@ -213,6 +213,16 @@ function deriveLul(k){
 // closest('[data-act]')로 대상을 찾아 디스패치한다. 동적 innerHTML로 요소가 재생성돼도 위임은
 // 루트에 고정이라 재바인딩이 불필요하다.
 
+
+// ── 다크 모드 — 토큰만 갈아끼우는 방식(개별 규칙 수정 없음). 선택은 이 PC의 브라우저에만 저장.
+//   인쇄는 @media print에서 항상 밝은 값으로 강제하므로 출력물은 영향 없음.
+function isDark(){try{return localStorage.getItem('theme')==='dark';}catch(_){return false;}}
+function applyTheme(dark){
+  document.documentElement.classList.toggle('dark',!!dark); // :root에 걸어야 cvar()가 읽는 CSS 변수까지 바뀐다
+  try{dark?localStorage.setItem('theme','dark'):localStorage.removeItem('theme');}catch(_){}
+  const c=document.getElementById('darkChk');if(c)c.checked=!!dark;
+  if(typeof themeRefresh==='function')themeRefresh(); // 차트는 생성 시 색을 굽기 때문에 재렌더 필요
+}
 // ── 라이브러리 보장 — vendor/ 로컬 로드가 실패하면(미배포·경로 오류) CDN에서 한 번 더 시도한다.
 //   과거 사고: vendor/ 폴더를 커밋하지 않아 4종이 404 → LZString 부재로 로컬 데이터가 '압축 해제 없이'
 //   JSON.parse 되어 원인 불명 오류가 쏟아졌다. 실패를 조용히 넘기지 않고 명확히 알린다.
@@ -305,8 +315,9 @@ registerActions('click', {
     try{if(font)localStorage.setItem('snapFont','1');else localStorage.removeItem('snapFont');}catch(_){} // 다음 내보내기 기본값으로 기억
     const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r({months:v,font:font});},
   'snap.rm':(el)=>snapSwitchMonth(el.value),
+  'set.dark':(el)=>applyTheme(el.checked),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
-  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.dataset.tt=el.classList.contains('exp')?'접기':'펼치기 — 현장·공종별 상세';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
+  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');}); /* 접을 때 툴팁도 원복 — 안 하면 '접기'가 남는다 */grid.classList.remove('ins-open');if(was)grid.style.height='';{const _t=document.getElementById('htooltip');if(_t)_t.classList.remove('show');} /* 표시 중이던 툴팁은 즉시 숨김 — 다음 호버에 새 문구가 뜨도록 */if(!was){el.classList.add('exp');el.dataset.tt='접기';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
   'dash.insTr':(el)=>openRecList('__team',el.dataset.scope||'ul',el.dataset.tr||'',''), // 상세 공종 행 → 공종 필터 팀 목록
   'dash.insList':(el)=>{openRecList('__team',el.dataset.scope||'ul','','');const R=window.__REC;if(!R)return;const k=el.dataset.fk,v=el.dataset.fv;if(k&&v!=null){R.valueFilters[k]=new Set([v]);R.filterRow=true;recRenderModalBody();}}, // 팀 목록 열고 카드 주제(보수주체·유형·업체) 필터 적용

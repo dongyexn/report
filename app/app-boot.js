@@ -293,6 +293,7 @@ function nd(v){
 
 // SETTINGS
 function loadSettings(){
+  {const d=document.getElementById('darkChk');if(d)d.checked=isDark();} // 다크 모드 토글 상태 복원
   document.getElementById('cfgc').value=S.ck||'';
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
   try{const su=document.getElementById('set-users');if(su)su.style.display=fb2IsEditor()?'':'none';if(fb2IsEditor()){if(typeof fb2SubUsers==='function')fb2SubUsers();if(typeof fb2RenderUsers==='function')fb2RenderUsers();}}catch(e){}
@@ -989,6 +990,7 @@ function bindGlobalUi(){
 
 }
 document.addEventListener('DOMContentLoaded',async()=>{
+  document.documentElement.classList.toggle('dark',isDark()); // 렌더 전에 테마 확정 — 밝은 화면이 번쩍이지 않도록
   await ensureVendors(); // vendor/ 로컬 실패 시 CDN 폴백 — 이후 로직이 LZString·Chart 존재를 전제한다
   applyChartTheme();
   bindDelegatedEvents(); // 위임 리스너 — 스냅샷·일반 경로 모두 커버 (조기 return 이전, 멱등)
