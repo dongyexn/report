@@ -166,7 +166,7 @@ function openNewSiteWizard(unknown,idx,byName,allItems){
   const bldgs=new Set(sample.map(i=>i.building).filter(Boolean));
   const bldgHint=bldgs.size||'';
   document.getElementById('mt').textContent=`신규 현장 등록 (${idx+1}/${unknown.length})`;
-  document.getElementById('mbody').innerHTML=`<p style="font-size:12.5px;color:var(--lbl2);margin-bottom:14px">"<b style="color:var(--b700)">${esc(name)}</b>" 현장이 등록되어 있지 않습니다. 정보를 입력하세요.</p>
+  document.getElementById('mbody').innerHTML=`<p style="font-size:12.5px;color:var(--lbl2);margin-bottom:14px">"<b style="color:var(--bt1)">${esc(name)}</b>" 현장이 등록되어 있지 않습니다. 정보를 입력하세요.</p>
     <div class="g2"><div class="ig2"><label class="il" for="mr">권역 *</label><select class="sel" id="mr">${curRegions().map(r=>`<option>${r}</option>`).join('')}</select></div>
     <div class="ig2"><label class="il" for="mu">세대수</label><input class="inp" id="mu" type="number" placeholder="세대수"></div>
     <div class="ig2"><label class="il" for="mb2">동수</label><input class="inp" id="mb2" type="number" value="${bldgHint}" placeholder="동수"></div>
@@ -591,7 +591,7 @@ function closeMo(){
   window.__REC=null;
   // 닫힘 애니메이션(약 .22s)이 끝난 뒤 wide 해제 — 닫히는 도중 너비가 갑자기 줄어들지 않도록
   const mb=document.getElementById('mb');
-  if(mb){clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow');},240);}
+  if(mb){mb.classList.remove('has-x');clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow');},240);}
   try{if(_moPrevFocus&&_moPrevFocus.focus)_moPrevFocus.focus();}catch(_){}
   _moPrevFocus=null;
 }

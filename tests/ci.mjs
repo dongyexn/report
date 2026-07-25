@@ -88,6 +88,24 @@ const self = await page.evaluate(() => {
 });
 step('셀프테스트 통과', !!self && self.pass === self.total, self ? `${self.pass}/${self.total}` : '결과 미검출');
 
+// CSS 토큰 자기참조 검사 — `--bg:var(--bg)` 같은 순환 정의는 값이 무효가 되어 배경이 통째로 날아간다(실제 사고)
+const cssBad = await page.evaluate(() => {
+  const out=[];
+  for (const ss of document.styleSheets) {
+    let rules; try { rules = ss.cssRules; } catch(_) { continue; }
+    for (const r of rules) {
+      if (!r.style) continue;
+      for (const prop of r.style) {
+        if (!prop.startsWith('--')) continue;
+        const v = r.style.getPropertyValue(prop);
+        if (new RegExp('var\\(\\s*' + prop + '\\b').test(v)) out.push(r.selectorText + ' { ' + prop + ':' + v.trim() + ' }');
+      }
+    }
+  }
+  return out;
+});
+step('CSS 토큰 순환 정의 없음', cssBad.length === 0, cssBad.slice(0,3).join(' | '));
+
 // ── 2) 화면별 클릭 전수 ──
 console.log('\n[2] 클릭 전수');
 await page.goto(`${BASE}/index.html`, { waitUntil:'load' });

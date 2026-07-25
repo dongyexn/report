@@ -214,6 +214,17 @@ function deriveLul(k){
 // 루트에 고정이라 재바인딩이 불필요하다.
 
 
+
+// AI 분석 HTML은 고정 색(#C0392B 등)으로 저장·게시된다 — 다크 모드에서 읽히도록 '표시할 때만' 토큰으로 바꾼다.
+//   저장물은 손대지 않으므로 과거 게시본도 그대로 적용된다.
+const AI_COLOR_MAP={'#c0392b':'var(--rd)','#1a7a3c':'var(--gn)','#a0590a':'var(--am)','#d97706':'var(--am)',
+                    '#3e71d2':'var(--bt1)','#3259b6':'var(--bt1)','#1f2b4c':'var(--bt2)',
+                    '#1c1c1e':'var(--lbl)','#6e6e73':'var(--lbl2)','#333':'var(--lbl)','#444':'var(--lbl)'};
+function themeHTML(html){
+  return String(html||'').replace(/color:\s*(#[0-9a-fA-F]{3,6})/g,(m,hex)=>{
+    const t=AI_COLOR_MAP[hex.toLowerCase()];return t?('color:'+t):m;
+  });
+}
 // ── 다크 모드 — 토큰만 갈아끼우는 방식(개별 규칙 수정 없음). 선택은 이 PC의 브라우저에만 저장.
 //   인쇄는 @media print에서 항상 밝은 값으로 강제하므로 출력물은 영향 없음.
 function isDark(){try{return localStorage.getItem('theme')==='dark';}catch(_){return false;}}

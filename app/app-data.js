@@ -526,14 +526,14 @@ function pickSnapMonths(list,defRm){
     window.__SNAPPICK__=resolve;
     document.getElementById('mt').textContent='스냅샷 내보내기';
     let fontOn=false;try{fontOn=!!localStorage.getItem('snapFont');}catch(_){}
-    const rows=list.map(m=>`<label class="share-row" style="cursor:pointer"><span class="share-info"><b>${esc(m)}</b>${m===defRm?'<span style="margin-left:8px;font-size:11px;color:var(--b700)">현재</span>':''}</span><input type="checkbox" class="snap-mo" value="${esc(m)}"${m===defRm?' checked':''} style="width:17px;height:17px;accent-color:var(--b600)"></label>`).join('<div class="share-sep"></div>');
+    const rows=list.map(m=>`<label class="share-row" style="cursor:pointer"><span class="share-info"><b>${esc(m)}</b>${m===defRm?'<span style="margin-left:8px;font-size:11px;color:var(--bt1)">현재</span>':''}</span><input type="checkbox" class="snap-mo" value="${esc(m)}"${m===defRm?' checked':''} style="width:17px;height:17px;accent-color:var(--bt1)"></label>`).join('<div class="share-sep"></div>');
     const moBlock=list.length>1
       ? '<div class="opt-sec">포함할 기준월</div><p class="opt-note">두 달 이상 담으면 파일 안에서 기준월을 바꿔가며 볼 수 있습니다(월당 수백 KB~수 MB).</p>'+rows+'<div class="opt-div"></div>'
       : '';
     document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:56vh">'+moBlock+
       '<div class="opt-sec">글꼴</div>'+
       '<label class="share-row" style="cursor:pointer"><span class="share-info"><b>글꼴 포함</b><span>어느 PC에서 열어도 화면과 같은 글꼴로 보입니다 · 약 1.5MB 증가</span></span>'+
-      '<input type="checkbox" id="snapFontChk"'+(fontOn?' checked':'')+' style="width:18px;height:18px;accent-color:var(--b600)"></label></div>';
+      '<input type="checkbox" id="snapFontChk"'+(fontOn?' checked':'')+' style="width:18px;height:18px;accent-color:var(--bt1)"></label></div>';
     document.getElementById('mf').innerHTML=(list.length>1?'<button class="btn bo bsm" data-act="snapPick.all">전체 선택</button>':'')+'<div style="flex:1"></div><button class="btn bg2 bsm" data-act="snapPick.cancel">취소</button><button class="btn bp bsm" data-act="snapPick.ok">내보내기</button>';
     const mb=document.getElementById('mb');if(mb){mb.classList.remove('wide');mb.classList.add('narrow');} // 항목이 적어 좁은 폭
     openMo();
@@ -748,7 +748,7 @@ function fb2ScopeSiteSubs(sid){
     }
     if(!ch)return; // 자기 저장 에코 → 재렌더 생략(깜빡임 방지)
     lsSave();
-    if(curTxt!=null&&S.view==='site'&&S.sid===sid&&!shEditing()){const el=document.getElementById('ait-'+sid);if(el)el.innerHTML=safeHTML(curTxt);}
+    if(curTxt!=null&&S.view==='site'&&S.sid===sid&&!shEditing()){const el=document.getElementById('ait-'+sid);if(el)el.innerHTML=themeHTML(safeHTML(curTxt));}
     fb2Rerender();
   });
   FB2._siteSubs.push(function(){aref.off('value',ah);});
@@ -1643,7 +1643,7 @@ async function openReadme(){
     mbody.innerHTML='<div class="md-scroll"></div>';
     mbody.firstChild.appendChild(wrap);
     document.getElementById('mf').innerHTML='';
-    const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
+    const mb=document.getElementById('mb');if(mb){mb.classList.add('wide');mb.classList.add('has-x');} // 자체 닫기 버튼이 없어 헤더 X 노출
     openMo();
   }catch(e){
     console.warn('[README] 열기 실패',e);
@@ -1665,7 +1665,7 @@ function loadXLSX(){
     s.onerror=()=>{s.remove();reject(new Error('xlsx load failed: '+src));};
     document.head.appendChild(s);
   });
-  _xlsxPromise=tryLoad('./xlsx.full.min.js')
+  _xlsxPromise=tryLoad('./vendor/xlsx.full.min.js')
     .catch(()=>tryLoad('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw'))
     .catch(err=>{_xlsxPromise=null;throw err;});
   return _xlsxPromise;
