@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// app-data.js — 저장소(IndexedDB)·Firebase 동기화/게시/뷰어·목록/피벗 모달·엑셀 내보내기·사용 안내 뷰어.
-//   빌드 없이 여러 <script>로 나눠 로드한다(순서 고정: core → data → view → boot).
-//   함수 선언은 전역에 올라가므로 파일 간 호출은 자유롭지만, **최상위 실행문은 순서에 의존**한다.
+// app-data.js — 저장소(IndexedDB)·Firebase 동기화/게시·목록/피벗 모달·엑셀 내보내기.
+//   로드 순서 고정: core → data → view → boot · 호출 방향도 같은 한 방향(tests/deps.mjs 검사).
+//   core 만 부른다. 화면 갱신이 필요하면 fireHook 으로 알린다.
 //   index.html의 로드 순서와 스냅샷 인라인 순서(exportSnapshot의 APP_PARTS)를 함께 유지할 것.
 // ─────────────────────────────────────────────────────────────────────────────
 // SIDEBAR
@@ -439,49 +439,6 @@ async function fb2SetRole(uid,role){
 }
 window.fb2SetRole=fb2SetRole;
 
-// ----- 진입 (역할 분기: 관리자 / 사용자 / 차단) -----
-async function fb2Enter(user){
-  // 중복 진입 가드: ① 진입 처리 중 재호출 차단, ② 이미 같은 계정으로 진입 완료면 무시.
-  //   (가입 직후 자동 로그인 등으로 onAuthStateChanged가 재발화하지 않을 때 fbDoLogin이 진입을
-  //    직접 구동하는데, 일반 로그인에서는 onAuthStateChanged도 함께 돌 수 있어 가드가 필요하다.)
-  if(FB2._entering)return;
-  if(FB2.ready&&FB2.user&&user&&FB2.user.uid===user.uid)return;
-  FB2._entering=true;
-  // 진입 워치독: 자동 로그인 경로(onAuthStateChanged→fb2Enter)는 _loginWatch가 없어 서버 통신이
-  // 막히면(App Check/네트워크/보안 프로그램) 커버가 로딩 상태로 영구 대기한다. 20초 내 진입 실패 시
-  // 로그인 폼과 원인 안내를 노출한다. 진입 성공 시 기존 clearTimeout(FB2._loginWatch)이 해제.
-  clearTimeout(FB2._loginWatch);
-  FB2._loginWatch=setTimeout(function(){if(!FB2.ready){showGateForm();fbMsg('서버 연결이 지연되고 있습니다 · 개발자도구(F12) 콘솔의 차단 항목 확인 후 새로고침(F5)해 주세요.');}},20000);
-  try{
-    FB2.user=user;
-    let role='viewer';
-    try{role=await fb2ResolveRole(user);}catch(e){console.warn('[FB2] resolveRole',e);}
-    FB2.role=role;
-    if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단 (finally에서 _entering 해제)
-    FB2.ready=true;
-    clearTimeout(FB2._loginWatch); // 진입 성공 — 워치독 해제
-    hideCover();
-    // 첫 방문 안내 — 이 브라우저에서 처음 로그인한 사용자에게 사용 안내를 1회만 띄운다(이후엔 헤더 ? 버튼).
-    try{if(!localStorage.getItem('rmSeen')){localStorage.setItem('rmSeen','1');setTimeout(()=>{try{openReadme();}catch(_){}},1400);}}catch(_){}
-    fb2RenderAcct();
-    fb2BindFocusout();
-    fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
-    if(S.view==='site'&&S.sid)fb2ScopeSiteSubs(S.sid);
-    fb2SubSiteConfig();
-    if(role==='editor'){
-      document.body.classList.remove('viewer');
-      const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
-  const su=document.getElementById('set-users');if(su)su.style.display='';
-      fb2SubUsers();
-      fb2RefreshMeta();
-      if(S.view==='settings')loadSettings();
-    }else{
-      await fb2EnterViewer();
-    }
-  }finally{
-    FB2._entering=false;
-  }
-}
 async function fb2EnterViewer(){
   try{
     const rep=await fb2LoadReportLatest();
@@ -603,23 +560,6 @@ function buildSnapFromReport(rm,rep){
   const cmt={};Object.keys(S.cmt||{}).forEach(x=>{cmt[x]=Object.assign({},S.cmt[x]);}); // 사본 — 호출자 상태 불변
   Object.keys(vac).forEach(sid=>{const v=vac[sid];if(!cmt[sid])cmt[sid]={};if(v.vacantStatus)cmt[sid].vacantStatus=v.vacantStatus;if(v.commercialStatus)cmt[sid].commercialStatus=v.commercialStatus;});
   return {P:{rm:(/^\d{4}-\d{2}$/.test(rm)?rm:S.rm),sites:sites,teams:teams,cmt:cmt,ana:S.ana,st:st,wks:dash.wks||[],am:dash.am||{},siteWks:siteWks,siteAm:siteAm,insightsHTML:dash.insightsHTML||''},vac:vac};
-}
-function fb2ApplyReport(rm,rep){
-  const built=buildSnapFromReport(rm,rep),P=built.P;
-  S.sites=P.sites;S.teams=P.teams;
-  if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
-  Object.keys(S.def).forEach(_k=>delete S.def[_k]); // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
-  Object.keys(built.vac).forEach(sid=>{const v=built.vac[sid];if(!S.cmt[sid])S.cmt[sid]={};if(v.vacantStatus)S.cmt[sid].vacantStatus=v.vacantStatus;if(v.commercialStatus)S.cmt[sid].commercialStatus=v.commercialStatus;});
-  P.cmt=S.cmt;P.ana=S.ana; // 실시간 처리계획·분석 갱신이 그대로 반영되도록 라이브 참조 유지
-  window.__SNAP__=P;
-  document.body.classList.add('viewer');
-  ensureTeams();
-  fb2ApplySiteCfg(); // 게시된 sites 위에 최신 토글(siteConfig) 덮어쓰기
-  setRmChip();
-  rTeamSel();rNav();
-  if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);
-  else go('dashboard');
-  progHide();
 }
 
 // ----- 실시간 구독 -----
@@ -781,16 +721,6 @@ function fb2SubSiteConfig(){
   });
   FB2.subs.push(function(){ref.off('value',h);});
 }
-// ----- AI 분석 규칙 팀 공유 동기화 -----
-// 규칙(추가 지침·중대하자 키워드·기본 규칙 override)을 DB 최상위 aiRules 노드에 저장 → 전 사용자 실시간 공유.
-// 쓰기는 편집자 전용(클라이언트 게이트 + DB 보안규칙으로 강제 — siteConfig와 동일하게 aiRules 노드 규칙 추가 필요).
-function fb2Rerender(){
-  if(shEditing()){FB2._pendRerender=true;return;}
-  FB2._pendRerender=false;
-  try{rTeamSel();rNav();}catch(e){}
-  if(S.view==='dashboard')rDash();
-  else if(S.view==='site'&&S.sid)rSite(S.sid);
-}
 function fb2BindFocusout(){
   if(FB2._foBound)return;FB2._foBound=true;
   document.addEventListener('focusout',function(e){
@@ -833,69 +763,6 @@ function fb2TouchMeta(sid){
   try{FB2.db.ref('meta/'+sid).set({updatedAt:Date.now(),updatedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120)});}catch(e){}
 }
 
-// ----- 게시 (편집자 전용): 현재 집계를 report/{기준월}/{현장}에 set -----
-async function fb2Publish(){
-  if(!fb2IsEditor()){toast('등록 권한이 없습니다(편집자 전용)');return;}
-  if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다.');return;}
-  if(!Object.keys(S.def||{}).length){toast('등록할 데이터가 없습니다 · 먼저 리스트를 업로드하세요');return;}
-  const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
-  try{
-    toast('등록 준비 중…');
-    const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3): 느린 기기·백그라운드 탭 캡처 누락 불가
-    if(S.view==='dashboard'&&rDash._flush)rDash._flush(); // 대시보드에 있으면 인사이트를 동기 최신화 후 캡처
-    let insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
-    if(!insightsHTML.replace(/\s/g,'')){
-      // 이 세션에서 대시보드를 열지 않고 설정에서 바로 게시한 경우 — 인사이트 지연 렌더(_late)는
-      // 대시보드 뷰가 아니면 스킵하므로 DOM이 비어 있다. 스냅샷 내보내기와 동일하게 대시보드로
-      // 이동해 동기 렌더 후 캡처한다(게시 직후 결과 확인 동선과도 자연스럽게 일치).
-      try{go('dashboard');if(rDash._flush)rDash._flush();insightsHTML=insCleanHTML();}
-      catch(e){console.warn('[FB2] 주요 이슈 사전 렌더 실패',e);}
-    }
-    const rm=S.rm;
-    const upd={};
-    upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
-    teamSites().forEach(function(s2){ // 인수 전 현장 포함 — '대시보드 집계 제외'는 유지되나 현장 개별 게시본은 전 현장에 제공
-      const r=calc(S.def[s2.id]||[],s2,rm);
-      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // 캡(300) 목록 — ulz 해제 실패 시 폴백
-      // 전체 미처리 목록(압축) — 만건 이상 현장도 뷰어가 편집자와 동일한 목록·피벗을 보도록
-      // 표시·피벗에 쓰는 필드만 담아 LZ+Base64로 게시한다(접수내용·민원은 기존 정책대로 제외).
-      // 규모 감: 1만건 ≈ JSON 1.5MB → 압축 후 수백KB (RTDB 문자열 한도 10MB 대비 여유).
-      let ulz='';
-      try{
-        if(typeof LZString!=='undefined'){
-          const slim=slimUL(r.ul);
-          ulz=LZString.compressToBase64(JSON.stringify(slim));
-        }
-      }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
-      const cm=S.cmt[s2.id]||{},vac={};
-      if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
-      if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
-      upd['report/'+rm+'/'+s2.id]={kpi:kpi,ulz:ulz,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
-    });
-    upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
-    upd['reportIndex/'+rm]=Date.now(); // 게시월 인덱스 — 뷰어 기준월 선택기가 이 노드만 읽어 목록 구성(전체 report 다운로드 방지)
-    Object.keys(upd).forEach(function(p){upd[p]=deepEncKeys(upd[p]);}); // 중첩 맵 키(하자유형/공종/보수주체 등)에 '/'·'.' 등이 있으면 거부되므로 인코딩
-    await FB2.db.ref().update(upd);
-    // 편집자가 로컬에만 갖고 있던 처리계획·분석의견을 리프로 시드(실시간 협업 시작점) — 실패해도 게시 자체는 완료.
-    try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
-    fb2RefreshMeta();
-    toastAction('등록 완료 · '+rm+' · 현장 '+teamSites().length+'개','스냅샷 저장',()=>{try{exportSnapshot();}catch(e){console.error(e);}},12000);
-    // 잔존 미래 게시월 정리: 기준월이 잘못 설정된 채 게시된 노드(예: 2026-07)가 남아 있으면
-    // 뷰어 기준월 선택기에 계속 노출되고 과거엔 '최신'으로 오판되던 원인이므로 삭제를 제안한다.
-    try{
-      const _idxSnap=await FB2.db.ref('reportIndex').once('value');
-      const _stale=Object.keys(_idxSnap.val()||{}).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k>rm);
-      if(_stale.length){
-        toastAction('기준월('+rm+')보다 미래인 게시월 발견: '+_stale.join(', ')+' — 잘못 게시된 월이면 삭제하세요','삭제',async()=>{
-          const del={};_stale.forEach(m=>{del['report/'+m]=null;del['reportIndex/'+m]=null;});
-          try{await FB2.db.ref().update(del);toast('게시월 삭제 완료 · '+_stale.join(', '));}
-          catch(e2){console.error('[FB2] 게시월 삭제 실패',e2);toast('삭제 실패: '+((e2&&e2.message)||e2));}
-        },15000);
-      }
-    }catch(e){console.warn('[FB2] 미래 게시월 감지 실패',e);}
-  }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
-  finally{if(btn)btn.disabled=false;}
-}
 async function fb2SeedPlansAnalysis(){
   // 시드는 '원격에 없는 리프만' 채운다(add-only). 처리계획·분석의견은 뷰어 포함 MEMBER 전원이
   // 실시간으로 쓰는 협업 데이터인데, P2 이후 편집자 로컬은 안 보고 있던 현장에 대해 스테일일 수 있어
@@ -1453,24 +1320,6 @@ document.addEventListener('pointerdown',function(e){
   document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
 });
 document.addEventListener('click',function(e){if(e.target.closest('.rl-rz')){e.stopPropagation();e.preventDefault();}},true); // 핸들 클릭이 헤더 정렬로 전파되는 것 차단
-// 화면 표를 탭 구분 텍스트로 복사(엑셀·메일 Ctrl+V) — 정렬 화살표·버튼 등 화면전용 요소 제외, 처리계획 등 입력칸은 입력값 사용
-function ctxCopyTable(tbl){
-  if(!tbl)return;
-  const rows=[];
-  tbl.querySelectorAll('tr').forEach(tr=>{
-    if(tr.closest('table')!==tbl)return; // 중첩 표 방어
-    const cells=[...tr.children].filter(c=>c.tagName==='TD'||c.tagName==='TH');
-    if(!cells.length)return;
-    rows.push(cells.map(c=>{
-      const f=c.querySelector('textarea,input');
-      let t;
-      if(f)t=String(f.value||'');
-      else{const cl=c.cloneNode(true);cl.querySelectorAll('.sortmk,.no-print,button,svg').forEach(x=>x.remove());t=cl.textContent;}
-      return t.replace(/\s+/g,' ').trim();
-    }).join('\t'));
-  });
-  ctxCopy(rows.join('\n'),'표를 복사했습니다 · 엑셀·메일에 붙여넣기(Ctrl+V)');
-}
 document.addEventListener('contextmenu',function(e){
   if(e.target.closest('input,textarea,select,[contenteditable="true"]'))return; // 입력 요소 — 기본 메뉴 유지(붙여넣기·맞춤법)
   if(window.getSelection&&String(window.getSelection())!=='')return; // 텍스트 선택 중 — 기본 복사 메뉴 유지
@@ -1518,7 +1367,7 @@ document.addEventListener('contextmenu',function(e){
       const sid=a.dataset.site;
       e.preventDefault();
       openCtx(e.clientX,e.clientY,[
-        {label:'현장 화면 열기',act:()=>go('site',sid)},
+        {label:'현장 화면 열기',act:()=>fireHook('nav.go','site',sid)},
         {sep:true},
         {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
         {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
@@ -1533,12 +1382,12 @@ document.addEventListener('contextmenu',function(e){
   if(sti){
     const sid=sti.dataset.site;
     const items=[
-      {label:'현장 화면 열기',act:()=>go('site',sid)},
+      {label:'현장 화면 열기',act:()=>fireHook('nav.go','site',sid)},
       {sep:true},
       {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
       {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
     ];
-    if(!manageLocked()){items.push({sep:true});items.push({label:'현장 정보 수정',act:()=>openSM(sid)});}
+    if(!manageLocked()){items.push({sep:true});items.push({label:'현장 정보 수정',act:()=>fireHook('cmd.siteModal',sid)});}
     e.preventDefault();openCtx(e.clientX,e.clientY,items);return;
   }
   // ⑥ 현장 종합 분석(AI) 영역 — 텍스트 복사/재생성
@@ -1548,7 +1397,7 @@ document.addEventListener('contextmenu',function(e){
     e.preventDefault();openCtx(e.clientX,e.clientY,[
       {label:'분석 텍스트 복사',act:()=>ctxCopy(ait.innerText.trim())},
       {sep:true},
-      {label:'AI 분석 재생성',act:()=>runAI(sid)},
+      {label:'AI 분석 재생성',act:()=>fireHook('cmd.siteAI',sid)},
     ]);return;
   }
   // ⑦ 대시보드 주요 이슈 카드 — 텍스트 복사/AI 재작성
@@ -1557,7 +1406,7 @@ document.addEventListener('contextmenu',function(e){
     e.preventDefault();openCtx(e.clientX,e.clientY,[
       {label:'이슈 텍스트 복사',act:()=>ctxCopy(ins.innerText.trim())},
       {sep:true},
-      {label:'AI로 재작성',act:()=>runDashAI()},
+      {label:'AI로 재작성',act:()=>fireHook('cmd.dashAI',)},
     ]);return;
   }
   // ⑧ 현장 화면 공종 표 행 — 공종 필터 드릴다운(미처리/장기미처리) + 복사. 기존 공종 셀 클릭(rl-link)은 한 종류 고정이라 우클릭이 보완
@@ -1696,4 +1545,162 @@ function migratePlansMonthly(){
   }
   try{localStorage.setItem('planMM','1');}catch(e){}
   if(touched)lsSave();
+}
+
+// ── 동기·게시 유스케이스 ──
+//   저장/동기화 결과를 화면에 반영하므로 data와 view를 모두 부른다 → 최상위인 boot에 둔다.
+// ----- 진입 (역할 분기: 관리자 / 사용자 / 차단) -----
+async function fb2Enter(user){
+  // 중복 진입 가드: ① 진입 처리 중 재호출 차단, ② 이미 같은 계정으로 진입 완료면 무시.
+  //   (가입 직후 자동 로그인 등으로 onAuthStateChanged가 재발화하지 않을 때 fbDoLogin이 진입을
+  //    직접 구동하는데, 일반 로그인에서는 onAuthStateChanged도 함께 돌 수 있어 가드가 필요하다.)
+  if(FB2._entering)return;
+  if(FB2.ready&&FB2.user&&user&&FB2.user.uid===user.uid)return;
+  FB2._entering=true;
+  // 진입 워치독: 자동 로그인 경로(onAuthStateChanged→fb2Enter)는 _loginWatch가 없어 서버 통신이
+  // 막히면(App Check/네트워크/보안 프로그램) 커버가 로딩 상태로 영구 대기한다. 20초 내 진입 실패 시
+  // 로그인 폼과 원인 안내를 노출한다. 진입 성공 시 기존 clearTimeout(FB2._loginWatch)이 해제.
+  clearTimeout(FB2._loginWatch);
+  FB2._loginWatch=setTimeout(function(){if(!FB2.ready){showGateForm();fbMsg('서버 연결이 지연되고 있습니다 · 개발자도구(F12) 콘솔의 차단 항목 확인 후 새로고침(F5)해 주세요.');}},20000);
+  try{
+    FB2.user=user;
+    let role='viewer';
+    try{role=await fb2ResolveRole(user);}catch(e){console.warn('[FB2] resolveRole',e);}
+    FB2.role=role;
+    if(role==='blocked'){fb2ShowBlocked();return;} // 데이터 구독 없음 — 전면 차단 (finally에서 _entering 해제)
+    FB2.ready=true;
+    clearTimeout(FB2._loginWatch); // 진입 성공 — 워치독 해제
+    hideCover();
+    // 첫 방문 안내 — 이 브라우저에서 처음 로그인한 사용자에게 사용 안내를 1회만 띄운다(이후엔 헤더 ? 버튼).
+    try{if(!localStorage.getItem('rmSeen')){localStorage.setItem('rmSeen','1');setTimeout(()=>{try{openReadme();}catch(_){}},1400);}}catch(_){}
+    fb2RenderAcct();
+    fb2BindFocusout();
+    fb2PrimePlansAnalysis(); // 1회 전체 병합(비동기) — 이후 실시간은 현장 단위 스코프 구독
+    if(S.view==='site'&&S.sid)fb2ScopeSiteSubs(S.sid);
+    fb2SubSiteConfig();
+    if(role==='editor'){
+      document.body.classList.remove('viewer');
+      const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
+  const su=document.getElementById('set-users');if(su)su.style.display='';
+      fb2SubUsers();
+      fb2RefreshMeta();
+      if(S.view==='settings')fireHook('ui.settings');
+    }else{
+      await fb2EnterViewer();
+    }
+  }finally{
+    FB2._entering=false;
+  }
+}
+
+function fb2ApplyReport(rm,rep){
+  const built=buildSnapFromReport(rm,rep),P=built.P;
+  S.sites=P.sites;S.teams=P.teams;
+  if(/^\d{4}-\d{2}$/.test(rm))S.rm=rm;
+  Object.keys(S.def).forEach(_k=>delete S.def[_k]); // 뷰어는 원본 행 없음 — 집계는 __SNAP__에서
+  Object.keys(built.vac).forEach(sid=>{const v=built.vac[sid];if(!S.cmt[sid])S.cmt[sid]={};if(v.vacantStatus)S.cmt[sid].vacantStatus=v.vacantStatus;if(v.commercialStatus)S.cmt[sid].commercialStatus=v.commercialStatus;});
+  P.cmt=S.cmt;P.ana=S.ana; // 실시간 처리계획·분석 갱신이 그대로 반영되도록 라이브 참조 유지
+  window.__SNAP__=P;
+  document.body.classList.add('viewer');
+  fireHook('data.teamsChanged');
+  fb2ApplySiteCfg(); // 게시된 sites 위에 최신 토글(siteConfig) 덮어쓰기
+  fireHook('ui.rmchip');
+  rTeamSel();fireHook('ui.nav');
+  if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))fireHook('ui.site',S.sid);
+  else fireHook('nav.go','dashboard');
+  progHide();
+}
+
+// ----- AI 분석 규칙 팀 공유 동기화 -----
+// 규칙(추가 지침·중대하자 키워드·기본 규칙 override)을 DB 최상위 aiRules 노드에 저장 → 전 사용자 실시간 공유.
+// 쓰기는 편집자 전용(클라이언트 게이트 + DB 보안규칙으로 강제 — siteConfig와 동일하게 aiRules 노드 규칙 추가 필요).
+function fb2Rerender(){
+  if(shEditing()){FB2._pendRerender=true;return;}
+  FB2._pendRerender=false;
+  try{rTeamSel();fireHook('ui.nav');}catch(e){}
+  if(S.view==='dashboard')fireHook('ui.dash');
+  else if(S.view==='site'&&S.sid)fireHook('ui.site',S.sid);
+}
+
+// ----- 게시 (편집자 전용): 현재 집계를 report/{기준월}/{현장}에 set -----
+async function fb2Publish(){
+  if(!fb2IsEditor()){toast('등록 권한이 없습니다(편집자 전용)');return;}
+  if(!FB2.ready||!FB2.db){toast('네트워크에 연결할 수 없습니다.');return;}
+  if(!Object.keys(S.def||{}).length){toast('등록할 데이터가 없습니다 · 먼저 리스트를 업로드하세요');return;}
+  const btn=document.getElementById('fbPubBtn');if(btn)btn.disabled=true;
+  try{
+    toast('등록 준비 중…');
+    const cap=capAll(); // 순수 산출 — 렌더·타이머 의존 제거(P3): 느린 기기·백그라운드 탭 캡처 누락 불가
+    if(S.view==='dashboard'&&rDash._flush)rDash._flush(); // 대시보드에 있으면 인사이트를 동기 최신화 후 캡처
+    let insightsHTML=insCleanHTML(); // 확장 상세는 캡처에서 제외
+    if(!insightsHTML.replace(/\s/g,'')){
+      // 이 세션에서 대시보드를 열지 않고 설정에서 바로 게시한 경우 — 인사이트 지연 렌더(_late)는
+      // 대시보드 뷰가 아니면 스킵하므로 DOM이 비어 있다. 스냅샷 내보내기와 동일하게 대시보드로
+      // 이동해 동기 렌더 후 캡처한다(게시 직후 결과 확인 동선과도 자연스럽게 일치).
+      try{fireHook('nav.go','dashboard');if(rDash._flush)rDash._flush();insightsHTML=insCleanHTML();}
+      catch(e){console.warn('[FB2] 주요 이슈 사전 렌더 실패',e);}
+    }
+    const rm=S.rm;
+    const upd={};
+    upd['report/'+rm+'/_dash']={wks:cap.wks||[],am:cap.am||{},insightsHTML:insightsHTML,sites:S.sites,teams:S.teams};
+    teamSites().forEach(function(s2){ // 인수 전 현장 포함 — '대시보드 집계 제외'는 유지되나 현장 개별 게시본은 전 현장에 제공
+      const r=calc(S.def[s2.id]||[],s2,rm);
+      const kpi=Object.assign({},r,{ul:redactUL(r.ul),lul:redactUL(r.lul),critUl:redactUL(r.critUl)}); // 캡(300) 목록 — ulz 해제 실패 시 폴백
+      // 전체 미처리 목록(압축) — 만건 이상 현장도 뷰어가 편집자와 동일한 목록·피벗을 보도록
+      // 표시·피벗에 쓰는 필드만 담아 LZ+Base64로 게시한다(접수내용·민원은 기존 정책대로 제외).
+      // 규모 감: 1만건 ≈ JSON 1.5MB → 압축 후 수백KB (RTDB 문자열 한도 10MB 대비 여유).
+      let ulz='';
+      try{
+        if(typeof LZString!=='undefined'){
+          const slim=slimUL(r.ul);
+          ulz=LZString.compressToBase64(JSON.stringify(slim));
+        }
+      }catch(e){console.warn('[FB2] ulz 압축 실패 — 캡 목록으로 게시',s2.id,e);ulz='';}
+      const cm=S.cmt[s2.id]||{},vac={};
+      if(cm.vacantStatus)vac.vacantStatus=cm.vacantStatus;
+      if(cm.commercialStatus)vac.commercialStatus=cm.commercialStatus;
+      upd['report/'+rm+'/'+s2.id]={kpi:kpi,ulz:ulz,siteWks:(cap.siteWks&&cap.siteWks[s2.id])||[],siteAm:(cap.siteAm&&cap.siteAm[s2.id])||{},vac:vac};
+    });
+    upd['report/'+rm+'/_meta']={publishedAt:Date.now(),publishedBy:String((FB2.user&&FB2.user.email)||'').slice(0,120),rm:rm};
+    upd['reportIndex/'+rm]=Date.now(); // 게시월 인덱스 — 뷰어 기준월 선택기가 이 노드만 읽어 목록 구성(전체 report 다운로드 방지)
+    Object.keys(upd).forEach(function(p){upd[p]=deepEncKeys(upd[p]);}); // 중첩 맵 키(하자유형/공종/보수주체 등)에 '/'·'.' 등이 있으면 거부되므로 인코딩
+    await FB2.db.ref().update(upd);
+    // 편집자가 로컬에만 갖고 있던 처리계획·분석의견을 리프로 시드(실시간 협업 시작점) — 실패해도 게시 자체는 완료.
+    try{await fb2SeedPlansAnalysis();}catch(e){console.warn('[FB2] seed 실패',e);toast('처리계획·분석 시드 일부 실패 · 게시는 완료됨');}
+    fb2RefreshMeta();
+    toastAction('등록 완료 · '+rm+' · 현장 '+teamSites().length+'개','스냅샷 저장',()=>{try{fireHook('cmd.snapshot');}catch(e){console.error(e);}},12000);
+    // 잔존 미래 게시월 정리: 기준월이 잘못 설정된 채 게시된 노드(예: 2026-07)가 남아 있으면
+    // 뷰어 기준월 선택기에 계속 노출되고 과거엔 '최신'으로 오판되던 원인이므로 삭제를 제안한다.
+    try{
+      const _idxSnap=await FB2.db.ref('reportIndex').once('value');
+      const _stale=Object.keys(_idxSnap.val()||{}).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k>rm);
+      if(_stale.length){
+        toastAction('기준월('+rm+')보다 미래인 게시월 발견: '+_stale.join(', ')+' — 잘못 게시된 월이면 삭제하세요','삭제',async()=>{
+          const del={};_stale.forEach(m=>{del['report/'+m]=null;del['reportIndex/'+m]=null;});
+          try{await FB2.db.ref().update(del);toast('게시월 삭제 완료 · '+_stale.join(', '));}
+          catch(e2){console.error('[FB2] 게시월 삭제 실패',e2);toast('삭제 실패: '+((e2&&e2.message)||e2));}
+        },15000);
+      }
+    }catch(e){console.warn('[FB2] 미래 게시월 감지 실패',e);}
+  }catch(e){console.error('[FB2] publish 실패',e);toast('등록 실패: '+((e&&e.message)||e));}
+  finally{if(btn)btn.disabled=false;}
+}
+
+// 화면 표를 탭 구분 텍스트로 복사(엑셀·메일 Ctrl+V) — 정렬 화살표·버튼 등 화면전용 요소 제외, 처리계획 등 입력칸은 입력값 사용
+function ctxCopyTable(tbl){
+  if(!tbl)return;
+  const rows=[];
+  tbl.querySelectorAll('tr').forEach(tr=>{
+    if(tr.closest('table')!==tbl)return; // 중첩 표 방어
+    const cells=[...tr.children].filter(c=>c.tagName==='TD'||c.tagName==='TH');
+    if(!cells.length)return;
+    rows.push(cells.map(c=>{
+      const f=c.querySelector('textarea,input');
+      let t;
+      if(f)t=String(f.value||'');
+      else{const cl=c.cloneNode(true);cl.querySelectorAll('.sortmk,.no-print,button,svg').forEach(x=>x.remove());t=cl.textContent;}
+      return t.replace(/\s+/g,' ').trim();
+    }).join('\t'));
+  });
+  ctxCopy(rows.join('\n'),'표를 복사했습니다 · 엑셀·메일에 붙여넣기(Ctrl+V)');
 }

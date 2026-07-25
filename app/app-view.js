@@ -1,53 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// app-view.js — 집계 엔진(calc)·AI 분석·내비게이션·대시보드·현장 패널·저장/PII 마스킹 — 화면을 그리는 층.
-//   빌드 없이 여러 <script>로 나눠 로드한다(순서 고정: core → data → view → boot).
-//   함수 선언은 전역에 올라가므로 파일 간 호출은 자유롭지만, **최상위 실행문은 순서에 의존**한다.
+// app-view.js — 화면 렌더: 내비게이션·대시보드·현장 패널·차트.
+//   로드 순서 고정: core → data → view → boot · 호출 방향도 같은 한 방향(tests/deps.mjs 검사).
+//   core 와 data 만 부른다.
 //   index.html의 로드 순서와 스냅샷 인라인 순서(exportSnapshot의 APP_PARTS)를 함께 유지할 것.
 // ─────────────────────────────────────────────────────────────────────────────
 // ANALYSIS ENGINE
 // 대시보드 집계에서 제외할 권역 (사이드바·현장패널에는 표시)
 const DASH_EXCLUDE_REGIONS=[PERM_REGION];
-function dashSites(){return teamSites().filter(s=>!DASH_EXCLUDE_REGIONS.includes(s.region));}
-function calc(items,site,rm){
-  if(window.__SNAP__){const _e=window.__SNAP__.st&&window.__SNAP__.st[site.id];if(_e)return _e;} // 스냅샷: 임베드 집계 반환
-  // 메모이즈: (현장·기준월·데이터버전·건수) 조합으로 캐시. 건수를 내용 프록시로 사용한다.
-  // 캐시 무효화는 S.def Proxy가 자동 처리(set/delete). defVer·length는 키의 보조 식별자.
-  const _ck=site.id+'|'+rm+'|'+S.defVer+'|'+(site.lastUploadedAt||'')+'|'+(items?items.length:0);
-  const _hit=_calcCache.get(_ck);if(_hit)return _hit;
-  if(_calcCache.size>80)_calcCache.clear(); // 소프트 상한 — 월 전환 반복 열람 시 메모리 증식 방지
-  const _res=_calcImpl(items,site,rm);
-  _calcCache.set(_ck,_res);
-  return _res;
-}
-// 중대하자 "의심" 후보 추출(규칙) — 매니저가 잘 안 채우는 중대하자유형 컬럼에 의존하지 않고,
-//   하자유형·접수내용에서 사내 매뉴얼 신호(누수/침수, 엘리베이터 갇힘·멈춤, 퇴거·거주불가, 언론리스크)와
-//   피해보상·법적 분쟁, 장문(강성민원)을 넓게 포착한다. 최종 중대하자 판정은 AI가 매뉴얼 기준으로 거른다.
-function critReason(i){
-  const c=((i.receiptContent||'')+' '+(i.complaint||''));
-  const t=((i.defectType||'')+' '+(i.trade||''));
-  const tags=[];
-  // 부정·해소 절 필터: 위험어가 속한 절(다음 구두점까지, 최대 20자) 안에 부정/해소어(없음·정상·해결 등)만
-  //   있고 위험 확정 문맥이 아니면 그 매치는 무효. 모든 매치가 부정 문맥이면 신호 제외(오탐 제거).
-  //   위험어가 부정 없이 한 번이라도 등장하면 채택(recall 보존 — 최종 판정은 AI).
-  const NEG=/없|아니|아님|無|해결|정상|이상\s*무|단순\s*문의|해당\s*무/;
-  const hasHazard=(re,text)=>{
-    const g=new RegExp(re.source,re.flags.replace('g','')+'g');let m;
-    while((m=g.exec(text))){
-      const clause=text.slice(m.index,m.index+20).split(/[,.\n·;]/)[0];
-      if(!NEG.test(clause.slice(m[0].length)))return true;
-    }
-    return false;
-  };
-  if(i.criticalType&&String(i.criticalType).trim())tags.push('유형기재');
-  {const rx=critKwRegex('c_leak');if(rx&&hasHazard(rx,t+' '+c))tags.push('누수침수');}
-  {const r1=critKwRegex('c_ev1','i'),r2=critKwRegex('c_ev2');if(r1&&r2&&r1.test(c)&&r2.test(c))tags.push('엘리베이터');}
-  {const rx=critKwRegex('c_evict');if(rx&&hasHazard(rx,c))tags.push('퇴거거주불가');}
-  {const rx=critKwRegex('c_media');if(rx&&rx.test(c))tags.push('언론리스크');}
-  {const rx=critKwRegex('c_legal');if(rx&&rx.test(c))tags.push('피해보상법적');}
-  if((i.receiptContent||'').replace(/\s+/g,'').length>=critLongLen())tags.push('장문민원');
-  return tags;
-}
-function isCritCandidate(i){return critReason(i).length>0;}
 // ── AI 분석 규칙 사용자 설정 (설정 > AI 분석) ──
 // aiRules: 기본 시스템 지침 뒤에 덧붙는 팀 추가 지침(내용 규칙 우선, 출력 형식은 불변).
 // critKw: 중대하자 의심 추출에 더할 키워드(쉼표 구분) — 규칙 추출(critReason)과 접수내용 샘플 우선순위 양쪽에 반영.
@@ -97,183 +56,8 @@ const CRIT_DEF=[
  {id:'c_legal',t:'피해보상·법적 키워드',d:'피해, 보상, 배상, 변상, 손해, 소송, 법무, 내용증명, 고소, 고발'},
  {id:'c_long',t:'장문민원 기준(공백 제외 글자수)',d:'80',num:true},
 ];
-function _ruleFind(id){for(const g of RULE_DEF)for(const r of g.rules)if(r.id===id)return r;for(const r of CRIT_DEF)if(r.id===id)return r;return null;}
-function ruleVal(id){const r=_ruleFind(id);return r?r.d:'';}
 function buildRules(scope){let out='';for(const g of RULE_DEF){if(g.scope!==scope)continue;const body=g.rules.map(r=>String(ruleVal(r.id)).trim()).filter(Boolean).join('\n');if(!body)continue;out+=(out?'\n\n':'')+(g.hdr?g.hdr+'\n':'')+body;}return out;}
 let _critRxCache={}; // 정규식 캐시(규칙이 고정이라 무효화 불필요)
-function critKwRegex(id,flags){const k=id+'|'+(flags||'');if(k in _critRxCache)return _critRxCache[k];const v=String(ruleVal(id)||'').split(',').map(x=>x.trim()).filter(Boolean);let rx=null;if(v.length){try{rx=new RegExp(v.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/\s+/g,'\\s*')).join('|'),flags||'');}catch(e){rx=null;}}_critRxCache[k]=rx;return rx;}
-function critLongLen(){const n=parseInt(ruleVal('c_long'),10);return (isFinite(n)&&n>0)?n:80;}
-function _calcImpl(items,site,rm){
-  const pm=pM(rm),all=items.filter(i=>i.receiptDate);
-  // 전월 말일 문자열 (ex. "2026-04-30") — 역산 기준일
-  const pmParts=pm.split('-').map(Number);
-  const pmLastDay=new Date(pmParts[0],pmParts[1],0).getDate();
-  const pmEnd=`${pm}-${String(pmLastDay).padStart(2,'0')}`;
-  // 금월 말일 문자열
-  const rmParts=rm.split('-').map(Number);
-  const rmLastDay=new Date(rmParts[0],rmParts[1],0).getDate();
-  const rmEnd=`${rm}-${String(rmLastDay).padStart(2,'0')}`;
-
-  // 미처리 통일 기준: 접수일<=cutoff & (status가 미처리 또는 완료일이 cutoff 이후) → 미처리
-  // 처리로 간주: status==='처리' AND 완료일<=cutoff. (status 미처리는 무조건 미처리)
-  const isDone=(i,cutoff)=>i.status==='처리'&&i.completionDate&&i.completionDate<=cutoff;
-
-  // 금월 기준: 접수일 <= 금월말
-  const ref=all.filter(i=>i.receiptDate<=rmEnd);
-  const tR=ref.length;
-  const res=ref.filter(i=>isDone(i,rmEnd)).length;
-  const unr=tR-res;
-  const rate=tR>0?res/tR*100:0;
-  // 금월 기준 미처리 목록
-  const ul=ref.filter(i=>!isDone(i,rmEnd));
-  // 지연일 역산: 기준일 - 접수일 (단, 원본 delayDays가 있으면 보조로만 활용)
-  const daysBetween=(a,b)=>{const da=new Date(a),db=new Date(b);return Math.max(0,Math.round((db-da)/86400000));};
-  const d0=ul.filter(i=>{const dd=daysBetween(i.receiptDate,rmEnd);return dd<30;}).length;
-  const d30=ul.filter(i=>{const dd=daysBetween(i.receiptDate,rmEnd);return dd>=30&&dd<60;}).length;
-  const d60=ul.filter(i=>{const dd=daysBetween(i.receiptDate,rmEnd);return dd>=60;}).length;
-  const lt=d30+d60;
-  const ltr=unr>0?lt/unr*100:0;
-  const top=topT(ul,5);
-  // 금월 장기미처리(30일+) 목록 및 TOP5 — 장기미처리 탭 상위5 표용
-  const lul=ul.filter(i=>daysBetween(i.receiptDate,rmEnd)>=30);
-  const topLt=topT(lul,5);
-
-  // 전월 기준 역산: 접수일 <= 전월말
-  const prev=all.filter(i=>i.receiptDate<=pmEnd);
-  const pT=prev.length;
-  const pRes=prev.filter(i=>isDone(i,pmEnd)).length;
-  const pUnr=pT-pRes;
-  const pRate=pT>0?pRes/pT*100:0;
-  const ulPrev=prev.filter(i=>!isDone(i,pmEnd));
-  const pd0=ulPrev.filter(i=>{const dd=daysBetween(i.receiptDate,pmEnd);return dd<30;}).length;
-  const pd30=ulPrev.filter(i=>{const dd=daysBetween(i.receiptDate,pmEnd);return dd>=30&&dd<60;}).length;
-  const pd60=ulPrev.filter(i=>{const dd=daysBetween(i.receiptDate,pmEnd);return dd>=60;}).length;
-  const pLt=pd30+pd60;
-  const pLtr=pUnr>0?pLt/pUnr*100:0;
-
-  // 전월 공종별 미처리 맵 — 증감 계산용
-  const topPrev={};ulPrev.forEach(i=>{const k=i.trade||'기타';topPrev[k]=(topPrev[k]||0)+1;});
-  // 전월 공종별 장기미처리(30일+) 맵 — 장기미처리 탭 증감 계산용
-  const lulPrev=ulPrev.filter(i=>daysBetween(i.receiptDate,pmEnd)>=30);
-  const topLtPrev={};lulPrev.forEach(i=>{const k=i.trade||'기타';topLtPrev[k]=(topLtPrev[k]||0)+1;});
-
-  // 공가 — 세대/상가 개별 집계
-  const _buildVac=(set,pset)=>{
-    const ul=set.filter(i=>!isDone(i,rmEnd));
-    const T=set.length,Unr=ul.length,Res=T-Unr,Rate=T>0?Res/T*100:0,Top=topT(ul,5);
-    const Lt=ul.filter(i=>daysBetween(i.receiptDate,rmEnd)>=30).length;
-    const _us=new Set(set.map(i=>`${i.building||''}-${i.unit||''}`));_us.delete('-');const Units=_us.size;
-    const TopPrev={};pset.filter(i=>!isDone(i,pmEnd)).forEach(i=>{const k=i.trade||'기타';TopPrev[k]=(TopPrev[k]||0)+1;});
-    return{T,Res,Unr,Rate,Lt,Units,Top,TopPrev};
-  };
-  const vacU=_buildVac(ref.filter(i=>isVacUnit(i)),prev.filter(i=>isVacUnit(i)));     // 공가세대
-  const vacS=_buildVac(ref.filter(i=>isVacStore(i,site)),prev.filter(i=>isVacStore(i,site))); // 공가상가
-  // 레거시 평면 필드(vT 등)는 세대 기준으로 매핑(AI 프롬프트·기타 호환)
-  const vT=vacU.T,vRes=vacU.Res,vUnr=vacU.Unr,vRate=vacU.Rate,vLt=vacU.Lt,vUnits=vacU.Units,vTop=vacU.Top,vTopPrev=vacU.TopPrev;
-
-  const rpb={};ul.forEach(i=>{rpb[i.repairParty||'미지정']=(rpb[i.repairParty||'미지정']||0)+1;});
-  const dtb={};ul.forEach(i=>{dtb[i.defectType||'미분류']=(dtb[i.defectType||'미분류']||0)+1;});
-  // 중대하자 "의심" 후보 — isCritCandidate(규칙: 매뉴얼 키워드+피해보상+장문)로 추출. 최종 판정은 AI가 함.
-  const _critAll=ref.filter(isCritCandidate);
-  const critT=_critAll.length;
-  const critUl=_critAll.filter(i=>!isDone(i,rmEnd));
-  const critUnr=critUl.length;
-  const critPrevUnr=prev.filter(i=>isCritCandidate(i)&&!isDone(i,pmEnd)).length;
-  // 공종별 전체 처리현황 집계(trAgg) — 현장 화면 표의 단일 출처. 게시 kpi에 실려 뷰어·스냅샷도 동일 표를 본다.
-  //   (기존에는 rSite가 로컬 원본으로 직접 재계산 → 원본이 없는 뷰어에서 표가 비는 문제)
-  const _trm={};
-  for(const i of all){
-    if(i.receiptDate>rmEnd)continue;
-    const t=i.trade||'기타';
-    const o=_trm[t]||(_trm[t]={t,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,co:{},pu:0,plt:0});
-    o.r++;
-    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=rmEnd;
-    if(done)o.res++;else{o.u++;const dd=daysBetween(i.receiptDate,rmEnd);if(dd>=60){o.d60++;o.lt++;}else if(dd>=30){o.d30++;o.lt++;}else o.d0++;}
-    if(i.contractor)o.co[i.contractor]=(o.co[i.contractor]||0)+1;
-  }
-  for(const i of all){ // 전월 기준 역산(증감용) — rmEnd 범위가 pmEnd를 포함하므로 _trm에 항목 존재 보장
-    if(i.receiptDate>pmEnd)continue;
-    const o=_trm[i.trade||'기타'];if(!o)continue;
-    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=pmEnd;
-    if(!done){o.pu++;if(daysBetween(i.receiptDate,pmEnd)>=30)o.plt++;}
-  }
-  const trAgg=Object.values(_trm).sort((a,b)=>b.u-a.u).map(o=>({t:o.t,r:o.r,res:o.res,u:o.u,lt:o.lt,d0:o.d0,d30:o.d30,d60:o.d60,coTop:Object.entries(o.co).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-',coN:Object.keys(o.co).length,pu:o.pu,plt:o.plt}));
-  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul,trAgg};
-}
-function topT(items,n){
-  const m={};
-  items.forEach(i=>{const k=i.trade||'기타';if(!m[k])m[k]={c:0,co:{}};m[k].c++;const co=i.contractor||'';if(co)m[k].co[co]=(m[k].co[co]||0)+1;});
-  const s=Object.entries(m).sort((a,b)=>b[1].c-a[1].c);
-  const top=s.slice(0,n).map(([t,v])=>{const coEntries=Object.entries(v.co).sort((a,b)=>b[1]-a[1]);return{t,c:v.c,co:coEntries[0]?.[0]||'-',coN:coEntries.length};});
-  const oth=s.slice(n).reduce((a,[,v])=>a+v.c,0),tot=s.reduce((a,[,v])=>a+v.c,0);
-  // 기타(6위~끝) 묶음의 고유 시공업체 집합
-  const othCo={};s.slice(n).forEach(([,v])=>{Object.keys(v.co).forEach(c=>{othCo[c]=true;});});
-  if(oth>0)top.push({t:'기타',c:oth,isO:true,coN:Object.keys(othCo).length,keys:s.slice(n).map(([k])=>k)});
-  top.push({t:'계',c:tot,isT:true});
-  return top;
-}
-function calcW(items,rmEnd,pmEnd){
-  // 각 주차 일요일 cutoff 기준 역산. 지연구간(d0/d30/d60) 분해를 diff-array로 O(N·logW+W)에 계산.
-  // (구버전 O(주차×건수) 재순회 대체 — 동일 입력 BIT-EXACT 일치 검증 완료)
-  const DAY=86400000;
-  const cutSet={};
-  for(const i of items){const k=wk(i.receiptDate);if(k)cutSet[k]=true;}
-  // 월말 컷 추가: 월별 표의 각 월 값이 '월 마지막 일요일'이 아닌 '월말일' 기준이 되도록.
-  // KPI(unr=접수≤월말−처리≤월말)·도넛·추이차트 종점(refLim)과 동일 수식으로 정렬된다. 일요일 컷 값들은 불변.
-  const _me=ym=>{const[y,m]=ym.split('-').map(Number);cutSet[`${ym}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`]=true;};
-  for(const i of items){const rd=i.receiptDate;if(rd&&/^\d{4}-\d{2}/.test(rd))_me(rd.slice(0,7));}
-  if(rmEnd)cutSet[rmEnd]=true;
-  if(pmEnd)cutSet[pmEnd]=true;
-  const cuts=Object.keys(cutSet).sort();const W=cuts.length;if(!W)return[];
-  const cutMs=cuts.map(c=>new Date(c).getTime());
-  const byReceipt=items.filter(i=>i.receiptDate).slice().sort((a,b)=>a.receiptDate<b.receiptDate?-1:a.receiptDate>b.receiptDate?1:0);
-  const doneSorted=byReceipt.filter(i=>i.status==='처리'&&i.completionDate).map(i=>i.completionDate).sort();
-  // 누적 접수 r / 누적 처리 res — 포인터(문자열 비교, 구버전과 동일)
-  const rArr=new Array(W),resArr=new Array(W);
-  {let rPtr=0,resPtr=0;for(let c=0;c<W;c++){const cutoff=cuts[c];
-    while(rPtr<byReceipt.length&&byReceipt[rPtr].receiptDate<=cutoff)rPtr++;rArr[c]=rPtr;
-    while(resPtr<doneSorted.length&&doneSorted[resPtr]<=cutoff)resPtr++;resArr[c]=resPtr;}}
-  // cutMs 오름차순 → lowerBound(첫 c: cutMs[c]>=v)
-  const lb=v=>{let lo=0,hi=W;while(lo<hi){const mid=(lo+hi)>>1;if(cutMs[mid]>=v)hi=mid;else lo=mid+1;}return lo;};
-  const D0=new Float64Array(W+1),D30=new Float64Array(W+1),D60=new Float64Array(W+1);
-  const addRange=(D,a,b)=>{if(a<b){D[a]++;D[b]--;}};
-  for(const it of byReceipt){
-    const rcMs=new Date(it.receiptDate).getTime();
-    const enter=lb(rcMs);                                   // 접수<=cutoff 최초 주차
-    const done=it.status==='처리'&&it.completionDate;
-    const end=Math.min(done?lb(new Date(it.completionDate).getTime()):W,W); // 완료<=cutoff 이후 제외
-    if(enter>=end)continue;
-    const i30=lb(rcMs+30*DAY),i60=lb(rcMs+60*DAY);          // 경과 30·60일 도달 주차
-    addRange(D0,enter,Math.min(i30,end));
-    addRange(D30,Math.max(i30,enter),Math.min(i60,end));
-    addRange(D60,Math.max(i60,enter),end);
-  }
-  let a0=0,a30=0,a60=0;const arr=[];
-  for(let c=0;c<W;c++){a0+=D0[c];a30+=D30[c];a60+=D60[c];
-    arr.push({week:cuts[c],r:rArr[c],res:resArr[c],u:rArr[c]-resArr[c],d0:a0,d30:a30,d60:a60});}
-  // M월 Nw주 — 같은 달 내 누적 주 번호 (월 바뀌면 1로 리셋). 일요일 컷만 주번호를 증가시키고,
-  // 월말(비일요일) 컷은 'M월 말' 라벨 + sun:false — 월별 표 전용 스냅샷임을 표시(주차별 표는 sun 컷만 표시).
-  let lastM=null,wInM=0;
-  arr.forEach(r=>{const m=Number(r.week.slice(5,7));r.m=m;
-    const isSun=new Date(r.week).getUTCDay()===0;r.sun=isSun;
-    if(m!==lastM){wInM=0;lastM=m;}
-    if(isSun){wInM++;r.wn=wInM;r.label=`${m}월 ${wInM}주`;}
-    else{r.wn=wInM;r.label=`${m}월 말`;}
-  });
-  return arr;
-}
-function calcMo(items){const m={};items.forEach(i=>{const k=(i.receiptDate||'').slice(0,7);if(!k)return;if(!m[k])m[k]={month:k,r:0,res:0,u:0};m[k].r++;const done=i.status==='처리'&&i.completionDate;if(done)m[k].res++;else m[k].u++;});return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month));}
-function wk(d){if(!d)return null;const m=String(d).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(!m)return null;const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(isNaN(dt))return null;const sunOff=(7-dt.getUTCDay())%7;const sun=new Date(dt.getTime()+sunOff*86400000);return `${sun.getUTCFullYear()}-${String(sun.getUTCMonth()+1).padStart(2,'0')}-${String(sun.getUTCDate()).padStart(2,'0')}`;}
-// 상가 표기 감지 — 동/호 오타 변형 포함 ([강산살상성싱]+[가거기], 뒤에 숫자 허용)
-// 상가 라벨 판별 — '상가'와 업로드 데이터에서 실제 관찰된 오타 변형을 넓게 매칭.
-//   수용 리스크: 문자클래스 조합상 '살기' 등 우연 조합도 매치되지만, 검사 대상이 동·호 필드
-//   (isVacStore에서 hasCommercial 현장 + 공용 하자 한정)라 실데이터 오탐 개연성은 낮음.
-function isStoreLabel(s){return /[강산살상성싱][가거기]/.test(String(s||''));}
-// 공가세대/공가상가 하자건 판정 (둘 중 하나라도 해당하면 공가 건)
-// - 공가세대 하자: (모든 현장) 하자구분='세대' AND 입주상태∈{미분양,미납}
-// - 공가상가 하자: (공가상가 포함 현장만) 하자구분='공용' AND (동 또는 호에 상가 표기)
-function isVacUnit(item){return item.defectClass==='세대'&&(item.saleStatus==='미분양'||item.saleStatus==='미납');}
-function isVacStore(item,site){return !!site?.hasCommercial&&item.defectClass==='공용'&&(isStoreLabel(item.building)||isStoreLabel(item.unit));}
 function isVac(item,site){
   return isVacUnit(item)||isVacStore(item,site);
 }
@@ -295,8 +79,8 @@ function go(view,sid){
   if(view==='dashboard')rDash();
   if(view==='site'&&sid)rSite(sid);
   try{if(FB2.ready)fb2ScopeSiteSubs(view==='site'?sid:null);}catch(_){}// P2: 보고 있는 현장만 plans/analysis 실시간 구독
-  if(view==='manage')rManage();
-  if(view==='settings')loadSettings();
+  if(view==='manage')fireHook('view.manage');
+  if(view==='settings')fireHook('view.settings');
   const _c=document.getElementById('content');if(_c)_c.scrollTop=0;
   // 해시 딥링크 동기화 — 새로고침 유지 + "#site/{sid}" 링크 공유. replaceState라 hashchange 미발화(루프 없음).
   if(!document.body.classList.contains('snap')){
@@ -554,7 +338,7 @@ function snapSwitchMonth(rm){
   S.sites=P.sites||[];S.teams=P.teams||[];S.cmt=P.cmt||{};S.ana=P.ana||{};S.rm=P.rm||rm;
   for(const sid in (P.st||{}))deriveLul(P.st[sid]); // 장기미처리는 미저장 — 전환 시 파생
   _calcCache.clear();
-  ensureTeams();setRmChip();rTeamSel();rNav();
+  fireHook('data.teamsChanged');setRmChip();rTeamSel();rNav();
   if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);else go('dashboard');
 }
 function rDash(){
@@ -649,8 +433,6 @@ function insBindCards(){
     c.setAttribute('role','button');c.setAttribute('tabindex','0');c.setAttribute('aria-expanded','false');
   });
 }
-// 게시·스냅샷 캡처용 — 확장 상태(.exp)·상세(.insd)와 DOM 부착 토글 속성을 제거한 정적 HTML
-function insCleanHTML(){const el=document.getElementById('d-insight');if(!el)return '';const c=el.cloneNode(true);c.querySelectorAll('.insd').forEach(x=>x.remove());c.querySelectorAll('.ic').forEach(x=>{x.classList.remove('exp');x.removeAttribute('data-act');x.removeAttribute('data-instt');x.removeAttribute('role');x.removeAttribute('tabindex');x.removeAttribute('aria-expanded');});c.classList.remove('ins-open');return c.innerHTML;}
 function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
   const el=document.getElementById('d-insight');if(!el)return;
   if(window.__SNAP__){ // 스냅샷: 임베드 인사이트(살균) — 비어 있으면(구게시본·대시보드 미방문 게시) 안내 표시
@@ -835,52 +617,6 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
   S._dashIns=items.map(x=>({cls:x.cls,icon:x.icon,ttl:x.ttl,sub:x.sub}));
 }
 function dC(k){if(S.charts[k]){S.charts[k].$destroyed=true;S.charts[k].destroy();delete S.charts[k];}}
-// ── 게시·스냅샷용 순수 집계 (P3: __CAPTURE 렌더 부수효과 의존 제거) ──
-// capWks: 주차별 누계 스냅샷 — rChartsImpl/buildSiteTrend의 차트 데이터 계산과 동일 수식(BIT-EXACT).
-//   입력 defs는 receiptDate 형식(YYYY-MM-DD) 필터가 이미 적용된 배열을 기대(차트 코드와 동일 입력).
-function capWks(defs,rm,year){
-  const _ty=Number(year);
-  const ymPart=rm.split('-').map(Number),lastDay=new Date(ymPart[0],ymPart[1],0).getDate();
-  const refLimTS=Math.min(Date.UTC(ymPart[0],ymPart[1]-1,lastDay),Date.UTC(_ty,11,31));
-  const _rl=new Date(refLimTS),refLimStr=`${_rl.getUTCFullYear()}-${String(_rl.getUTCMonth()+1).padStart(2,'0')}-${String(_rl.getUTCDate()).padStart(2,'0')}`;
-  const startTS=Date.UTC(_ty,0,1),firstSunOff=(7-new Date(startTS).getUTCDay())%7;
-  const wks=[];let sunTS=startTS+firstSunOff*86400000,prevCutoff=`${_ty}-01-01`;
-  while(prevCutoff<refLimStr){
-    const isPartial=sunTS>refLimTS;
-    const cutTS=isPartial?refLimTS:sunTS;
-    const cutD=new Date(cutTS),cutoff=`${cutD.getUTCFullYear()}-${String(cutD.getUTCMonth()+1).padStart(2,'0')}-${String(cutD.getUTCDate()).padStart(2,'0')}`;
-    const m=cutD.getUTCMonth()+1;
-    let weekNum;
-    if(wks.length>0&&wks[wks.length-1].m===m)weekNum=wks[wks.length-1].w+1;
-    else weekNum=1;
-    let cR=0,cRes=0,curU=0,curLt=0,curLt60=0;
-    for(const it of defs){if(it.receiptDate>cutoff)continue;cR++;const done=it.status==='처리'&&it.completionDate&&it.completionDate<=cutoff;if(done)cRes++;else{curU++;const _dd=Math.max(0,Math.round((new Date(cutoff)-new Date(it.receiptDate))/86400000));if(_dd>=60){curLt++;curLt60++;}else if(_dd>=30)curLt++;}}
-    wks.push({m,w:weekNum,cumR:cR,cumRes:cRes,u:curU,lt:curLt,lt60:curLt60});
-    if(isPartial)break;
-    sunTS+=7*86400000;prevCutoff=cutoff;
-  }
-  return wks;
-}
-// capAm: 기준월말 시점 미처리 공종 분포 — rChartsImpl/buildSiteTradeDonut의 도넛 데이터와 동일 수식.
-function capAm(defs,rm){
-  const _rmP=rm.split('-').map(Number),_rmEnd=`${rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
-  const am={};(defs||[]).filter(i=>i.receiptDate&&i.receiptDate<=_rmEnd&&!(i.status==='처리'&&i.completionDate&&i.completionDate<=_rmEnd)).forEach(i=>{am[i.trade||'기타']=(am[i.trade||'기타']||0)+1;});
-  return am;
-}
-// capAll: 게시/스냅샷 전체 캡처 — 연도 선택 규칙(trendYearInfo)까지 차트 렌더와 동일하게 적용.
-//   렌더·setTimeout 없이 순수 산출 → 느린 기기/백그라운드 탭에서의 캡처 누락 클래스 제거.
-function capAll(){
-  const allDefRaw=dashSites().flatMap(s=>S.def[s.id]||[]);
-  const allDef=allDefRaw.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
-  const cap={wks:capWks(allDef,S.rm,trendYearInfo(allDef,'trendYear').year),am:capAm(allDefRaw,S.rm),siteWks:{},siteAm:{}};
-  for(const s of teamSites()){ // 현장별 캡처는 인수 전 현장 포함 — 대시보드 합산(wks/am)만 dashSites로 집계 제외
-    const defs=S.def[s.id]||[];
-    const sd=defs.filter(i=>i.receiptDate&&/^\d{4}-\d{2}-\d{2}/.test(i.receiptDate));
-    cap.siteWks[s.id]=capWks(sd,S.rm,trendYearInfo(sd,'siteTrendYear').year);
-    cap.siteAm[s.id]=capAm(defs,S.rm);
-  }
-  return cap;
-}
 function rCharts(all){
   // Globally disable datalabels by default (enabled per-dataset where needed)
   if(window.ChartDataLabels&&!Chart.__dlOff){Chart.register(ChartDataLabels);Chart.defaults.set('plugins.datalabels',{display:false});Chart.__dlOff=true;}
@@ -1391,15 +1127,6 @@ function openVacEdit(sid,vl,statusField){
 //   범용 한국어 PII 마스킹은 성숙한 OSS가 사실상 없어(영문 위주) 도메인 특화 정규식으로 유지.
 //   _PII_ROLE: 님/씨 앞에 붙는 흔한 직책·역할 명사 — 인명이 아니므로 보존(과잉 마스킹 방지).
 const _PII_ROLE=new Set(['고객','손님','선생','사장','기사','소장','반장','과장','차장','부장','대리','주임','팀장','실장','원장','이사','상무','전무','대표','회장','여사','담당','담당자','관리자','작업자','기술자','입주자','입주민','세대주','어르신','사모','아저','아주머','어머','아버']);
-function maskPII(s){
-  return String(s==null?'':s)
-    .replace(/01[016789][ .-]?\d{3,4}[ .-]?\d{4}\b/g,'010-****-****')
-    .replace(/\b0\d{1,2}[ .-]\d{3,4}[ .-]\d{4}\b/g,'0**-***-****')
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,'***@***')
-    .replace(/([가-힣]{2,4})(님|씨)(?![가-힣])/g,(m,name,h)=>_PII_ROLE.has(name)?m:'○○'+h);
-  // 알려진 한계: '홍길동님이'처럼 님/씨 뒤에 조사가 바로 붙으면 매치하지 않음(의도 — 완화 시 '날씨가' 등
-  // 일반 어휘 오탐이 발생). 인명 마스킹은 best-effort이며 고위험 PII(전화·이메일)는 위 규칙이 전담.
-}
 async function runAI(sid){if(!S.ck){toast('설정에서 Gemini API 키를 입력하세요');return;}const site=S.sites.find(s=>s.id===sid);if(!site)return;const st=calc(S.def[sid]||[],site,S.rm),el=document.getElementById(`ait-${sid}`);if(el)el.innerHTML='<p style="color:var(--lbl3)">AI 분석 생성 중…</p>';
 const systemInstruction = buildRules('site'); // 기본 규칙 레지스트리(RULE_DEF)에서 조립 — 설정>기본 규칙 편집의 override 반영, 미수정 시 종전 문자열과 동일
 const _ul=st.ul||[];

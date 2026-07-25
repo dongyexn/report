@@ -106,6 +106,8 @@ const cssBad = await page.evaluate(() => {
 });
 step('CSS 토큰 순환 정의 없음', cssBad.length === 0, cssBad.slice(0,3).join(' | '));
 
+
+
 // ── 2) 화면별 클릭 전수 ──
 console.log('\n[2] 클릭 전수');
 await page.goto(`${BASE}/index.html`, { waitUntil:'load' });
@@ -178,6 +180,83 @@ const snap = await off.evaluate(() => ({
 step('오프라인 스냅샷 실행', snap.app && snap.data && snap.kpi > 0 && snap.cover === 'none',
      `KPI ${snap.kpi} · 차트 ${snap.charts} · Chart=${snap.chart} · LZ=${snap.lz}`);
 step('오프라인 스냅샷 오류 없음', offErr.filter(e => !/Pretendard/.test(e)).length === 0, offErr.slice(0,2).join(' | '));
+
+
+// ── 5) 테마·인쇄 (캔버스는 CSS가 안 닿으므로 '픽셀'로 확인한다) ──
+console.log('\n[5] 테마·인쇄');
+await page.evaluate("go('dashboard')"); await page.waitForTimeout(2000);
+
+// 캔버스에서 가장 많이 쓰인 색 3개
+const canvasTop = async () => page.evaluate(() => {
+  const cv = document.getElementById('c-mo'); if (!cv) return [];
+  const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data, cnt = {};
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i+3] < 200) continue;
+    const h = '#' + [d[i],d[i+1],d[i+2]].map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase();
+    cnt[h] = (cnt[h] || 0) + 1;
+  }
+  return Object.entries(cnt).sort((a,b) => b[1]-a[1]).slice(0,3).map(([c]) => c);
+});
+const LIGHT_BARS = ['#DA6A60','#E89C9A','#B3C7DD'], DARK_BARS = ['#B4544B','#C98C86','#6E9BD6'];
+const hasAll = (got, want) => want.every(c => got.includes(c));
+
+// 인라인 하드코딩 색 검사 — JS 템플릿에 style="...#hex" 를 박으면 인쇄·다크에서 CSS가 못 덮는다(실제 사고).
+const inlineHex = await page.evaluate(() => {
+  const out = [];
+  const cover = document.getElementById('coverGate');
+  document.querySelectorAll('[style]').forEach(el => {
+    if (el.offsetParent === null) return;                 // 숨겨진 요소는 제외
+    if (cover && cover.contains(el)) return;              // 로그인 커버는 자체 다크 스타일(의도적)
+    if (el.classList.contains('dt')) return;              // 도넛 범례 점 — 팔레트가 테마 무관 고정(의도적)
+    const s = el.getAttribute('style') || '';
+    const m = s.match(/(color|background)\s*:\s*#[0-9a-fA-F]{3,6}/);
+    if (m) out.push((el.className || el.tagName) + ' → ' + m[0]);
+  });
+  return [...new Set(out)].slice(0, 5);
+});
+step('인라인 하드코딩 색 없음', inlineHex.length === 0, inlineHex.join(' | '));
+
+const lightPix = await canvasTop();
+step('라이트 차트 색', hasAll(lightPix, LIGHT_BARS), lightPix.join(' '));
+
+await page.evaluate('applyTheme(true)'); await page.waitForTimeout(2000);
+const darkPix = await canvasTop();
+step('다크 차트 색', hasAll(darkPix, DARK_BARS), darkPix.join(' '));
+
+// 인쇄 전환은 '대기 없이' 즉시 반영돼야 한다(Ctrl+P는 유예가 없음)
+const printPix = await page.evaluate(`(() => { printThemeSwap(true); const cv=document.getElementById('c-mo');
+  const d=cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data, cnt={};
+  for(let i=0;i<d.length;i+=4){ if(d[i+3]<200) continue;
+    const h='#'+[d[i],d[i+1],d[i+2]].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(); cnt[h]=(cnt[h]||0)+1; }
+  return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c])=>c); })()`);
+step('인쇄 전환 즉시 반영', hasAll(printPix, LIGHT_BARS), printPix.join(' '));
+
+// 도넛 고정 팔레트는 인쇄 왕복에도 변하지 않아야 한다
+const donutOk = await page.evaluate(`(() => { const p0=S.charts.mx?S.charts.mx.data.datasets[0].backgroundColor.slice():null;
+  printThemeSwap(false); const p1=S.charts.mx?S.charts.mx.data.datasets[0].backgroundColor.slice():null;
+  return !!p0 && JSON.stringify(p0)===JSON.stringify(p1); })()`);
+step('도넛 팔레트 보존', donutOk === true);
+
+// 다크에서 대비가 낮은 글자 없는지
+const lowContrast = await page.evaluate(() => {
+  const L = c => { const m = (c||'').match(/[\d.]+/g); if (!m) return null;
+    const f = x => { x/=255; return x <= .03928 ? x/12.92 : Math.pow((x+.055)/1.055, 2.4); };
+    return .2126*f(m[0]) + .7152*f(m[1]) + .0722*f(m[2]); };
+  const bgOf = el => { let e = el; while (e) { const c = getComputedStyle(e).backgroundColor;
+    const m = (c||'').match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > .5)) return c; e = e.parentElement; } return 'rgb(25,25,25)'; };
+  const out = [];
+  document.querySelectorAll('*').forEach(el => {
+    if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 1)) return;
+    const r = el.getBoundingClientRect(); if (r.width < 10 || r.height < 8) return;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) < .3) return;
+    const a = L(cs.color), b = L(bgOf(el)); if (a === null || b === null) return;
+    if ((Math.max(a,b)+.05) / (Math.min(a,b)+.05) < 3.2) out.push(el.textContent.trim().slice(0,16));
+  });
+  return [...new Set(out)].slice(0, 5);
+});
+step('다크 대비 위반 없음', lowContrast.length === 0, lowContrast.join(' | '));
+await page.evaluate('applyTheme(false)'); await page.waitForTimeout(600);
 
 await browser.close();
 server.close();

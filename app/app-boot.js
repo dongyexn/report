@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// app-boot.js — 업로드·설정·기준월·인쇄·모달/토스트·차트 테마·부팅·셀프테스트·스냅샷 내보내기.
-//   빌드 없이 여러 <script>로 나눠 로드한다(순서 고정: core → data → view → boot).
-//   함수 선언은 전역에 올라가므로 파일 간 호출은 자유롭지만, **최상위 실행문은 순서에 의존**한다.
+// app-boot.js — 조립층: 액션 등록·훅 수신·팀/현장 관리·업로드·설정·인쇄·부팅·스냅샷.
+//   로드 순서 고정: core → data → view → boot · 호출 방향도 같은 한 방향(tests/deps.mjs 검사).
+//   아래 전부를 부를 수 있는 유일한 층. onHook 등록도 여기서만 한다.
 //   index.html의 로드 순서와 스냅샷 인라인 순서(exportSnapshot의 APP_PARTS)를 함께 유지할 것.
 // ─────────────────────────────────────────────────────────────────────────────
 // UPLOAD
@@ -562,94 +562,6 @@ function doPrint(){
   setTimeout(()=>printThemeSwap(false),500);
 }
 
-// MODAL / TOAST
-// 모달 접근성: Esc 닫기 · Tab 포커스 순환(트랩) · role/aria · 열기 시 첫 포커스 이동, 닫을 때 이전 포커스 복귀
-let _moPrevFocus=null,_moKeyBound=false;
-function _moFocusables(){const mb=document.getElementById('mb');if(!mb)return [];return Array.prototype.slice.call(mb.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')).filter(el=>(el.offsetWidth>0||el.offsetHeight>0||el===document.activeElement));}
-function _moKeydown(e){
-  const mo=document.getElementById('mo');
-  if(!mo||!mo.classList.contains('open'))return;
-  if(e.key==='Escape'){e.preventDefault();closeMo();return;}
-  if(e.key==='Tab'){
-    const f=_moFocusables();if(!f.length)return;
-    const first=f[0],last=f[f.length-1],a=document.activeElement,inside=mo.contains(a);
-    if(e.shiftKey&&(a===first||!inside)){e.preventDefault();last.focus();}
-    else if(!e.shiftKey&&(a===last||!inside)){e.preventDefault();first.focus();}
-  }
-}
-function openMo(){
-  const mo=document.getElementById('mo'),mb=document.getElementById('mb');
-  if(mb)clearTimeout(mb._wideT);
-  _moPrevFocus=document.activeElement;
-  if(mb){mb.setAttribute('role','dialog');mb.setAttribute('aria-modal','true');mb.setAttribute('aria-labelledby','mt');if(!mb.hasAttribute('tabindex'))mb.setAttribute('tabindex','-1');}
-  mo.classList.add('open');
-  if(!_moKeyBound){_moKeyBound=true;document.addEventListener('keydown',_moKeydown,true);}
-  // 초기 포커스는 모달 컨테이너로(첫 input에 두면 모바일에서 키보드가 즉시 떠 불편). Tab 시 내부 요소로 이동.
-  setTimeout(()=>{try{if(mb&&mb.focus)mb.focus();}catch(_){}},30);
-}
-function closeMo(){
-  const mo=document.getElementById('mo');if(mo)mo.classList.remove('open');
-  if(window.__SNAPPICK__){const r=window.__SNAPPICK__;window.__SNAPPICK__=null;try{r(null);}catch(_){}} // 월 선택 대기 중이면 취소로 종결
-  if(typeof recCloseMenu==='function')recCloseMenu();
-  if(typeof recClosePvMenu==='function')recClosePvMenu();
-  window.__REC=null;
-  // 닫힘 애니메이션(약 .22s)이 끝난 뒤 wide 해제 — 닫히는 도중 너비가 갑자기 줄어들지 않도록
-  const mb=document.getElementById('mb');
-  if(mb){mb.classList.remove('has-x');clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow');},240);}
-  try{if(_moPrevFocus&&_moPrevFocus.focus)_moPrevFocus.focus();}catch(_){}
-  _moPrevFocus=null;
-}
-let _tt;
-function toast(msg,dur){const el=document.getElementById('toast');el.classList.remove('has-action');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),dur||2400);}
-// 커스텀 확인 모달 + 실행취소 토스트 (네이티브 confirm 대체)
-let _confirmCb=null,_undoDel=null;
-function openConfirm(title,msgHTML,confirmLabel,onConfirm,danger){
-  const mt=document.getElementById('mt'),mb=document.getElementById('mbody'),mf=document.getElementById('mf');
-  if(!mt||!mb||!mf)return;
-  mt.textContent=title;
-  mb.innerHTML=`<p style="font-size:13.5px;color:var(--lbl2);line-height:1.65;margin:0">${msgHTML}</p>`;
-  mf.innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bsm ${danger?'btn-danger':'bp'}" data-act="confirm.ok">${esc(confirmLabel)}</button>`;
-  _confirmCb=onConfirm||null;
-  openMo();
-}
-function toastAction(msg,actionLabel,onAction,dur){
-  const el=document.getElementById('toast');if(!el)return;
-  el.innerHTML=`<span>${esc(msg)}</span><button type="button" class="toast-btn">${esc(actionLabel)}</button>`;
-  el.classList.add('show','has-action');
-  const btn=el.querySelector('.toast-btn');
-  const close=()=>{el.classList.remove('show','has-action');};
-  if(btn)btn.onclick=()=>{close();try{onAction&&onAction();}catch(e){console.error(e);}};
-  clearTimeout(_tt);_tt=setTimeout(close,dur||6000);
-}
-// 진행률 오버레이
-function progShow(msg){const o=document.getElementById('uprog');if(!o)return;document.getElementById('uprogMsg').textContent=msg||'처리 중...';document.getElementById('uprogFill').style.width='0%';document.getElementById('uprogSub').textContent='';o.classList.add('show');}
-function progSet(pct,sub){const f=document.getElementById('uprogFill');if(f)f.style.width=Math.max(0,Math.min(100,pct))+'%';if(sub!=null){const s=document.getElementById('uprogSub');if(s)s.textContent=sub;}}
-function progMsg(msg){const m=document.getElementById('uprogMsg');if(m)m.textContent=msg;}
-function progHide(){const o=document.getElementById('uprog');if(o)o.classList.remove('show');}
-// 메인 스레드에 페인트 기회를 줘서 진행률 바가 실제로 갱신되게 함
-function nextFrame(){return new Promise(r=>{let done=false;const fin=()=>{if(done)return;done=true;r();};requestAnimationFrame(()=>requestAnimationFrame(fin));setTimeout(fin,60);});}
-// ── 차트 색상 ──
-function chartInk(){return cvar('--lbl','#1C1C1E');}
-function chartGrid(){return cvar('--ch-grid','rgba(0,0,0,.05)');}
-function chartAxisTitle(){return cvar('--ch-axis','rgba(60,60,67,.42)');}
-function chartSegBorder(){return cvar('--bg2','#fff');} // 다크에서는 카드 배경색 — 흰 테두리가 눈에 튀지 않도록
-function dlBlue(){return cvar('--ch-dlr','#2C437C');}
-function dlAmber(){return cvar('--ch-dld','#A0590A');}
-function dlInk(){return cvar('--lbl','#1C1C1E');}
-function dlStroke(){return cvar('--bg2','#fff');} // 라벨 외곽선 = 배경색
-// 추이차트 데이터라벨 자동 조절 — 막대 실폭(catW)에 맞춰 폰트 크기·표시 정책 결정.
-// 주차가 많아 막대가 좁아지면: 폰트 축소 → 막대 안 분해값(장기/일반) 생략 → 막대 위 총합 격주 표시.
-// chartArea가 아직 없는 첫 프레임은 opacity 0이라 화면엔 안 보이므로 fallback 값으로 안전.
-function moDLCfg(ctx){
-  const ca=ctx.chart.chartArea,n=(ctx.chart.data.labels||[]).length||1;
-  const catW=(ca&&ca.width)?ca.width/n:60;
-  const size=catW>=50?11:catW>=42?10:catW>=34?9:catW>=27?8:7;
-  return {size,catW,showInner:catW>=46,totalEvery:catW>=26?1:2};
-}
-// 도넛 팔레트 — 라이트·다크 동일(테마별로 색이 달라지면 같은 현장이 다른 색으로 보임)
-function donutPalette(){return ['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2','#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC','#B3C7DD'];} // 테마 무관 고정 — 같은 현장이 어디서나 같은 색
-
-function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 // 테마 갱신 진입점 — 색 토큰(CSS 변수)을 바꾼 뒤 이걸 호출하면 차트까지 새 색으로 다시 그린다.
 //   차트는 생성 시 색을 굽기 때문에 인스턴스를 파기하고 현재 화면만 재렌더한다. (다크모드 전환에서 사용)
 // 인쇄는 항상 라이트 — 두 가지를 따로 처리한다.
@@ -1056,6 +968,269 @@ function bindGlobalUi(){
   document.addEventListener('dragend',()=>{if(pvDragged){pvDragged.classList.remove('pv-dragging');pvDragged=null;pvCommitOrder();}});
 
 }
+
+
+
+
+
+
+
+
+// ── 팀·현장 관리(유스케이스) ──
+//   상태 변경 → 저장 → 재렌더를 엮는 층이라 data·view를 모두 부른다. 그래서 최상위인 boot에 둔다.
+// 팀/현장 모델 보정: 팀이 없으면 기존 현장으로부터 기본 팀 구성(권역은 실제 현장 데이터에서 도출), 현장에 teamId 부여
+function ensureTeams(){
+  if(!Array.isArray(S.teams))S.teams=[];
+  const orphanRegions=new Set();
+  S.sites.forEach(s=>{if(!s.teamId)orphanRegions.add(s.region||'');});
+  if(!S.teams.length){
+    const t=makeDefaultTeam();
+    orphanRegions.forEach(r=>{if(r&&!t.regions.includes(r))t.regions.push(r);});
+    if(Array.isArray(S.regionOrder)&&S.regionOrder.length)t.regionOrder=S.regionOrder.slice();
+    S.teams=[t];
+  }
+  if(!S.teamId||!S.teams.some(t=>t.id===S.teamId))S.teamId=S.teams[0].id;
+  S.teams.forEach(tm=>{if(Array.isArray(tm.regions)&&tm.regions.includes(PERM_REGION))tm.regions=tm.regions.filter(r=>r!==PERM_REGION);});
+  const fid=S.teams[0].id;
+  const validIds=new Set(S.teams.map(t=>t.id));
+  let changed=false;
+  S.sites.forEach(s=>{if(!s.teamId||!validIds.has(s.teamId)){s.teamId=fid;changed=true;}});
+  if(changed)lsSave();
+}
+
+function switchTeam(id){
+  if(!S.teams.some(t=>t.id===id))return;
+  S.teamId=id;S.smsort=null;S.dsort=null;
+  if(S.view==='site'&&!teamSites().some(s=>s.id===S.sid)){go('dashboard');}
+  else{rTeamSel();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='dashboard')rDash();if(S.view==='settings')loadSettings();}
+}
+
+function addTeam(name){
+  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return null;}
+  name=(name||'').trim();if(!name){toast('팀 이름을 입력하세요');return null;}
+  if(S.teams.some(t=>t.name===name)){toast('같은 이름의 팀이 있습니다');return null;}
+  const t={id:uid('t'),name,regions:[],regionOrder:[]};
+  S.teams.push(t);lsSave();return t;
+}
+
+function renameTeam(id,name){if(manageLocked())return;name=(name||'').trim();if(!name)return;const t=S.teams.find(x=>x.id===id);if(!t)return;t.name=name;lsSave();rTeamSel();}
+
+function doDeleteTeam(id){
+  const t=S.teams.find(x=>x.id===id);if(!t)return;
+  if(S.teams.length<=1)return;
+  S.sites.filter(s=>s.teamId===id).forEach(s=>{delete S.def[s.id];delete S.cmt[s.id];delete S.ana[s.id];defDelete(s.id);});
+  S.sites=S.sites.filter(s=>s.teamId!==id);
+  S.teams=S.teams.filter(x=>x.id!==id);
+  if(S.teamId===id)S.teamId=S.teams[0].id;
+  lsSave();
+  rTeamSel();rNav();if(S.view==='manage')rManage();else rSMgr();if(S.view==='dashboard')rDash();toast('팀 삭제됨');
+}
+
+function addRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;name=(name||'').trim();if(!name){toast('권역 이름을 입력하세요');return;}if(name===PERM_REGION){toast('고정 권역입니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}t.regions.push(name);lsSave();rNav();rSMgr();}
+
+function renameRegion(oldName,name){if(manageLocked())return;const t=curTeam();if(!t)return;name=(name||'').trim();if(!name||oldName===name)return;if(oldName===PERM_REGION||name===PERM_REGION){toast('고정 권역은 변경할 수 없습니다');return;}if(t.regions.includes(name)){toast('이미 있는 권역입니다');return;}const i=t.regions.indexOf(oldName);if(i<0)return;t.regions[i]=name;t.regionOrder=(t.regionOrder||[]).map(r=>r===oldName?name:r);S.sites.forEach(s=>{if(s.teamId===t.id&&s.region===oldName)s.region=name;});lsSave();rNav();rSMgr();if(S.view==='dashboard')rDash();}
+
+function deleteRegion(name){if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}const t=curTeam();if(!t)return;if(name===PERM_REGION){toast('고정 권역은 삭제할 수 없습니다');return;}const used=S.sites.filter(s=>s.teamId===t.id&&s.region===name).length;if(used){toast('현장 '+used+'개가 사용 중이라 삭제할 수 없습니다');return;}t.regions=t.regions.filter(r=>r!==name);t.regionOrder=(t.regionOrder||[]).filter(r=>r!==name);lsSave();rNav();rSMgr();}
+
+function rManage(){
+  const el=document.getElementById('mgcontent');if(!el)return;
+  const t=curTeam();
+  const teamRows=S.teams.map(tm=>{
+    const cnt=S.sites.filter(s=>s.teamId===tm.id).length;
+    const active=tm.id===S.teamId;
+    return `<div class="tm-row${active?' act':''}"><button class="tm-pick" data-act="team.pick" data-tid="${esc(tm.id)}" data-tt="이 팀 선택" aria-label="이 팀 선택">${active?ICON_RADIO_ON:ICON_RADIO_OFF}</button><input class="mg-inp tm-nameinp" value="${esc(tm.name)}" data-act="team.rename" data-tid="${esc(tm.id)}" aria-label="팀 이름"><span class="tm-cnt">${cnt}</span><button class="tm-x tm-del" data-act="team.del" data-tid="${esc(tm.id)}" data-tt="삭제" aria-label="삭제">${ICON_TRASH}</button></div>`;
+  }).join('');
+  const regRows=curRegions().map(r=>{
+    const used=S.sites.filter(s=>s.teamId===t.id&&s.region===r).length;
+    if(r===PERM_REGION)return `<div class="tm-row tm-locked"><span class="tm-nameinp tm-lockname">${esc(r)}</span><span class="tm-cnt">${used}</span><span class="tm-x tm-lockicon" data-tt="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외" aria-label="삭제·변경할 수 없는 고정 권역 · 대시보드 집계 제외">${ICON_LOCK}</span></div>`;
+    return `<div class="tm-row"><input class="mg-inp tm-nameinp" value="${esc(r)}" data-act="region.rename" data-rgn="${esc(r)}" aria-label="권역 이름"><span class="tm-cnt">${used}</span><button class="tm-x tm-del" data-act="region.del" data-rgn="${esc(r)}" data-tt="삭제" aria-label="삭제">${ICON_TRASH}</button></div>`;
+  }).join('');
+  el.innerHTML=`<div class="mg-grid"><div><div class="card mb12"><div class="tm-h"><span>팀</span><button class="btn bo bsm tm-add" data-act="team.addTeam">+ 팀 추가</button></div><div class="tm-list">${teamRows}</div></div><div class="card mb12"><div class="tm-h"><span>권역 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="team.addRegion">+ 권역 추가</button></div><div class="tm-list">${regRows}</div></div><div class="card tm-upcard"><div class="tm-h" style="margin-bottom:12px"><span>리스트 업로드</span></div><div id="uz" class="uz" data-act="uz"><div class="uzi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M2 20h20"></path></svg></div><div class="uzt">Excel 업로드</div><div class="uzh">HCS 전체 하자리스트 드래그 앤 드롭</div></div><input type="file" id="fi" accept=".csv,.xlsx,.xls" style="display:none" data-act="uz.file" aria-label="데이터 파일 선택"><div class="ulex-sep"></div><div><label class="il ulex-lbl" for="ulex">제외 키워드 <span style="font-weight:400;color:var(--lbl3)">· 쉼표로 구분</span></label><input class="inp" id="ulex" style="font-size:12.5px;padding:7px 10px" value="${esc(S.exTk||'')}" placeholder="예: 공가세대점검, 시범세대" data-act="set.exToken"></div></div></div><div><div class="card"><div class="tm-h"><span>현장 <span style="color:var(--lbl3);font-weight:500;text-transform:none;letter-spacing:0">· ${esc(t?t.name:'')}</span></span><button class="btn bo bsm tm-add" data-act="site.addModal">+ 현장 추가</button></div><div id="mgsites"></div></div></div></div>`;
+  rSMgr();
+}
+
+// 현장 인라인 수정 — 리스트 행에서 바로 편집 (모달 없이)
+function updSite(id,field,value){
+  if(manageLocked())return;
+  const s=S.sites.find(x=>x.id===id);if(!s)return;
+  if(field==='units'||field==='buildings'||field==='commercialUnits')s[field]=Number(value)||0;
+  else if(field==='hasCommercial'||field==='showVacant')s[field]=!!value;
+  else s[field]=value;
+  lsSave();
+  if(field==='hasCommercial'||field==='showVacant')fb2SiteConfigWrite(id);
+  rNav();
+  if((field==='name'||field==='region')&&S.view==='dashboard')rDash();
+  if((field==='hasCommercial'||field==='showVacant')&&S.view==='site'&&S.sid===id)rSite(id);
+}
+
+function setDetailYear(y){S.detailYear=y;if(S.sid)rSite(S.sid);}
+
+function setTrendYear(y){S.trendYear=y;const all=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));try{rCharts(all);}catch(e){console.error('rCharts(year)',e);}}
+
+function deleteTeam(id){
+  if(manageLocked()){toast('보기 전용입니다 · 관리자만 변경할 수 있습니다');return;}
+  if(S.teams.length<=1){toast('마지막 팀은 삭제할 수 없습니다');return;}
+  const t=S.teams.find(x=>x.id===id);if(!t)return;
+  const cnt=S.sites.filter(s=>s.teamId===id).length;
+  openConfirm('팀 삭제',`<b>${esc(t.name)}</b> 팀을 삭제합니다.${cnt?` 소속 현장 <b>${cnt}개</b>와 하자 데이터도 함께 삭제됩니다.`:''}`,'삭제',()=>doDeleteTeam(id),true);
+}
+
+function tmAddTeam(){const name=uniqName('새 팀',S.teams.map(t=>t.name));const t=addTeam(name);if(t)switchTeam(t.id);rManage();}
+
+function updTeamName(id,val){renameTeam(id,val);rManage();}
+
+function tmDeleteTeam(id){deleteTeam(id);rManage();}
+
+function tmAddRegion(){const t=curTeam();if(!t)return;const name=uniqName('새 권역',t.regions);addRegion(name);rManage();}
+
+function updRegionName(oldR,val){renameRegion(oldR,val);rManage();}
+
+function tmDeleteRegion(r){deleteRegion(r);rManage();}
+
+// FILTER helpers
+function setTab(t){S.tab=t;document.querySelectorAll('.tnav-i').forEach(b=>b.classList.toggle('act',b.dataset.tab===t));document.querySelectorAll('.tpane').forEach(p=>p.classList.toggle('act',p.dataset.tab===t));
+  // pane이 display:block이 된 직후 동기 측정 → display:none일 때 scrollHeight=0으로 잘못 잡혔던
+  // textarea 높이를 페인트 전에 즉시 교정 (첫 진입 시 "작았다 커지는" 깜빡임 방지).
+  autoSizeAll(document.querySelector('.tpane.act'));
+  setTimeout(()=>{if(S.sid)renderTabCharts(S.sid,S.lastSt);autoSizeAll(document.querySelector('.tpane.act'));},30);} // 차트 렌더로 폭이 바뀐 뒤 같은 프레임에서 재측정 — 높이 점프 방지
+
+function setSiteTrendYear(y){S.siteTrendYear=y;if(S.sid){dC('mo-'+S.sid);buildSiteTrend(S.sid,S.lastSt);}}
+
+
+// ── 훅 수신처 ── 아래 계층이 알린 사건을 여기서 실제 동작으로 연결한다(등록은 이 한 곳에서만).
+onHook('theme.changed',()=>{try{themeRefresh();}catch(e){console.warn('[hook] theme',e);}});
+onHook('modal.closed',()=>{if(typeof recCloseMenu==='function')recCloseMenu();if(typeof recClosePvMenu==='function')recClosePvMenu();});
+onHook('nav.go',(v,id)=>go(v,id));
+onHook('ui.nav',()=>rNav());
+onHook('ui.dash',()=>rDash());
+onHook('ui.site',(sid)=>rSite(sid));
+onHook('ui.rmchip',()=>setRmChip());
+onHook('ui.settings',()=>loadSettings());
+onHook('cmd.siteModal',(a,b2)=>openSM(a,b2));
+onHook('cmd.dashAI',()=>runDashAI());
+onHook('cmd.siteAI',(sid)=>runAI(sid));
+onHook('cmd.snapshot',()=>exportSnapshot());
+onHook('data.teamsChanged',()=>ensureTeams());
+onHook('view.manage',()=>rManage());
+onHook('view.settings',()=>loadSettings());
+
+// ── 클릭·입력 액션 등록 ──
+//   핸들러가 data·view·boot 함수를 모두 부르므로 최상위인 boot에 둔다(위→아래 호출만 남도록).
+registerActions('click', {
+  'nav.toggle':      ()=>toggleSB(),
+  'nav.mobileOpen':  ()=>openMobileSB(),
+  'nav.mobileClose': ()=>closeMobileSB(),
+  'nav.region':      (el)=>tRg(el),
+  'nav.go':          (el)=>go(el.dataset.view),       // 정적 항목: data-view(dashboard/manage/settings)
+  'nav.site':        (el)=>go('site', el.dataset.site) // 사이트 항목: 기존 data-site 재사용
+});
+
+// ── [전환 완료] 클릭 액션 (로그인/상단바/대시보드/설정/모달/팀/현장/패널) ──
+registerActions('click', {
+  'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
+  'top.month':()=>openMP(), 'top.print':()=>doPrint(),
+  'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
+  'readme.tab':(el)=>{const i=el.dataset.i;const mb=document.getElementById('mbody');if(!mb)return;
+    mb.querySelectorAll('.rd-navi').forEach(b=>b.classList.toggle('act',b.dataset.i===i));
+    mb.querySelectorAll('.rd-sec').forEach((s,n)=>s.classList.toggle('act',String(n)===i));
+    const sc=mb.querySelector('.md-scroll');if(sc)sc.scrollTop=0;},
+  'snapPick.all':()=>{document.querySelectorAll('#mbody .snap-mo').forEach(c=>{c.checked=true;});},
+  'snapPick.cancel':()=>{closeMo();},
+  'snapPick.ok':()=>{const box=document.querySelectorAll('#mbody .snap-mo');
+    const v=Array.from(document.querySelectorAll('#mbody .snap-mo:checked')).map(c=>c.value);
+    if(box.length&&!v.length){toast('기준월을 한 개 이상 선택하세요');return;}
+    const fc=document.getElementById('snapFontChk'),font=!!(fc&&fc.checked);
+    try{if(font)localStorage.setItem('snapFont','1');else localStorage.removeItem('snapFont');}catch(_){} // 다음 내보내기 기본값으로 기억
+    const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r({months:v,font:font});},
+  'snap.rm':(el)=>snapSwitchMonth(el.value),
+  'set.dark':(el)=>applyTheme(el.checked),
+  'theme.toggle':()=>applyTheme(!isDark()),
+  'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
+  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');}); /* 접을 때 툴팁도 원복 — 안 하면 '접기'가 남는다 */grid.classList.remove('ins-open');if(was)grid.style.height='';{const _t=document.getElementById('htooltip');if(_t)_t.classList.remove('show');} /* 표시 중이던 툴팁은 즉시 숨김 — 다음 호버에 새 문구가 뜨도록 */if(!was){el.classList.add('exp');el.dataset.tt='접기';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
+  'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
+  'dash.insTr':(el)=>openRecList('__team',el.dataset.scope||'ul',el.dataset.tr||'',''), // 상세 공종 행 → 공종 필터 팀 목록
+  'dash.insList':(el)=>{openRecList('__team',el.dataset.scope||'ul','','');const R=window.__REC;if(!R)return;const k=el.dataset.fk,v=el.dataset.fv;if(k&&v!=null){R.valueFilters[k]=new Set([v]);R.filterRow=true;recRenderModalBody();}}, // 팀 목록 열고 카드 주제(보수주체·유형·업체) 필터 적용
+  'modal.close':()=>closeMo(), 'modal.stop':()=>{}, 'modal.confirmSM':(el)=>confirmSM(el.dataset.sid), 'modal.applyM':()=>applyM(),
+  'rec.list':(el)=>openRecList(el.dataset.sid, el.dataset.scope||'ul', el.dataset.trade||'', el.dataset.vac||''),
+  'confirm.ok':()=>{const cb=_confirmCb;_confirmCb=null;closeMo();if(cb){try{cb();}catch(e){console.error(e);}}},
+  'rec.pivotPct':()=>{const R=window.__REC;if(!R)return;R.showPct=!R.showPct;recRenderModalBody();},
+  'rec.copyTable':()=>{const R=window.__REC;if(!R)return;
+    if(R.pivotOn){ // 피벗: 렌더된 표를 그대로 탭 구분 텍스트로 (% 병기·정렬 화살표는 제거)
+      const t=document.querySelector('.pv-table');if(!t){toast('복사할 표가 없습니다');return;}
+      const cl=t.cloneNode(true);cl.querySelectorAll('.pv-pct').forEach(x=>x.remove());
+      const lines=[...cl.rows].map(r=>[...r.cells].map(c=>c.textContent.replace(/[▲▼]/g,'').trim()).join('\t'));
+      ctxCopy(lines.join('\n'),'피벗 표가 복사되었습니다 · 엑셀에 붙여넣기(Ctrl+V)');
+    }else{ // 목록: 현재 필터·정렬이 적용된 전체 결과 × 보이는 컬럼
+      const rows=R.view||[];if(!rows.length){toast('복사할 건이 없습니다');return;}
+      const cols=recVisCols();
+      const lines=[cols.map(c=>c.label).join('\t')].concat(rows.map((i,idx)=>cols.map(c=>String(c.key==='__no'?(idx+1):recCell(i,c.key)).replace(/[\t\n]+/g,' ')).join('\t')));
+      ctxCopy(lines.join('\n'),'목록 '+rows.length.toLocaleString()+'건이 복사되었습니다 · 엑셀에 붙여넣기(Ctrl+V)');
+    }},
+  'rec.export':()=>{const R=window.__REC;if(!R)return;if(R.pivotOn){recPivotExport();return;}const rows=R.view||[];if(!rows.length){toast('내보낼 건이 없습니다');return;}const headers=recCols().map(c=>c.label);const aoa=[headers].concat(rows.map((i,idx)=>recCols().map(c=>c.key==='__no'?(idx+1):recCell(i,c.key))));exportXlsx(`미처리목록_${(R.label||'').replace(/\s+/g,'')}_${S.rm}.xlsx`,aoa,'미처리');},
+  'rec.limit':(el)=>{const R=window.__REC;if(!R)return;const n=+el.dataset.n;R.limit=n||Infinity;recRenderModalBody();},
+  'rec.band':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.band||'';R.band=(R.band===k||!k)?null:k;recRenderModalBody();},
+  'rec.vac':(el)=>{const R=window.__REC;if(!R)return;const v=el.dataset.vac||'';R.vac=(R.vac===v||!v)?null:v;recRenderModalBody();},
+  'rec.pivotVal':(el)=>{const r=el.getBoundingClientRect();recPivotValMenu(r.left,r.bottom+4);},
+  'rec.pivotValPick':(el)=>{const R=window.__REC;if(!R)return;R.pivot.val=el.dataset.val;recClosePvMenu();recRenderModalBody();},
+  'rec.sort':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.key;if(R.sort.key===k){if(R.sort.dir===1){R.sort.key=null;R.sort.dir=-1;}else R.sort.dir=1;}else{R.sort.key=k;R.sort.dir=-1;}recRenderHead();recRenderBody();},
+  'rec.menuToggleRow':()=>{const R=window.__REC;if(!R)return;R.filterRow=!R.filterRow;const fr=document.querySelector('.rl-frow');if(fr)fr.classList.toggle('open',R.filterRow);if(!R.filterRow){R.filters={};document.querySelectorAll('.rl-fin').forEach(i=>{i.value='';});recRenderBody();}recCloseMenu();},
+  'rec.menuAll':(el)=>{const M=window.__RECMENU;if(!M)return;M.sel=el.checked?new Set(M.all):new Set();recMenuRenderList();},
+  'rec.menuVal':(el)=>{const M=window.__RECMENU;if(!M)return;const v=el.dataset.val;if(el.checked)M.sel.add(v);else M.sel.delete(v);if(M.dateTree)recMenuRenderList();else recMenuSyncAll();},
+  'rec.menuTreeToggle':(el)=>{const M=window.__RECMENU;if(!M)return;const n=el.dataset.node;if(M.expand.has(n))M.expand.delete(n);else M.expand.add(n);recMenuRenderList();},
+  'rec.menuTreeCheck':(el)=>{const M=window.__RECMENU;if(!M||!M.dateTree)return;const leaves=recDateLeaves(M.dateTree,el.dataset.node);const st=recTri(leaves,M.sel);if(st==='all')leaves.forEach(v=>M.sel.delete(v));else leaves.forEach(v=>M.sel.add(v));recMenuRenderList();},
+  'rec.menuApply':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;if(M.sel.size>=M.all.length)delete R.valueFilters[M.key];else R.valueFilters[M.key]=new Set(M.sel);recRenderBody();recCloseMenu();},
+  'rec.menuClear':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;delete R.valueFilters[M.key];recRenderBody();recCloseMenu();},
+  'rec.menuHideCol':()=>{const R=window.__REC,M=window.__RECMENU;if(!R||!M)return;if(!R.hidden)R.hidden=new Set();const col=recCols().find(c=>c.key===M.key);R.hidden.add(M.key);recCloseMenu();recRenderModalBody();toast(`「${col?col.label:M.key}」 열을 숨겼습니다 · 아무 열 헤더 우클릭으로 복원`);},
+  'rec.menuShowCols':()=>{const R=window.__REC;if(!R||!R.hidden)return;R.hidden.clear();recCloseMenu();recRenderModalBody();},
+  'rec.pivotToggle':()=>{const R=window.__REC;if(!R)return;R.pivotOn=!R.pivotOn;recRenderModalBody();const b=document.querySelector('[data-act="rec.pivotToggle"]');if(b)b.textContent=R.pivotOn?'목록':'피벗';const hd=document.querySelector('.rl-thead');if(hd)hd.classList.toggle('pivot-mode',R.pivotOn);},
+  'rec.clearTrade':()=>{const R=window.__REC;if(!R||!R._args)return;openRecList(R._args.sid,R._args.scope,'',R._args.vac);}, // 공종 필터 해제 — 동일 범위 재오픈
+  'rec.pivotAdd':(el)=>{const r=el.getBoundingClientRect();recPivotAddMenu(el.dataset.zone,r.left,r.bottom+4);},
+  'rec.pivotPick':(el)=>{const R=window.__REC,M=window.__PVMENU;if(!R||!M)return;if(M.zone==='rows'){if(R.pivot.rows.length<3&&!R.pivot.rows.includes(el.dataset.key))R.pivot.rows.push(el.dataset.key);}else{R.pivot.col=el.dataset.key;}recClosePvMenu();recRenderModalBody();},
+  'rec.pivotRemove':(el)=>{const R=window.__REC;if(!R)return;if(el.dataset.zone==='rows')R.pivot.rows.splice(+el.dataset.i,1);else R.pivot.col=null;recRenderModalBody();},
+  'rec.pivotSort':(el)=>{const R=window.__REC;if(!R)return;const k=el.dataset.pk,P=R.pivot;if(P.sort.key===k){if(P.sort.dir===1)P.sort={key:'__total',dir:-1};else P.sort={key:k,dir:1};}else P.sort={key:k,dir:-1};const b=document.getElementById('pvBody');if(b)b.innerHTML=recPivotTableHTML();},
+  'team.pick':(el)=>switchTeam(el.dataset.tid), 'team.del':(el)=>tmDeleteTeam(el.dataset.tid),
+  'team.addTeam':()=>tmAddTeam(), 'team.addRegion':()=>tmAddRegion(), 'region.del':(el)=>tmDeleteRegion(el.dataset.rgn),
+  'uz':()=>{const fi=document.getElementById('fi');if(fi)fi.click();},
+  'smt.sort':(el)=>sortSMT(el.dataset.key), 'site.del':(el)=>delS(el.dataset.sid), 'site.addModal':()=>openSM(null),
+  'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('복사할 전월 계획이 없거나 이미 입력되어 있습니다');},
+  'panel.tab':(el)=>setTab(el.dataset.tab), 'panel.ai':(el)=>runAI(el.dataset.sid), 'panel.sort':(el)=>sortPanel(el.dataset.tbl, el),
+  'vac.edit':(el)=>openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf),
+  'ul.cancel':()=>{cancelUL();closeMo();}, 'ul.confirmSite':(el)=>confirmNewSite(el.dataset.name, Number(el.dataset.idx), Number(el.dataset.total))
+});
+// ── [전환 완료] input 액션 ──
+registerActions('input', {
+  'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
+  'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
+  'rec.qsearch':(el)=>{const R=window.__REC;if(!R)return;R.q=el.value;clearTimeout(R._qt);R._qt=setTimeout(recRenderModalBody,150);}, // 목록 내 통합 검색(디바운스) — 피벗 모드도 함께 갱신
+  'rec.menuSearch':(el)=>{const M=window.__RECMENU;if(!M)return;M.q=el.value;const q=M.q.trim().toLowerCase();if(q)M.sel=new Set(M.all.filter(v=>String(v).toLowerCase().includes(q)));recMenuRenderList();},
+  'set.exToken':(el)=>{S.exTk=el.value;localStorage.setItem('exTk',el.value);},
+  'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
+  'site.completion':(el)=>clampYear(el), 'util.clampYear':(el)=>clampYear(el),
+  'panel.plan':(el)=>{autoResize(el);schedulePlanSave(el);}
+});
+// ── [전환 완료] change 액션 (site.upd: 셀렉트도 동일 핸들러로 재사용) ──
+registerActions('change', {
+  'viewer.rm':(el)=>fb2SwitchReportMonth(el.value),
+  'dash.monthYear':(el)=>setDashMonthYear(el.value),
+  'dash.trendYear':(el)=>setTrendYear(el.value), 'site.trendYear':(el)=>setSiteTrendYear(el.value),
+  'team.switch':(el)=>switchTeam(el.value), 'team.rename':(el)=>updTeamName(el.dataset.tid, el.value),
+  'region.rename':(el)=>updRegionName(el.dataset.rgn, el.value), 'fb2.role':(el)=>fb2SetRole(el.dataset.uid, el.value),
+  'site.upd':(el)=>updSite(el.dataset.sid, el.dataset.field, el.value),
+  'site.completion':(el)=>updSite(el.dataset.sid, 'completionDate', el.value),
+  'site.updc':(el)=>updSite(el.dataset.sid, el.dataset.field, el.checked),
+  'panel.detailYear':(el)=>setDetailYear(el.value), 'uz.file':(el)=>onFile(el.files && el.files[0])
+});
+// ── [전환 완료] keydown 액션 ──
+registerActions('keydown', {
+  'auth.emailEnter':(el,e)=>{if(e.key==='Enter'){e.preventDefault();const p=document.getElementById('fbPw');if(p)p.focus();}},
+  'auth.pwEnter':(el,e)=>{if(e.key==='Enter'){e.preventDefault();fbDoLogin();}},
+  'vac.edit':(el,e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf);}}
+});
+// ── [전환 완료] 업로드 존 drag/drop (uz: 단일 data-act, 이벤트별 핸들러) ──
+registerActions('dragover',  {'uz':(el,e)=>{e.preventDefault();el.classList.add('drag');}});
+registerActions('dragleave', {'uz':(el)=>el.classList.remove('drag')});
+registerActions('drop',      {'uz':(el,e)=>{e.preventDefault();el.classList.remove('drag');const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)onFile(f);}});
+
 document.addEventListener('DOMContentLoaded',async()=>{
   document.documentElement.classList.toggle('dark',isDark()); // 렌더 전에 테마 확정 — 밝은 화면이 번쩍이지 않도록
   await ensureVendors(); // vendor/ 로컬 실패 시 CDN 폴백 — 이후 로직이 LZString·Chart 존재를 전제한다
