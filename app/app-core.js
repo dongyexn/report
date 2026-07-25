@@ -148,6 +148,33 @@ function applyTheme(dark){
    const b=document.querySelector('.sb-th1');if(b){b.dataset.tt=dark?'라이트 모드로':'다크 모드로';}}
   fireHook('theme.changed',!!dark);   // 차트 재렌더는 boot가 받아서 처리
 }
+// ── 빌드 식별자 ──
+//   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
+//   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
+const BUILD='2026-07-25.1';
+
+// ── 오류 기록 ──
+//   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
+//   여기 모아두고, 화면에는 한 번만 조용히 알린 뒤 설정에서 내용을 복사해 담당자에게 전달할 수 있게 한다.
+const ERRLOG=[];
+const CRLF_='\n';
+let _errToasted=false;
+function logErr(where,e){
+  const msg=(e&&(e.message||e.reason&&e.reason.message))||String(e&&e.reason||e||'');
+  ERRLOG.push({t:new Date().toISOString().slice(11,19),where:String(where||''),msg:msg.slice(0,300)});
+  if(ERRLOG.length>50)ERRLOG.shift();
+  try{console.error('['+where+']',e);}catch(_){}
+  if(!_errToasted){
+    _errToasted=true;
+    setTimeout(()=>{try{toast('일부 기능에서 오류가 발생했습니다 · 새로고침(Ctrl+F5) 후에도 계속되면 담당자에게 알려주세요',8000);}catch(_){}},400);
+  }
+}
+function errLogText(){
+  return 'build '+BUILD+' · '+navigator.userAgent+CRLF_+ERRLOG.map(x=>`[${x.t}] ${x.where}: ${x.msg}`).join(CRLF_);
+}
+window.addEventListener('error',e=>logErr('window',e.error||e.message));
+window.addEventListener('unhandledrejection',e=>logErr('promise',e));
+
 // ── 계층 훅 ──
 //   아래 계층(core·data)이 위 계층(view·boot)의 함수를 직접 부르면 의존 방향이 뒤집힌다.
 //   그래서 아래는 '알리기만' 하고(fireHook), 위가 '받아서 처리한다'(onHook). 등록은 boot에서 한 곳에 모아둔다.

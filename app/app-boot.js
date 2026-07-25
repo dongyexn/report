@@ -293,6 +293,8 @@ function nd(v){
 
 // SETTINGS
 function loadSettings(){
+  {const b=document.getElementById('buildInfo');
+   if(b)b.textContent='버전 '+BUILD+(ERRLOG.length?(' · 기록된 오류 '+ERRLOG.length+'건'):' · 오류 없음');}
   {const d=document.getElementById('darkChk');if(d)d.checked=isDark();} // 다크 모드 토글 상태 복원
   document.getElementById('cfgc').value=S.ck||'';
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
@@ -612,19 +614,19 @@ function printThemeSwap(toLight){
         if(!el||!el.options)return;
         if(isDonut){ if(map[el.options.borderColor])el.options.borderColor=map[el.options.borderColor]; } // 조각 색은 고정 팔레트라 건드리지 않음
         else _swapColors(el.options,map,4);
-      }));}catch(e){console.warn('[print] 요소 색 교체 실패',e);}
+      }));}catch(e){logErr('print.요소 색 교체 실패',e);}
       try{ch.draw();}catch(_){} // 다음 프레임을 기다리지 않고 지금 칠한다(Ctrl+P는 대기 시간이 없다)
     });
-  }catch(e){console.warn('[print] 차트 색 전환 실패',e);}
+  }catch(e){logErr('print.차트 색 전환 실패',e);}
 }
 window.addEventListener('beforeprint',()=>printThemeSwap(true));
 window.addEventListener('afterprint',()=>printThemeSwap(false));
 
 function themeRefresh(){
   CSSVAR.clear();
-  try{Object.keys(S.charts||{}).forEach(k=>dC(k));}catch(e){console.warn('[theme] chart reset',e);}
+  try{Object.keys(S.charts||{}).forEach(k=>dC(k));}catch(e){logErr('theme.chart reset',e);}
   try{applyChartTheme();}catch(_){}
-  try{if(S.view==='site'&&S.sid)rSite(S.sid);else rDash();}catch(e){console.warn('[theme] rerender',e);}
+  try{if(S.view==='site'&&S.sid)rSite(S.sid);else rDash();}catch(e){logErr('theme.rerender',e);}
 }
 window.themeRefresh=themeRefresh;
 
@@ -705,7 +707,7 @@ async function exportSnapshot(){
       docHtml=await(await fetch('index.html',{cache:'no-cache'})).text();
       for(const f of APP_PARTS)appTxt[f]=await(await fetch(f,{cache:'no-cache'})).text();
       for(const v of VENDOR)vendTxt[v]=await(await fetch(v,{cache:'no-cache'})).text();
-    }catch(e){console.error('[snap] 원본 fetch 실패',e);toast('스냅샷 생성 실패 · 앱·라이브러리 파일 로드 불가');return;}
+    }catch(e){logErr('snap.원본 fetch 실패',e);toast('스냅샷 생성 실패 · 앱·라이브러리 파일 로드 불가');return;}
     // ⚠ CSP 해시는 HTML 파서의 줄바꿈 정규화(CRLF→LF) "이후" 본문을 기준으로 검사된다.
     //   CRLF 그대로 해시하면 브라우저 계산값과 어긋나 인라인 앱이 차단됨(스냅샷 전체 먹통의 근본 원인이었음).
     //   → 해시 대상과 삽입 본문을 모두 LF로 정규화해 일치시킨다.
@@ -757,7 +759,7 @@ async function exportSnapshot(){
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
     toast('스냅샷 저장됨 · '+(P?'게시본':'로컬 데이터')+' 기준 '+_label+(months?(' · '+Object.keys(months).length+'개월'):'')+' · '+(html.length/1048576).toFixed(2)+'MB',6000);
-  }catch(e){console.error('[snap] export 실패',e);toast('스냅샷 생성 실패');}
+  }catch(e){logErr('snap.export 실패',e);toast('스냅샷 생성 실패');}
 }
 window.exportSnapshot=exportSnapshot;
 // ====================================================================
@@ -1145,6 +1147,9 @@ registerActions('click', {
   'snap.rm':(el)=>snapSwitchMonth(el.value),
   'set.dark':(el)=>applyTheme(el.checked),
   'theme.toggle':()=>applyTheme(!isDark()),
+  'set.copyErr':()=>{const s=errLogText();
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('버전·오류 기록을 복사했습니다'),()=>toast('복사 실패 · 콘솔을 확인하세요'));
+    else{console.log(s);toast('복사를 지원하지 않는 브라우저입니다 · 콘솔에 출력했습니다');}},
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');}); /* 접을 때 툴팁도 원복 — 안 하면 '접기'가 남는다 */grid.classList.remove('ins-open');if(was)grid.style.height='';{const _t=document.getElementById('htooltip');if(_t)_t.classList.remove('show');} /* 표시 중이던 툴팁은 즉시 숨김 — 다음 호버에 새 문구가 뜨도록 */if(!was){el.classList.add('exp');el.dataset.tt='접기';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
@@ -1232,6 +1237,7 @@ registerActions('dragleave', {'uz':(el)=>el.classList.remove('drag')});
 registerActions('drop',      {'uz':(el,e)=>{e.preventDefault();el.classList.remove('drag');const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)onFile(f);}});
 
 document.addEventListener('DOMContentLoaded',async()=>{
+  console.info('[build]',BUILD);
   document.documentElement.classList.toggle('dark',isDark()); // 렌더 전에 테마 확정 — 밝은 화면이 번쩍이지 않도록
   await ensureVendors(); // vendor/ 로컬 실패 시 CDN 폴백 — 이후 로직이 LZString·Chart 존재를 전제한다
   applyChartTheme();
@@ -1242,7 +1248,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     try{
       if(typeof LZString==='undefined')throw new Error('lz-string 미로드(CDN 차단/오프라인)');
       window.__SNAP__=JSON.parse(LZString.decompressFromBase64(window.__SNAPZ__));
-    }catch(e){console.error('[snap] 압축 해제 실패',e);alert('스냅샷 데이터를 여는 데 실패했습니다.\n네트워크(CDN) 연결 상태에서 다시 열어 주세요.');}
+    }catch(e){logErr('snap.압축 해제 실패',e);alert('스냅샷 데이터를 여는 데 실패했습니다.\n네트워크(CDN) 연결 상태에서 다시 열어 주세요.');}
   }
   if(window.__SNAP__){try{
     let P=window.__SNAP__;
@@ -1260,7 +1266,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     go('dashboard');
     hideCover();progHide(); // 골격 fetch 방식의 coverGate는 기본 표시 상태 — 명시적으로 걷어야 함(라이브 DOM 박제 시절엔 숨김 상태가 우연히 담겨 있었음)
     return;
-  }catch(e){console.error('[snap] boot failed',e);}}
+  }catch(e){logErr('snap.boot failed',e);}}
   // 저장소 영속화 요청 — 하자 원본의 유일 보관소인 IndexedDB가 디스크 압박 시 브라우저에 의해
   // 자동 삭제(eviction)되지 않도록 persist를 요청한다. 거부돼도 동작에는 영향 없음(콘솔로만 알림).
   try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().then(ok=>{if(!ok)console.warn('[storage] 영속화 미승인 — 저장 공간 부족 시 브라우저가 IndexedDB를 정리할 수 있음. 스냅샷·원본 엑셀 백업 유지 권장');}).catch(()=>{});}}catch(_){}

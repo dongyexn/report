@@ -396,8 +396,8 @@ function rDash(){
   const _late=()=>{
     if(rDash._flush!==_late)return;rDash._flush=null;
     if(S.view!=='dashboard')return; // 이탈 시 스킵 — 재진입 시 go()가 rDash를 다시 부름
-    try{buildDashMonthTable();}catch(e){console.error('buildDashMonthTable failed',e);}
-    try{rCharts(all);}catch(e){console.error('rCharts failed',e);}
+    try{buildDashMonthTable();}catch(e){logErr('buildDashMonthTable',e);}
+    try{rCharts(all);}catch(e){logErr('rCharts',e);}
     rInsights(all,tR,tRes,tU,tLt,rate,pRate);
   };
   rDash._flush=_late;

@@ -122,7 +122,7 @@ async function defLoadAll(){
         if(raw)S.def[row.sid]=Object.freeze(JSON.parse(raw)); // freeze: 통째 교체 규약 강제 — push/splice 등 in-place 편집 시 무증상 캐시 스테일 차단
       }catch(e){console.warn('defLoad parse failed for',row.sid,e);}
     }
-  }catch(e){console.warn('defLoadAll failed',e);}
+  }catch(e){logErr('defLoadAll',e);}
 }
 async function defDelete(sid){try{await dbDel('defects',sid);}catch(e){console.warn('defDelete failed',e);}}
 

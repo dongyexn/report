@@ -34,10 +34,19 @@ for (const f of ORDER) {
 const stray = ORDER.filter(f => f !== 'app/app-boot.js' &&
   /(?<!function )onHook\s*\(/.test(src[f].replace(/function onHook[^\n]*/g, '')));
 
-if (violations.length || stray.length) {
+// 훅 이름 짝 검사 — fireHook('오타')는 조용히 아무 일도 안 하므로 이름이 어긋나면 즉시 실패시킨다.
+const all = ORDER.map(f => src[f]).join('\n');
+const fired = new Set([...all.matchAll(/fireHook\(\s*'([^']+)'/g)].map(m => m[1]));
+const handled = new Set([...all.matchAll(/onHook\(\s*'([^']+)'/g)].map(m => m[1]));
+const noHandler = [...fired].filter(n => !handled.has(n));
+const neverFired = [...handled].filter(n => !fired.has(n));
+
+if (violations.length || stray.length || noHandler.length || neverFired.length) {
   console.error('계층 방향 위반:');
   violations.slice(0, 30).forEach(v => console.error('  ' + v));
   stray.forEach(f => console.error(`  ${f}: onHook 등록은 app-boot.js 에서만 해야 합니다`));
+  noHandler.forEach(n => console.error(`  fireHook('${n}') — 받는 onHook 이 없습니다(오타이거나 등록 누락)`));
+  neverFired.forEach(n => console.error(`  onHook('${n}') — 아무도 부르지 않습니다(불필요하거나 호출부 오타)`));
   process.exit(1);
 }
-console.log(`계층 방향 OK — ${ORDER.length}개 파일, 역방향 호출 0`);
+console.log(`계층 방향 OK — 역방향 호출 0 · 훅 ${fired.size}종 모두 짝 맞음`);
