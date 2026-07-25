@@ -264,7 +264,27 @@ function attachSBTip(){if(window._sbTipAttached)return;window._sbTipAttached=tru
 // 페이드아웃 완료 후 sb-mode 클래스 해제 (다른 툴팁 호출에 영향 안 주게)
 tip.addEventListener('transitionend',e=>{if(e.propertyName==='opacity'&&!tip.classList.contains('show'))tip.classList.remove('sb-mode');});
 }
-function attachTitleTip(){if(window._ttTipAttached)return;window._ttTipAttached=true;const tip=document.getElementById('htooltip');if(!tip)return;const show=(e,t)=>{const txt=t.dataset.tt;if(!txt)return;tip.innerHTML=`<div style="font-size:11.5px;font-weight:500">${esc(txt)}</div>`;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');};const hide=()=>tip.classList.remove('show');document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tt]');if(t)show(e,t);});document.addEventListener('mousemove',e=>{if(tip.classList.contains('show')&&!tip.classList.contains('sb-mode')&&e.target.closest('[data-tt]')){tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';}});document.addEventListener('mouseout',e=>{const t=e.target.closest('[data-tt]');if(t&&!e.relatedTarget?.closest('[data-tt]'))hide();});}
+function attachTitleTip(){if(window._ttTipAttached)return;window._ttTipAttached=true;
+  const tip=document.getElementById('htooltip');if(!tip)return;
+  // 커서 위에 띄우되, 화면 위/좌우로 벗어나면 방향을 뒤집거나 안쪽으로 민다(상단바 버튼이 잘리던 문제).
+  const place=(x,y)=>{
+    tip.classList.remove('below');
+    tip.style.left=x+'px';tip.style.top=y+'px';
+    let r=tip.getBoundingClientRect();
+    if(r.top<6){tip.classList.add('below');r=tip.getBoundingClientRect();}   // 위가 잘리면 아래로
+    let dx=0;
+    if(r.left<6)dx=6-r.left;
+    else if(r.right>window.innerWidth-6)dx=window.innerWidth-6-r.right;
+    if(dx)tip.style.left=(x+dx)+'px';
+  };
+  const show=(e,t)=>{const txt=t.dataset.tt;if(!txt)return;
+    tip.innerHTML=`<div style="font-size:11.5px;font-weight:500">${esc(txt)}</div>`;
+    tip.classList.remove('gl');tip.classList.remove('sb-mode');tip.classList.add('show');
+    place(e.clientX,e.clientY);};
+  const hide=()=>{tip.classList.remove('show');tip.classList.remove('below');};
+  document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tt]');if(t)show(e,t);});
+  document.addEventListener('mousemove',e=>{if(tip.classList.contains('show')&&!tip.classList.contains('sb-mode')&&e.target.closest('[data-tt]'))place(e.clientX,e.clientY);});
+  document.addEventListener('mouseout',e=>{const t=e.target.closest('[data-tt]');if(t&&!e.relatedTarget?.closest('[data-tt]'))hide();});}
 // 모바일 KPI 카드 탭 애니메이션 — 터치기기에선 비대화형 div에 :active가 안정적으로 안 걸리므로 JS로 클래스 토글
 function attachKpiTap(){if(window._kpiTapAttached)return;window._kpiTapAttached=true;
   let cur=null;
