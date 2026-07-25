@@ -330,7 +330,7 @@ function fb2RoleLabel(r){return r==='editor'?'관리자':(r==='blocked'?'차단'
 // ===== 계정 카드(사이드바 하단) + 계정 모달(이름/비밀번호 변경·로그아웃) =====
 function fb2AcctNick(){const u=FB2.user;if(!u)return'';const email=u.email||'';return String(u.displayName||(FB2.userRec&&FB2.userRec.name)||email.split('@')[0]||'').trim();}
 function fb2RenderAcct(){
-  const card=document.getElementById('sbAcct');if(!card)return;
+  const card=document.getElementById('sbFoot');if(!card)return;
   const u=FB2.user;
   if(!u||!FB2.ready){card.style.display='none';return;}
   const email=u.email||'', nick=fb2AcctNick()||'사용자', role=FB2.role||'viewer';

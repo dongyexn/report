@@ -113,13 +113,27 @@ html.dark .md-doc code,html.dark .md-doc pre{background:var(--surf3);}
 #mb.has-x .mo-x{display:inline-flex;} /* 자체 닫기 버튼이 없는 모달(사용 안내)에서만 노출 */
 .mo-x .icn{width:17px;height:17px;}
 
-/* 사이드바 테마 전환 — 프로필 줄 오른쪽 아이콘 하나(해↔달 토글) */
-.sb-th1{flex:0 0 auto;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+/* 사이드바 하단 — [아이콘·이름·역할] | 구분선 | [테마 버튼] */
+.sb-foot{position:relative;margin:10px 0 3px;display:flex;align-items:center;gap:8px;}
+.sb-foot::before{content:"";position:absolute;left:8px;right:8px;top:-5px;height:1px;background:var(--sep);}
+.sb-foot .sb-acct{flex:1;min-width:0;margin:0;}
+.sb-foot .sb-acct::before{display:none;}
+.sb-th1{flex:0 0 auto;position:relative;width:34px;height:34px;margin-left:2px;padding-left:9px;
+        display:inline-flex;align-items:center;justify-content:center;border-radius:9px;
         color:var(--lbl3);background:transparent;cursor:pointer;transition:background var(--tr),color var(--tr);}
+.sb-th1::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;background:var(--sep);} /* 영역 구분선 */
 .sb-th1:hover{background:var(--fill);color:var(--bt1);}
-.sb-th1 .icn{width:16px;height:16px;}
+.sb-th1 .icn{width:17px;height:17px;}
+body.sb-collapsed .sb-th1{display:none;}
 @media print{.sb-th1{display:none!important;}}
 body.sb-collapsed .sb-theme{flex-direction:column;padding:4px;}
+
+/* 차트 범례·툴팁 색 표식 — 인라인 스타일이면 인쇄 미디어가 못 덮으므로 클래스로 둔다 */
+.ck-d60{background:var(--ch-d60)!important;}
+.ck-d30{background:var(--ch-d30)!important;}
+.ck-d0{background:var(--ch-d0)!important;}
+.ck-recv{border-color:var(--ch-recv)!important;}
+.ck-done{border-color:var(--ch-done)!important;}
 
 /* LAYOUT */
 #app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
@@ -1577,12 +1591,13 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
       <div class="nic"><svg class="icn" aria-hidden="true"><use href="#i-settings"></use></svg></div>
       <span class="nil" style="font-size:13px">설정</span>
     </div>
-    <div class="sb-acct" id="sbAcct" data-act="acct.open" data-tt="계정 · 이름/비밀번호 변경" aria-label="계정 · 이름/비밀번호 변경" style="display:none">
+    <div class="sb-foot" id="sbFoot" style="display:none"><div class="sb-acct" id="sbAcct" data-act="acct.open" data-tt="계정 · 이름/비밀번호 변경" aria-label="계정 · 이름/비밀번호 변경">
       <div class="sb-acct-av" id="sbAcctAv"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg></div>
       <div class="sb-acct-info"><div class="sb-acct-name" id="sbAcctName">—</div></div>
-      <button class="sb-th1" data-act="theme.toggle" data-tt="다크 모드" aria-label="테마 전환"><svg class="icn" aria-hidden="true"><use href="#i-sun" id="thIcon"></use></svg></button><span class="sb-acct-role" id="sbAcctRole"></span>
+      <span class="sb-acct-role" id="sbAcctRole"></span>
+      </div>
+      <button class="sb-th1" data-act="theme.toggle" data-tt="다크 모드로" aria-label="테마 전환"><svg class="icn" aria-hidden="true"><use href="#i-sun" id="thIcon"></use></svg></button>
     </div>
-    
   </div>
 </aside>
 <main id="main">

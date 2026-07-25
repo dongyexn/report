@@ -519,7 +519,8 @@ function doPrint(){
         // trade tbody 행 복원
         if(tradeAllCard){const tb=tradeAllCard.querySelector('[id^="trade-"] tbody');if(tb)[...tb.querySelectorAll('tr')].forEach(tr=>tr.classList.remove('sp-hide-print'));}
       };
-      setTimeout(()=>{window.print();setTimeout(_restore,500);},80);
+      printThemeSwap(true); // 인쇄 색으로 먼저 전환(캔버스는 CSS가 안 닿음)
+    setTimeout(()=>{window.print();setTimeout(()=>{printThemeSwap(false);_restore();},500);},80);
       return;
     }
   }
@@ -552,10 +553,13 @@ function doPrint(){
       if(moCard)moCard.classList.remove('sp-dash-month');
       _added.forEach(n=>{if(n&&n.parentNode)n.parentNode.removeChild(n);});
     };
-    setTimeout(()=>{window.print();setTimeout(_restoreDash,500);},80);
+    printThemeSwap(true);
+    setTimeout(()=>{window.print();setTimeout(()=>{printThemeSwap(false);_restoreDash();},500);},80);
     return;
   }
+  printThemeSwap(true);
   window.print();
+  setTimeout(()=>printThemeSwap(false),500);
 }
 
 // MODAL / TOAST
@@ -679,7 +683,12 @@ function printThemeSwap(toLight){
   try{
     Object.values(S.charts||{}).forEach(ch=>{
       if(!ch||ch.$destroyed)return;
-      _swapColors(ch.data.datasets,map,0);
+      const isDonut=(ch.config&&ch.config.type==='doughnut')||(ch.data.datasets[0]&&ch.data.datasets[0].data&&!ch.options.scales);
+      if(isDonut){ // 도넛 팔레트는 테마 무관 고정 — 색을 바꾸면 조각 색이 뒤섞인다. 테두리만 배경색으로.
+        ch.data.datasets.forEach(ds=>{ if(typeof ds.borderColor==='string'&&map[ds.borderColor])ds.borderColor=map[ds.borderColor]; });
+      }else{
+        _swapColors(ch.data.datasets,map,0);
+      }
       _swapColors(ch.options.scales,map,0);
       _swapColors(ch.options.plugins,map,0);
       const ct=ch.options.plugins&&ch.options.plugins.centerText;
