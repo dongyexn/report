@@ -260,7 +260,7 @@ registerActions('click', {
     const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r({months:v,font:font});},
   'snap.rm':(el)=>snapSwitchMonth(el.value),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
-  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
+  'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.dataset.tt=el.classList.contains('exp')?'접기':'펼치기 — 현장·공종별 상세';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
   'dash.insTr':(el)=>openRecList('__team',el.dataset.scope||'ul',el.dataset.tr||'',''), // 상세 공종 행 → 공종 필터 팀 목록
   'dash.insList':(el)=>{openRecList('__team',el.dataset.scope||'ul','','');const R=window.__REC;if(!R)return;const k=el.dataset.fk,v=el.dataset.fv;if(k&&v!=null){R.valueFilters[k]=new Set([v]);R.filterRow=true;recRenderModalBody();}}, // 팀 목록 열고 카드 주제(보수주체·유형·업체) 필터 적용
@@ -900,13 +900,14 @@ function pickSnapMonths(list,defRm){
     let fontOn=false;try{fontOn=!!localStorage.getItem('snapFont');}catch(_){}
     const rows=list.map(m=>`<label class="share-row" style="cursor:pointer"><span class="share-info"><b>${esc(m)}</b>${m===defRm?'<span style="margin-left:8px;font-size:11px;color:var(--b700)">현재</span>':''}</span><input type="checkbox" class="snap-mo" value="${esc(m)}"${m===defRm?' checked':''} style="width:17px;height:17px;accent-color:var(--b600)"></label>`).join('<div class="share-sep"></div>');
     const moBlock=list.length>1
-      ? '<p style="font-size:12.5px;color:var(--lbl2);line-height:1.6;margin:2px 0 10px">담을 <b>기준월</b>을 고르세요. 두 달 이상 담으면 파일 안에서 기준월을 바꿔가며 볼 수 있고, 그만큼 파일이 커집니다(월당 수백 KB~수 MB).</p>'+rows+'<div style="height:14px"></div>'
+      ? '<div class="opt-sec">포함할 기준월</div><p class="opt-note">두 달 이상 담으면 파일 안에서 기준월을 바꿔가며 볼 수 있습니다(월당 수백 KB~수 MB).</p>'+rows+'<div class="opt-div"></div>'
       : '';
-    document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:52vh">'+moBlock+
-      '<label class="share-row" style="cursor:pointer"><span class="share-info"><b>글꼴 포함</b><span>어느 PC에서 열어도 화면과 같은 글꼴로 보입니다 · 파일이 약 1.5MB 커집니다</span></span>'+
+    document.getElementById('mbody').innerHTML='<div class="md-scroll" style="max-height:56vh">'+moBlock+
+      '<div class="opt-sec">글꼴</div>'+
+      '<label class="share-row" style="cursor:pointer"><span class="share-info"><b>글꼴 포함</b><span>어느 PC에서 열어도 화면과 같은 글꼴로 보입니다 · 약 1.5MB 증가</span></span>'+
       '<input type="checkbox" id="snapFontChk"'+(fontOn?' checked':'')+' style="width:18px;height:18px;accent-color:var(--b600)"></label></div>';
     document.getElementById('mf').innerHTML=(list.length>1?'<button class="btn bo bsm" data-act="snapPick.all">전체 선택</button>':'')+'<div style="flex:1"></div><button class="btn bg2 bsm" data-act="snapPick.cancel">취소</button><button class="btn bp bsm" data-act="snapPick.ok">내보내기</button>';
-    const mb=document.getElementById('mb');if(mb)mb.classList.add('wide');
+    const mb=document.getElementById('mb');if(mb){mb.classList.remove('wide');mb.classList.add('narrow');} // 항목이 적어 좁은 폭
     openMo();
   });
 }
@@ -2702,7 +2703,7 @@ function insDetailHTML(ttl){
 }
 // 카드에 확장 토글 속성 부착 — safeHTML(ALLOW_DATA_ATTR:false·속성 화이트리스트)이 data-act를 제거하므로 살균 후 DOM에서 부여.
 // 제목은 .ic-ttl 텍스트에서 읽어 세 렌더 경로(규칙 선정·AI 재작성·스냅샷 임베드) 공통으로 동작.
-function insCollapseAll(){const g=document.getElementById('d-insight');if(!g)return false;const c=g.querySelector('.ic.exp');if(!c)return false;c.classList.remove('exp');c.setAttribute('aria-expanded','false');g.classList.remove('ins-open');g.style.height='';return true;}
+function insCollapseAll(){const g=document.getElementById('d-insight');if(!g)return false;const c=g.querySelector('.ic.exp');if(!c)return false;c.classList.remove('exp');c.dataset.tt='펼치기 — 현장·공종별 상세';c.setAttribute('aria-expanded','false');g.classList.remove('ins-open');g.style.height='';return true;}
 function insBindCards(){
   const el=document.getElementById('d-insight');if(!el)return;
   el.classList.remove('ins-open');el.style.height=''; // 재렌더 시 확장 잔여 상태 초기화 — 남으면 전 카드가 투명·클릭불가로 잠김
@@ -2711,6 +2712,7 @@ function insBindCards(){
     const t=tt.textContent.trim();
     if(t==='데이터 없음'||t==='주요 이슈 없음')return; // 안내 카드는 확장 대상 아님
     c.dataset.act='dash.insToggle';c.dataset.instt=t;
+    c.dataset.tt='펼치기 — 현장·공종별 상세'; // 접힌 상태 안내(펼치면 제거)
     c.setAttribute('role','button');c.setAttribute('tabindex','0');c.setAttribute('aria-expanded','false');
   });
 }
@@ -4098,7 +4100,7 @@ function closeMo(){
   window.__REC=null;
   // 닫힘 애니메이션(약 .22s)이 끝난 뒤 wide 해제 — 닫히는 도중 너비가 갑자기 줄어들지 않도록
   const mb=document.getElementById('mb');
-  if(mb){clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide');},240);}
+  if(mb){clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow');},240);}
   try{if(_moPrevFocus&&_moPrevFocus.focus)_moPrevFocus.focus();}catch(_){}
   _moPrevFocus=null;
 }
