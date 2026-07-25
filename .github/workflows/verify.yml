@@ -1,0 +1,52 @@
+name: 검증
+
+# 배포 전에 자동으로 돌린다 — 사람이 잊어도 회귀가 새어 나가지 않도록.
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 구문 검사
+        run: |
+          for f in app/app-core.js app/app-data.js app/app-view.js app/app-boot.js; do node --check $f; done
+          node -e "const fs=require('fs');const h=fs.readFileSync('index.html','utf8');
+            for(const f of ['app/app-core.js','app/app-data.js','app/app-view.js','app/app-boot.js']){
+              if(!fs.existsSync(f))throw new Error(f+' 누락');
+              if(!h.includes('<script src=\"./'+f+'\"></script>'))throw new Error('index.html에 '+f+' 태그 없음');}
+            for(const v of ['lz-string.min.js','chart.umd.min.js','purify.min.js','xlsx.full.min.js','PretendardVariable.woff2'])
+              if(!fs.existsSync('vendor/'+v))throw new Error('vendor/'+v+' 누락');
+            console.log('구문·구조 OK');"
+
+      - name: 계층 방향 검사
+        run: node tests/deps.mjs
+
+      - name: Playwright 설치
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i -D playwright@1.56.0 --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: 앱 검증(셀프테스트·클릭 전수·불변식·스냅샷)
+        run: node tests/ci.mjs
+
+      - name: 실패 시 스크린샷 업로드
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 실패-아티팩트
+          path: |
+            /tmp/ci-snapshot.html
+          if-no-files-found: ignore
+          retention-days: 7
