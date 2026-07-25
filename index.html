@@ -28,6 +28,9 @@
 --ch-recv:#3E71D2;                     /* 전체 접수 라인 */
 --ch-done:#F0B144;                     /* 처리 완료 라인 */
 --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434;   /* 데이터라벨 */
+--ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42);  /* 격자·축 제목 */
+--ch-seg:#fff;                          /* 도넛 조각 사이 테두리 = 카드 배경색 */
+--ch-dlr:#2C437C; --ch-dld:#A0590A;     /* 라인 끝 데이터라벨(접수·처리) */
 --ch-ink:#1C1C1E;                      /* 축·범례 글자 */
 --ch-bg:#fff;                          /* 포인트·라벨 배경 */
 --surf1:#FAFBFC; --surf2:#F5F7FA; --surf3:#E9EDF2;   /* 보조 표면 */
@@ -77,9 +80,12 @@ html.dark{
   --bt1:#9DBDEA; --bt2:#C6DAF5;   /* 어두운 배경 위 파랑 글자는 밝게 */
   --ct:rgba(236,236,236,.82);      /* 사이드바 현장명 등 보조 글자 */
   --gn:#4ADE80; --rd:#F87171; --am:#FBBF24;
-  --ch-d60:#C9635B; --ch-d60h:#DE7E76; --ch-d30:#D98D8A; --ch-d30h:#EAA9A7;
-  --ch-d0:#8AA3BE; --ch-d0h:#A8BDD4; --ch-recv:#7FA9E0; --ch-done:#E2B457;
-  --ch-lbl:#DDE6F5; --ch-lbl2:#EAA9A7; --ch-ink:#ECECEC; --ch-bg:#212121;
+  --ch-d60:#B4544B; --ch-d60h:#CB6B62; --ch-d30:#C98C86; --ch-d30h:#DCA5A0;
+  --ch-d0:#7B90A8; --ch-d0h:#93A8BF; --ch-recv:#8FB5E8; --ch-done:#E8BE62;
+  --ch-lbl:#E8EEF8; --ch-lbl2:#F2C9C7; --ch-ink:#D8D8D8; --ch-bg:#212121;
+  --ch-grid:rgba(255,255,255,.09); --ch-axis:rgba(236,236,236,.42);
+  --ch-seg:#212121;                      /* 흰 테두리 대신 카드 배경색 — 조각이 서로 붙어 보이지 않게 */
+  --ch-dlr:#A9C7EE; --ch-dld:#EFC873;
   --glass:rgba(33,33,33,.88); --glass2:rgba(25,25,25,.80); --glass3:rgba(33,33,33,.92);
   color-scheme:dark;
 }
@@ -97,7 +103,8 @@ html.dark .md-doc code,html.dark .md-doc pre{background:var(--surf3);}
     --b500:#538CDE; --b600:#3E71D2; --b700:#3259B6; --b800:#304D9D; --b900:#2C437C; --b950:#1F2B4C;
     --gn:#16A34A; --rd:#DC2626; --am:#D97706;
     --ch-d60:#DA6A60; --ch-d30:#E89C9A; --ch-d0:#B3C7DD; --ch-recv:#3E71D2; --ch-done:#F0B144;
-    --ch-lbl:#1F2B4C; --ch-ink:#1C1C1E; --ch-bg:#fff;
+    --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434; --ch-ink:#1C1C1E; --ch-bg:#fff;
+    --ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42); --ch-seg:#fff; --ch-dlr:#2C437C; --ch-dld:#A0590A;
     --glass:rgba(255,255,255,.88); --glass2:rgba(255,255,255,.75); --glass3:rgba(255,255,255,.92);
     color-scheme:light;
   }

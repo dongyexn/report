@@ -625,12 +625,12 @@ function progHide(){const o=document.getElementById('uprog');if(o)o.classList.re
 // 메인 스레드에 페인트 기회를 줘서 진행률 바가 실제로 갱신되게 함
 function nextFrame(){return new Promise(r=>{let done=false;const fin=()=>{if(done)return;done=true;r();};requestAnimationFrame(()=>requestAnimationFrame(fin));setTimeout(fin,60);});}
 // ── 차트 색상 ──
-function chartInk(){return '#3C3C43';}
-function chartGrid(){return 'rgba(0,0,0,.05)';}
-function chartAxisTitle(){return 'rgba(60,60,67,.42)';}
-function chartSegBorder(){return '#fff';}
-function dlBlue(){return '#2C437C';}
-function dlAmber(){return '#A0590A';}
+function chartInk(){return cvar('--ch-ink','#3C3C43');}
+function chartGrid(){return cvar('--ch-grid','rgba(0,0,0,.05)');}
+function chartAxisTitle(){return cvar('--ch-axis','rgba(60,60,67,.42)');}
+function chartSegBorder(){return cvar('--ch-seg','#fff');} // 다크에서는 카드 배경색 — 흰 테두리가 눈에 튀지 않도록
+function dlBlue(){return cvar('--ch-dlr','#2C437C');}
+function dlAmber(){return cvar('--ch-dld','#A0590A');}
 function dlInk(){return cvar('--ch-ink','#1C1C1E');}
 function dlStroke(){return '#fff';}
 // 추이차트 데이터라벨 자동 조절 — 막대 실폭(catW)에 맞춰 폰트 크기·표시 정책 결정.
@@ -642,7 +642,13 @@ function moDLCfg(ctx){
   const size=catW>=50?11:catW>=42?10:catW>=34?9:catW>=27?8:7;
   return {size,catW,showInner:catW>=46,totalEvery:catW>=26?1:2};
 }
-function donutPalette(){return [cvar('--ch-lbl','#1F2B4C'),'#2C437C','#304D9D','#3259B6',cvar('--ch-recv','#3E71D2'),'#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC',cvar('--ch-d0','#B3C7DD')];}
+// 도넛 팔레트 — 라이트는 진한 남색→연한 파랑, 다크는 어두운 남색이 배경에 묻히므로
+//   '밝은 하늘 → 중간 파랑' 밴드만 사용해 12조각이 모두 보이게 한다.
+function donutPalette(){
+  if(document.documentElement.classList.contains('dark'))
+    return ['#E7EFFA','#CCDDF3','#B2CBEC','#98B9E5','#7FA7DD','#6C96D0','#5D86C0','#517AB0','#476E9E','#3F638C','#38597B','#8FA3B8'];
+  return [cvar('--ch-lbl','#1F2B4C'),'#2C437C','#304D9D','#3259B6',cvar('--ch-recv','#3E71D2'),'#538CDE','#74ABE6','#A0C8F0','#C7DDF6','#DFEBFA','#EAF2FC',cvar('--ch-d0','#B3C7DD')];
+}
 function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 // 테마 갱신 진입점 — 색 토큰(CSS 변수)을 바꾼 뒤 이걸 호출하면 차트까지 새 색으로 다시 그린다.
 //   차트는 생성 시 색을 굽기 때문에 인스턴스를 파기하고 현재 화면만 재렌더한다. (다크모드 전환에서 사용)
