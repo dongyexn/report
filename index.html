@@ -28,14 +28,9 @@
 --ch-recv:#3E71D2;                     /* 전체 접수 라인 */
 --ch-done:#F0B144;                     /* 처리 완료 라인 */
 --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434;   /* 데이터라벨 */
---ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42);  /* 격자·축 제목 */
---ch-seg:#fff;                          /* 도넛 조각 사이 테두리 = 카드 배경색 */
---ch-stroke:#fff;                       /* 데이터라벨 외곽선 = 차트 배경색 */
+--ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42);  /* 격자·축 제목 */                          /* 도넛 조각 사이 테두리 = 카드 배경색 */                       /* 데이터라벨 외곽선 = 차트 배경색 */
 --pv-grp:#F4F6F9;                       /* 피벗 그룹(상위 행) 배경 */
---ch-dlr:#2C437C; --ch-dld:#A0590A;     /* 라인 끝 데이터라벨(접수·처리) */
---ch-ink:#1C1C1E;                      /* 축·범례 글자 */
---ch-bg:#fff;                          /* 포인트·라벨 배경 */
---surf1:#FAFBFC; --surf2:#F5F7FA; --surf3:#E9EDF2;   /* 보조 표면 */
+--ch-dlr:#2C437C; --ch-dld:#A0590A;     /* 라인 끝 데이터라벨(접수·처리) */                      /* 축·범례 글자 */                          /* 포인트·라벨 배경 */ --surf2:#F5F7FA; --surf3:#E9EDF2;   /* 보조 표면 */
 --bt1:#3259B6; --bt2:#1F2B4C;   /* 파랑 '글자'용 — 배경·그라데이션용(b400~950)과 분리 */
 --glass:rgba(255,255,255,.88); --glass2:rgba(255,255,255,.75); --glass3:rgba(255,255,255,.92); /* 반투명 표면(사이드바·상단바·탭바) */
 --rsm:8px;--rmd:12px;--rlg:16px;--rxl:20px;--rp:999px;
@@ -72,7 +67,7 @@ svg{display:block;flex-shrink:0;}
 /* ── 다크 모드 ── html.dark 에서 토큰만 재정의한다(개별 규칙은 손대지 않음).
    인쇄는 항상 밝은 값으로 강제 — 보고서 출력물이 검게 나오면 안 된다. */
 html.dark{
-  --bg:#191919; --bg2:#212121; --surf1:#262626; --surf2:#2A2A2A; --surf3:#333333;
+  --bg:#191919; --bg2:#212121; --surf2:#2A2A2A; --surf3:#333333;
   --fill:rgba(255,255,255,.06); --fill2:rgba(255,255,255,.11);
   --sep:rgba(255,255,255,.12); --sepo:rgba(255,255,255,.22);
   --lbl:#ECECEC; --lbl2:rgba(236,236,236,.80); --lbl3:rgba(236,236,236,.60);
@@ -84,10 +79,8 @@ html.dark{
   --gn:#4ADE80; --rd:#F87171; --am:#FBBF24;
   --ch-d60:#B4544B; --ch-d60h:#CB6B62; --ch-d30:#C98C86; --ch-d30h:#DCA5A0;
   --ch-d0:#6E9BD6; --ch-d0h:#87ACE0; --ch-recv:#8FB5E8; --ch-done:#E8BE62;   /* 30일 미만 — 어둡게가 아니라 채도를 올려 또렷하게 */
-  --ch-lbl:#E8EEF8; --ch-lbl2:#F2C9C7; --ch-ink:#D8D8D8; --ch-bg:#212121;
-  --ch-grid:rgba(255,255,255,.09); --ch-axis:rgba(236,236,236,.42);
-  --ch-seg:#212121;                      /* 흰 테두리 대신 카드 배경색 — 조각이 서로 붙어 보이지 않게 */
-  --ch-stroke:#212121;                   /* 라벨 외곽선도 배경색 — 흰 테두리가 도드라지지 않게 */
+  --ch-lbl:#E8EEF8; --ch-lbl2:#F2C9C7;
+  --ch-grid:rgba(255,255,255,.09); --ch-axis:rgba(236,236,236,.42);                      /* 흰 테두리 대신 카드 배경색 — 조각이 서로 붙어 보이지 않게 */                   /* 라벨 외곽선도 배경색 — 흰 테두리가 도드라지지 않게 */
   --pv-grp:#2E2E2E;                      /* 피벗 그룹 행 — 본문보다 살짝 밝은 회색 */
   --ch-dlr:#A9C7EE; --ch-dld:#EFC873;
   --glass:rgba(33,33,33,.88); --glass2:rgba(25,25,25,.80); --glass3:rgba(33,33,33,.92);
@@ -102,14 +95,12 @@ html.dark .md-doc code,html.dark .md-doc pre{background:var(--surf3);}
     --fill:rgba(120,120,128,.12); --fill2:rgba(120,120,128,.18);
     --sep:rgba(60,60,67,.13); --sepo:#C6C6C8;
     --lbl:#1C1C1E; --lbl2:rgba(60,60,67,.58); --lbl3:rgba(60,60,67,.45);
-    --b50:#F1F7FD; --b100:#DFEBFA; --b200:#C7DDF6; --b300:#A0C8F0; --b400:#74ABE6;
-    --surf1:#FAFBFC; --bt1:#3259B6; --bt2:#1F2B4C; --ct:#5C5C60;
+    --b50:#F1F7FD; --b100:#DFEBFA; --b200:#C7DDF6; --b300:#A0C8F0; --b400:#74ABE6; --bt1:#3259B6; --bt2:#1F2B4C; --ct:#5C5C60;
     --b500:#538CDE; --b600:#3E71D2; --b700:#3259B6; --b800:#304D9D; --b900:#2C437C; --b950:#1F2B4C;
     --gn:#16A34A; --rd:#DC2626; --am:#D97706;
     --ch-d60:#DA6A60; --ch-d30:#E89C9A; --ch-d0:#B3C7DD; --ch-recv:#3E71D2; --ch-done:#F0B144;
-    --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434; --ch-ink:#1C1C1E; --ch-bg:#fff;
-    --ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42); --ch-seg:#fff; --ch-dlr:#2C437C; --ch-dld:#A0590A;
-    --ch-stroke:#fff; --pv-grp:#F4F6F9;
+    --ch-lbl:#1F2B4C; --ch-lbl2:#7A3434;
+    --ch-grid:rgba(0,0,0,.05); --ch-axis:rgba(60,60,67,.42); --ch-dlr:#2C437C; --ch-dld:#A0590A; --pv-grp:#F4F6F9;
     --glass:rgba(255,255,255,.88); --glass2:rgba(255,255,255,.75); --glass3:rgba(255,255,255,.92);
     color-scheme:light;
   }
@@ -646,7 +637,7 @@ table.dt-detail th{text-align:center!important;}
 .pv-table th.pv-th{cursor:pointer;user-select:none;transition:background .1s;}
 .pv-table th.pv-th:hover{background:var(--surf3);}
 .pv-table td.pv-rh,.pv-table thead th.pv-rh{text-align:left;color:var(--lbl);}
-.pv-table td.pv-tot{font-weight:700;color:var(--bt1);background:var(--surf1);}
+.pv-table td.pv-tot{font-weight:700;color:var(--bt1);background:var(--surf2);}
 .pv-pct{font-size:10px;color:var(--lbl3);margin-left:4px;font-weight:400;}
 /* README(사용 안내) 문서 렌더 */
 .md-scroll{max-height:min(74vh,900px);overflow-y:auto;overscroll-behavior:contain;margin:0 -8px;padding:0 8px;} /* 모달 안에서 문서 전체를 스크롤로 읽기 */

@@ -625,14 +625,14 @@ function progHide(){const o=document.getElementById('uprog');if(o)o.classList.re
 // 메인 스레드에 페인트 기회를 줘서 진행률 바가 실제로 갱신되게 함
 function nextFrame(){return new Promise(r=>{let done=false;const fin=()=>{if(done)return;done=true;r();};requestAnimationFrame(()=>requestAnimationFrame(fin));setTimeout(fin,60);});}
 // ── 차트 색상 ──
-function chartInk(){return cvar('--ch-ink','#3C3C43');}
+function chartInk(){return cvar('--lbl','#1C1C1E');}
 function chartGrid(){return cvar('--ch-grid','rgba(0,0,0,.05)');}
 function chartAxisTitle(){return cvar('--ch-axis','rgba(60,60,67,.42)');}
-function chartSegBorder(){return cvar('--ch-seg','#fff');} // 다크에서는 카드 배경색 — 흰 테두리가 눈에 튀지 않도록
+function chartSegBorder(){return cvar('--bg2','#fff');} // 다크에서는 카드 배경색 — 흰 테두리가 눈에 튀지 않도록
 function dlBlue(){return cvar('--ch-dlr','#2C437C');}
 function dlAmber(){return cvar('--ch-dld','#A0590A');}
-function dlInk(){return cvar('--ch-ink','#1C1C1E');}
-function dlStroke(){return cvar('--ch-stroke','#fff');} // 라벨 외곽선 = 배경색
+function dlInk(){return cvar('--lbl','#1C1C1E');}
+function dlStroke(){return cvar('--bg2','#fff');} // 라벨 외곽선 = 배경색
 // 추이차트 데이터라벨 자동 조절 — 막대 실폭(catW)에 맞춰 폰트 크기·표시 정책 결정.
 // 주차가 많아 막대가 좁아지면: 폰트 축소 → 막대 안 분해값(장기/일반) 생략 → 막대 위 총합 격주 표시.
 // chartArea가 아직 없는 첫 프레임은 opacity 0이라 화면엔 안 보이므로 fallback 값으로 안전.

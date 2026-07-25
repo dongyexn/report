@@ -336,7 +336,6 @@ function fb2RenderAcct(){
   const email=u.email||'', nick=fb2AcctNick()||'사용자', role=FB2.role||'viewer';
   card.style.display='';
   const nm=document.getElementById('sbAcctName');nm.textContent=nick;nm.title=nick;
-  const ml=document.getElementById('sbAcctMail');if(ml){ml.textContent=email;ml.title=email;} // 프로필에서 이메일 표기는 제거됨(요소 없음)
   const rb=document.getElementById('sbAcctRole');rb.textContent=fb2RoleLabel(role);
   rb.className='sb-acct-role '+(role==='editor'?'r-editor':'r-viewer');
 }
