@@ -250,6 +250,8 @@ registerActions('click', {
     if(!v.length){toast('한 개 이상 선택하세요');return;}
     const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r(v);},
   'snap.rm':(el)=>snapSwitchMonth(el.value),
+  'set.snapFont':(el)=>{try{if(el.checked)localStorage.setItem('snapFont','1');else localStorage.removeItem('snapFont');}catch(_){}
+    toast(el.checked?'스냅샷에 글꼴을 포함합니다 · 파일이 커집니다':'스냅샷에서 글꼴을 제외합니다');},
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.setAttribute('aria-expanded','false');});grid.classList.remove('ins-open');if(was)grid.style.height='';if(!was){el.classList.add('exp');el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼
@@ -836,7 +838,7 @@ async function fb2Enter(user){
     if(role==='editor'){
       document.body.classList.remove('viewer');
       const fb=document.getElementById('set-fb');if(fb)fb.style.display='';
-      const su=document.getElementById('set-users');if(su)su.style.display='';
+  const su=document.getElementById('set-users');if(su)su.style.display='';
       fb2SubUsers();
       fb2RefreshMeta();
       if(S.view==='settings')loadSettings();
@@ -1993,7 +1995,9 @@ async function openReadme(){
     const nav=document.createElement('nav');nav.className='rd-nav';nav.setAttribute('aria-label','사용 안내 목차');
     nav.innerHTML=secs.map((s,i)=>`<button type="button" class="rd-navi${i===0?' act':''}" data-act="readme.tab" data-i="${i}">${esc(s.t)}</button>`).join('');
     const body=document.createElement('div');body.className='rd-body md-doc';
-    secs.forEach((s,i)=>{const d=document.createElement('div');d.className='rd-sec'+(i===0?' act':'');s.nodes.forEach(n=>d.appendChild(n));body.appendChild(d);});
+    secs.forEach((s,i)=>{const d=document.createElement('div');d.className='rd-sec'+(i===0?' act':'');s.nodes.forEach(n=>d.appendChild(n));
+      d.querySelectorAll('table').forEach(tb=>{const w=document.createElement('div');w.className='md-tw';tb.parentNode.insertBefore(w,tb);w.appendChild(tb);}); // 좁은 화면에서 표만 가로 스크롤
+      body.appendChild(d);});
     wrap.appendChild(nav);wrap.appendChild(body);
     document.getElementById('mt').textContent='사용 안내 (README)';
     const mbody=document.getElementById('mbody');
@@ -3270,11 +3274,11 @@ function rSite(sid){
   document.getElementById('scontent').innerHTML=`
 <div class="akpi mb12">${kpis}</div>
 <div class="tnav">
-  <button class="tnav-i ${S.tab==='overview'?'act':''}" data-tab="overview" data-act="panel.tab" data-tab="overview">📊 종합</button>
-  <button class="tnav-i ${S.tab==='trade'?'act':''}" data-tab="trade" data-act="panel.tab" data-tab="trade">⚠️ 장기미처리</button>
-  ${showSedae?`<button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" data-act="panel.tab" data-tab="vacant">🏠 공가세대</button>`:''}
-  ${showSangga?`<button class="tnav-i ${S.tab==='commercial'?'act':''}" data-tab="commercial" data-act="panel.tab" data-tab="commercial">🏢 공가상가</button>`:''}
-  <button class="tnav-i ${S.tab==='timeline'?'act':''}" data-tab="timeline" data-act="panel.tab" data-tab="timeline">📈 상세 현황</button>
+  <button class="tnav-i ${S.tab==='overview'?'act':''}" data-tab="overview" data-act="panel.tab" data-tab="overview"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-chart"></use></svg>종합</button>
+  <button class="tnav-i ${S.tab==='trade'?'act':''}" data-tab="trade" data-act="panel.tab" data-tab="trade"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-warn"></use></svg>장기미처리</button>
+  ${showSedae?`<button class="tnav-i ${S.tab==='vacant'?'act':''}" data-tab="vacant" data-act="panel.tab" data-tab="vacant"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-home"></use></svg>공가세대</button>`:''}
+  ${showSangga?`<button class="tnav-i ${S.tab==='commercial'?'act':''}" data-tab="commercial" data-act="panel.tab" data-tab="commercial"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-build"></use></svg>공가상가</button>`:''}
+  <button class="tnav-i ${S.tab==='timeline'?'act':''}" data-tab="timeline" data-act="panel.tab" data-tab="timeline"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-trend"></use></svg>상세 현황</button>
 </div>
 
 <div class="tpane ${S.tab==='overview'?'act':''}" data-tab="overview">
@@ -3787,6 +3791,7 @@ function nd(v){
 
 // SETTINGS
 function loadSettings(){
+  {const fc=document.getElementById('snapFont');if(fc){try{fc.checked=!!localStorage.getItem('snapFont');}catch(_){}}} // 스냅샷 글꼴 포함 토글 상태 복원
   document.getElementById('cfgc').value=S.ck||'';
   const go_=document.getElementById('acctEmail');if(go_){go_.textContent='—';}
   try{const fb=document.getElementById('set-fb');if(fb)fb.style.display=fb2IsEditor()?'':'none';if(typeof fb2RefreshMeta==='function'&&FB2.ready)fb2RefreshMeta();}catch(e){}
@@ -4216,6 +4221,17 @@ async function exportSnapshot(){
     // 스냅샷은 Firebase를 전혀 쓰지 않음(부팅이 __SNAP__ 분기로 빠짐) — SDK·App Check 태그 제거로 reCAPTCHA 원천 차단
     docHtml=docHtml.replace(/[ \t]*<script[^>]*firebase-(?:app|auth|database|app-check)-compat\.js[^>]*><\/script>\n?/g,'');
     if(docHtml.indexOf('<script src="./app.js"></script>')<0){toast('스냅샷 생성 실패 · index.html 구조 불일치(app.js 태그 없음)');return;}
+    // 글꼴 포함(옵션) — 스냅샷은 단일 파일이라 상대경로 woff2를 못 찾고 시스템 글꼴로 폴백된다.
+    //   켜져 있으면 base64로 심어 어느 PC에서나 화면과 같은 모양이 되게 한다(파일이 커짐).
+    let _fontOn=false;try{_fontOn=!!localStorage.getItem('snapFont');}catch(_){}
+    if(_fontOn&&docHtml.indexOf("url('./PretendardVariable.woff2')")>=0){
+      try{
+        const fb=await(await fetch('./PretendardVariable.woff2',{cache:'force-cache'})).arrayBuffer();
+        let bin='';const u8=new Uint8Array(fb);const CH=0x8000;
+        for(let i=0;i<u8.length;i+=CH)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));
+        docHtml=docHtml.replace("url('./PretendardVariable.woff2')",()=>"url('data:font/woff2;base64,"+btoa(bin)+"')");
+      }catch(e){console.warn('[snap] 글꼴 포함 실패 — 시스템 글꼴로 표시됩니다',e);}
+    }
     const injectBody='window.__SNAPZ__='+JSON.stringify(packed)+';'; // 한 줄 — 줄바꿈 정규화 무관
     const _h256=async s=>{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return btoa(String.fromCharCode.apply(null,new Uint8Array(d)));};
     const hApp=await _h256(appTxt),hInj=await _h256(injectBody);

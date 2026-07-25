@@ -20,7 +20,7 @@
 --bg:#F2F2F7;--bg2:#fff;--fill:rgba(120,120,128,.12);--fill2:rgba(120,120,128,.18);
 --sep:rgba(60,60,67,.13);--sepo:#C6C6C8;
 --lbl:#1C1C1E;--lbl2:rgba(60,60,67,.58);--lbl3:rgba(60,60,67,.45);
---gn:#34C759;--rd:#FF3B30;--am:#FF9500;
+--gn:#16A34A;--rd:#DC2626;--am:#D97706;
 --rsm:8px;--rmd:12px;--rlg:16px;--rxl:20px;--rp:999px;
 --sw:240px;--swm:64px;--th:52px;--tr:.22s cubic-bezier(.4,0,.2,1);--ct:#5C5C60;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -33,6 +33,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 table{border-collapse:collapse;width:100%;}
 .hidden{display:none!important;}
 svg{display:block;flex-shrink:0;}
+
+/* 아이콘 — 글자 색·크기를 따라가도록 currentColor + em 기준. 굵기는 한 곳에서만 정한다 */
+/* .ic 는 이미 주요 이슈 카드 클래스로 쓰이므로 아이콘은 .icn 으로 분리 */
+.icn{width:1.05em;height:1.05em;flex-shrink:0;vertical-align:-.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.icn-sm{width:.95em;height:.95em;}
+.icn-lg{width:1.3em;height:1.3em;}
+.nic .icn{width:18px;height:18px;stroke-width:1.9;}
+.tnav-i .icn{margin-right:5px;}
+/* 표 숫자 자릿수 정렬 — 한글에는 영향이 없고 수치 비교가 쉬워진다 */
+.dt th,.dt td,.utbl th,.utbl td,.smtbl th,.smtbl td{font-variant-numeric:tabular-nums;}
 
 /* LAYOUT */
 #app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
@@ -558,9 +568,15 @@ table.dt-detail th{text-align:center!important;}
 .rd-navi:hover{background:var(--fill);}
 .rd-navi.act{background:var(--b50);color:var(--b700);font-weight:700;}
 .rd-body{flex:1;min-width:0;}
-.rd-sec{display:none;}
+/* 안내 이미지 — 폭에 맞춰 축소, 좁은 화면에서도 넘치지 않게 */
+.md-doc img{display:block;max-width:100%;height:auto;margin:12px 0;border:1px solid var(--sep);border-radius:10px;background:#fff;}
+/* 표가 넓으면 문서 폭을 밀어내지 않고 표 안에서만 가로 스크롤 */
+.md-doc .md-tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0;max-width:100%;}
+.md-doc .md-tw table{margin:0;}
+.rd-sec{min-width:0;}  /* 표의 min-width가 부모 폭을 밀어내지 않도록 */
+.rd-sec{display:none;min-width:0;}
 .rd-sec.act{display:block;}
-@media(max-width:820px){.rd-wrap{flex-direction:column;gap:12px;}.rd-nav{flex:none;width:100%;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--sep);padding:0 0 8px;display:flex;gap:6px;overflow-x:auto;}.rd-navi{width:auto;white-space:nowrap;margin:0;}}
+@media(max-width:820px){.rd-wrap{flex-direction:column;gap:12px;align-items:stretch;} /* 세로 배치에서는 본문이 컨테이너 폭을 따르게(flex-start면 내용 폭으로 늘어남) */.rd-nav{flex:none;width:100%;position:static;max-height:none;border-right:none;border-bottom:1px solid var(--sep);padding:0 0 8px;display:flex;gap:6px;overflow-x:auto;}.rd-navi{width:auto;white-space:nowrap;margin:0;}}
 .md-doc{font-size:13.5px;line-height:1.75;color:var(--lbl);max-width:820px;margin:0 auto;padding:4px 2px 12px;}
 .md-doc h1{font-size:20px;margin:6px 0 14px;letter-spacing:-.01em;}
 .md-doc h2{font-size:16px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--sep);}
@@ -1332,7 +1348,7 @@ body.snap .nvi[data-view="manage"],body.snap .nvi[data-view="settings"],body.sna
 body.snap [data-act="dash.ai"],body.snap [data-act="panel.ai"]{display:none!important;} /* 박제 문서 — AI 재생성은 저장 불가·무의미 */
 body.snap [data-act="top.month"],body.viewer [data-act="top.month"]{display:none!important;} /* 게시본·스냅샷은 기준월 고정 — 뷰어는 기준월 선택기(vrm)로 전환 */
 body.snap [data-act="set.readme"]{display:none!important;} /* 스냅샷은 단일 파일 — README.md를 읽을 수 없음 */
-.tb-help{font-weight:800;padding-left:11px;padding-right:11px;}
+.tb-help{padding-left:9px;padding-right:9px;display:inline-flex;align-items:center;}
 body.snap textarea,body.snap [contenteditable="true"]{pointer-events:none!important;background:transparent!important;}
 /* 사내 뷰어(@hdec.co.kr 로그인) — 업로드/관리/설정만 숨기고 처리계획·분석의견 입력은 허용 */
 body.viewer .nvi[data-view="upload"],body.viewer .sb-bottom .sbsl{display:none!important;}
@@ -1418,6 +1434,8 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 </style>
 </head>
 <body>
+<!-- 아이콘: Lucide (ISC) — 24 그리드·stroke 2 통일. 스냅샷 단일 파일에서도 살아있도록 인라인 심볼로 둔다. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true" focusable="false"><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol><symbol id="i-build" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /> <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /> <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /> <path d="M10 6h4" /> <path d="M10 10h4" /> <path d="M10 14h4" /> <path d="M10 18h4" /></symbol><symbol id="i-trend" viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /> <polyline points="16 7 22 7 22 13" /></symbol><symbol id="i-cal" viewBox="0 0 24 24"><path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" /></symbol><symbol id="i-print" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /> <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /> <rect x="6" y="14" width="12" height="8" rx="1" /></symbol><symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" /></symbol><symbol id="i-dash" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1" /> <rect width="7" height="5" x="14" y="3" rx="1" /> <rect width="7" height="9" x="14" y="12" rx="1" /> <rect width="7" height="5" x="3" y="16" rx="1" /></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="17 8 12 3 7 8" /> <line x1="12" x2="12" y1="3" y2="15" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /> <circle cx="12" cy="12" r="3" /></symbol><symbol id="i-sites" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /> <path d="M13 6h8" /> <path d="M13 12h8" /> <path d="M13 18h8" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /> <path d="m21 21-4.3-4.3" /></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="7 10 12 15 17 10" /> <line x1="12" x2="12" y1="15" y2="3" /></symbol><symbol id="i-chevr" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol><symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <circle cx="9" cy="7" r="4" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M10 9H8" /> <path d="M16 13H8" /> <path d="M16 17H8" /></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" /></symbol><symbol id="i-pivot" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" /></symbol><symbol id="i-filter" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></symbol><symbol id="i-ai" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> <path d="M20 3v4" /> <path d="M22 5h-4" /> <path d="M4 17v2" /> <path d="M5 18H3" /></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18" /> <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /> <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /> <line x1="10" x2="10" y1="11" y2="17" /> <line x1="14" x2="14" y1="11" y2="17" /></symbol></svg>
 <div id="coverGate" style="position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 120% at 50% 0%,#1c2b46 0%,#0f1626 55%,#0a0f1a 100%);font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;">
   <div style="width:min(380px,90vw);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:38px 32px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.45);text-align:center;">
     <div style="margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">
@@ -1458,18 +1476,18 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     <div class="teamsel" id="teamsel"></div>
     <div class="sbsl">메인</div>
     <div class="nvi" role="button" tabindex="0" data-view="dashboard" data-tip="대시보드" data-act="nav.go">
-      <div class="nic"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2V2zm7 0h5v5H9V2zM2 9h5v5H2V9zm7 0h5v5H9V9z" opacity=".85"></path></svg></div>
+      <div class="nic"><svg class="icn" aria-hidden="true"><use href="#i-dash"></use></svg></div>
       <span class="nil" style="font-size:13px;text-align:left">대시보드</span>
     </div>
     <div id="rgnav"></div>
     <div class="sb-bottom">
     <div class="sbsl">관리</div>
     <div class="nvi" role="button" tabindex="0" data-view="manage" data-tip="현장 관리" data-act="nav.go">
-      <div class="nic"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14V3.2a.7.7 0 0 1 .7-.7h5.1a.7.7 0 0 1 .7.7V14M8.5 6.8h4.8a.7.7 0 0 1 .7.7V14M1 14h14"></path><path d="M4.2 5.3h1.4M4.2 7.8h1.4M4.2 10.3h1.4M10.6 9.2h1.4M10.6 11.5h1.4"></path></svg></div>
+      <div class="nic"><svg class="icn" aria-hidden="true"><use href="#i-sites"></use></svg></div>
       <span class="nil" style="font-size:13px">현장 관리</span>
     </div>
     <div class="nvi act" role="button" tabindex="0" data-view="settings" data-tip="설정" data-act="nav.go">
-      <div class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+      <div class="nic"><svg class="icn" aria-hidden="true"><use href="#i-settings"></use></svg></div>
       <span class="nil" style="font-size:13px">설정</span>
     </div>
     <div class="sb-acct" id="sbAcct" data-act="acct.open" data-tt="계정 · 이름/비밀번호 변경" aria-label="계정 · 이름/비밀번호 변경" style="display:none">
@@ -1488,10 +1506,10 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
       <div id="tbsu" class="tbsu"></div>
     </div>
     <div class="tbr">
-      <div class="mc"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"></rect><path d="M5 1v4M11 1v4M2 7h12"></path></svg><span id="mchip">기준월 2026-05</span></div>
+      <div class="mc"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-cal"></use></svg><span id="mchip">기준월 2026-05</span></div>
       <button class="btn bg2 bsm no-print" data-act="top.month" data-tt="기준월 변경 · 단축키 [ ]">기준월 변경</button>
-      <button class="btn bg2 bsm no-print tb-help" data-act="set.readme" data-tt="사용 안내 — 화면 보는 법·용어" aria-label="사용 안내 열기">?</button>
-      <button id="pbtn" class="btn bp bsm no-print hide-mobile" data-act="top.print" style="display: none;"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6V2h8v4M4 11H2V6h12v5h-2M4 9h8M4 11v4h8v-4"></path></svg>인쇄</button>
+      <button class="btn bg2 bsm no-print tb-help" data-act="set.readme" data-tt="사용 안내 — 화면 보는 법·용어" aria-label="사용 안내 열기"><svg class="icn" aria-hidden="true"><use href="#i-help"></use></svg></button>
+      <button id="pbtn" class="btn bp bsm no-print hide-mobile" data-act="top.print" style="display: none;"><svg class="icn icn-sm" aria-hidden="true"><use href="#i-print"></use></svg>인쇄</button>
     </div>
   </header>
   <div id="content">
@@ -1564,6 +1582,11 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
             <div class="share-row">
               <div class="share-info"><b>스냅샷</b><span>사내 게시본 기준 읽기전용 HTML로 내보내기 · 뷰어가 보는 내용과 동일</span></div>
               <button class="btn bp bsm" data-act="set.snapshot">내보내기</button>
+            </div>
+            <div class="share-sep"></div>
+            <div class="share-row">
+              <div class="share-info"><b>스냅샷에 글꼴 포함</b><span>켜면 어느 PC에서 열어도 화면과 같은 글꼴로 보입니다 · 파일이 약 1.5MB 커집니다</span></div>
+              <label style="display:inline-flex;align-items:center;cursor:pointer"><input type="checkbox" id="snapFont" data-act="set.snapFont" style="width:18px;height:18px;accent-color:var(--b600);cursor:pointer"></label>
             </div>
             <div id="set-fb" style="display:none">
               <div class="share-sep"></div>
