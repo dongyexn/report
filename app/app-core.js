@@ -232,7 +232,8 @@ function applyTheme(dark){
   document.documentElement.classList.toggle('dark',!!dark); // :root에 걸어야 cvar()가 읽는 CSS 변수까지 바뀐다
   try{dark?localStorage.setItem('theme','dark'):localStorage.removeItem('theme');}catch(_){}
   const c=document.getElementById('darkChk');if(c)c.checked=!!dark;
-  document.querySelectorAll('.sb-th-b').forEach(b=>b.classList.toggle('act',(b.dataset.theme==='dark')===!!dark)); // 사이드바 해/달 세그먼트
+  {const u=document.getElementById('thIcon');if(u)u.setAttribute('href',dark?'#i-moon':'#i-sun');   // 현재 모드를 아이콘으로 표시(해=라이트, 달=다크)
+   const b=document.querySelector('.sb-th1');if(b){b.dataset.tt=dark?'라이트 모드로':'다크 모드로';}}
   if(typeof themeRefresh==='function')themeRefresh(); // 차트는 생성 시 색을 굽기 때문에 재렌더 필요
 }
 // ── 라이브러리 보장 — vendor/ 로컬 로드가 실패하면(미배포·경로 오류) CDN에서 한 번 더 시도한다.
@@ -328,7 +329,7 @@ registerActions('click', {
     const r=window.__SNAPPICK__;window.__SNAPPICK__=null;closeMo();if(r)r({months:v,font:font});},
   'snap.rm':(el)=>snapSwitchMonth(el.value),
   'set.dark':(el)=>applyTheme(el.checked),
-  'theme.set':(el)=>applyTheme(el.dataset.theme==='dark'),
+  'theme.toggle':()=>applyTheme(!isDark()),
   'set.snapshot':()=>exportSnapshot(), 'set.publish':()=>fb2Publish(), 'set.viewerMode':()=>fb2ViewAsViewer(), 'set.readme':()=>openReadme(),
   'dash.insToggle':(el)=>{const grid=el.closest('.ins-grid');if(!grid)return;const was=el.classList.contains('exp');if(!was)grid.style.height=grid.offsetHeight+'px';/* 확장 전 자연 높이(카드 3개)를 고정 — absolute 이탈로 컨테이너가 줄어드는 것 방지 */grid.querySelectorAll('.ic.exp').forEach(c=>{c.classList.remove('exp');c.dataset.tt='펼치기';c.setAttribute('aria-expanded','false');}); /* 접을 때 툴팁도 원복 — 안 하면 '접기'가 남는다 */grid.classList.remove('ins-open');if(was)grid.style.height='';{const _t=document.getElementById('htooltip');if(_t)_t.classList.remove('show');} /* 표시 중이던 툴팁은 즉시 숨김 — 다음 호버에 새 문구가 뜨도록 */if(!was){el.classList.add('exp');el.dataset.tt='접기';el.setAttribute('aria-expanded','true');grid.classList.add('ins-open');const tc=el.querySelector('.ic-t');if(tc&&!tc.querySelector('.insd'))tc.insertAdjacentHTML('beforeend',insDetailHTML(el.dataset.instt||''));/* 신뢰 코드 생성 HTML(외부 문자열 esc 처리) — safeHTML은 insd 클래스·data-act를 제거하므로 미사용 */el.scrollTop=0;}}, // 주요 이슈 카드 확장/접기 — 상세는 최초 확장 시 생성
   'dash.insCollapse':()=>insCollapseAll(), // 상세 헤더의 접기 버튼

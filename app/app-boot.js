@@ -648,26 +648,45 @@ function donutPalette(){return ['#1F2B4C','#2C437C','#304D9D','#3259B6','#3E71D2
 function applyChartTheme(){if(typeof Chart==='undefined')return;Chart.defaults.color=chartInk();Chart.defaults.borderColor=chartGrid();}
 // 테마 갱신 진입점 — 색 토큰(CSS 변수)을 바꾼 뒤 이걸 호출하면 차트까지 새 색으로 다시 그린다.
 //   차트는 생성 시 색을 굽기 때문에 인스턴스를 파기하고 현재 화면만 재렌더한다. (다크모드 전환에서 사용)
-// 인쇄는 항상 라이트 — @media print가 CSS 색은 되돌리지만 차트는 캔버스라 그리는 시점의 색이 박힌다.
-//   그래서 인쇄 직전에 테마를 라이트로 바꾸고 현재 화면을 '동기'로 다시 그린 뒤, 인쇄가 끝나면 되돌린다.
-let _printWasDark=false;
+// 인쇄는 항상 라이트 — 두 가지를 따로 처리한다.
+//   ① CSS: @media print의 html.dark 블록이 토큰을 밝은 값으로 덮으므로 **화면의 테마 클래스는 건드리지 않는다**
+//      (예전엔 클래스를 벗겼다가 화면까지 라이트로 번쩍이는 문제가 있었음)
+//   ② 캔버스: CSS가 닿지 않으므로 차트 색만 인쇄용으로 바꿔 치고 애니메이션 없이 즉시 다시 그린다
+//      (파기 후 재생성하면 520ms 애니메이션 때문에 인쇄 캡처 시점에 빈 차트가 찍힌다)
+const PRINT_LIGHT={ // 다크 값 → 인쇄용 라이트 값
+  '#B4544B':'#DA6A60','#CB6B62':'#C65A50','#C98C86':'#E89C9A','#DCA5A0':'#C76F6D',
+  '#6E9BD6':'#B3C7DD','#87ACE0':'#7E9BBC','#8FB5E8':'#3E71D2','#E8BE62':'#F0B144',
+  '#E8EEF8':'#1F2B4C','#F2C9C7':'#7A3434','#A9C7EE':'#2C437C','#EFC873':'#A0590A',
+  '#212121':'#fff','#ECECEC':'#1C1C1E',
+  'rgba(255,255,255,.09)':'rgba(0,0,0,.05)','rgba(236,236,236,.42)':'rgba(60,60,67,.42)'
+};
+const PRINT_DARK=Object.fromEntries(Object.entries(PRINT_LIGHT).map(([k,v])=>[v,k]));
+function _swapColors(o,map,depth){ // 설정 트리를 훑어 매핑된 색 문자열만 교체(키가 색이라 오탐 없음)
+  if(!o||depth>6)return;
+  if(Array.isArray(o)){for(let i=0;i<o.length;i++){const v=o[i];
+    if(typeof v==='string'){if(map[v])o[i]=map[v];}else _swapColors(v,map,depth+1);} return;}
+  if(typeof o!=='object')return;
+  for(const k of Object.keys(o)){const v=o[k];
+    if(typeof v==='string'){if(map[v])o[k]=map[v];}
+    else if(v&&typeof v==='object')_swapColors(v,map,depth+1);}
+}
+let _printSwapped=false;
 function printThemeSwap(toLight){
-  const html=document.documentElement;
-  if(toLight){
-    _printWasDark=html.classList.contains('dark');
-    if(!_printWasDark)return;
-    html.classList.remove('dark');
-  }else{
-    if(!_printWasDark)return;
-    html.classList.add('dark');_printWasDark=false;
-  }
-  CSSVAR.clear();
-  try{applyChartTheme();}catch(_){}
-  try{Object.keys(S.charts||{}).forEach(k=>dC(k));}catch(_){}
+  const dark=document.documentElement.classList.contains('dark');
+  if(toLight){ if(!dark||_printSwapped)return; _printSwapped=true; }
+  else { if(!_printSwapped)return; _printSwapped=false; }
+  const map=toLight?PRINT_LIGHT:PRINT_DARK;
   try{
-    if(S.view==='site'&&S.sid)rSite(S.sid);
-    else{rDash();if(typeof rDash._flush==='function')rDash._flush();} // 지연 렌더분까지 즉시 완결
-  }catch(e){console.warn('[print] 테마 재렌더 실패',e);}
+    Object.values(S.charts||{}).forEach(ch=>{
+      if(!ch||ch.$destroyed)return;
+      _swapColors(ch.data.datasets,map,0);
+      _swapColors(ch.options.scales,map,0);
+      _swapColors(ch.options.plugins,map,0);
+      const ct=ch.options.plugins&&ch.options.plugins.centerText;
+      if(ct){ct.valueColor=toLight?'#1C1C1E':'#ECECEC';ct.labelColor=toLight?'rgba(60,60,67,.42)':'rgba(236,236,236,.42)';}
+      ch.update('none'); // 애니메이션 없이 즉시 — 인쇄 캡처 전에 그려져야 한다
+    });
+  }catch(e){console.warn('[print] 차트 색 전환 실패',e);}
 }
 window.addEventListener('beforeprint',()=>printThemeSwap(true));
 window.addEventListener('afterprint',()=>printThemeSwap(false));

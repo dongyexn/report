@@ -113,15 +113,12 @@ html.dark .md-doc code,html.dark .md-doc pre{background:var(--surf3);}
 #mb.has-x .mo-x{display:inline-flex;} /* 자체 닫기 버튼이 없는 모달(사용 안내)에서만 노출 */
 .mo-x .icn{width:17px;height:17px;}
 
-/* 사이드바 테마 전환 — 계정 카드와 분리된 별도 줄, 해/달 세그먼트 */
-.sb-theme{position:relative;margin:8px 0 4px;padding:5px;display:flex;gap:4px;background:var(--fill);border-radius:10px;}
-.sb-theme::before{content:"";position:absolute;left:0;right:0;top:-5px;height:1px;background:var(--sep);}
-.sb-th-b{flex:1;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;
-         color:var(--lbl3);background:transparent;cursor:pointer;transition:background var(--tr),color var(--tr);}
-.sb-th-b:hover{color:var(--lbl2);}
-.sb-th-b.act{background:var(--bg2);color:var(--bt1);box-shadow:0 1px 2px rgba(0,0,0,.10);}
-.sb-th-b .icn{width:15px;height:15px;}
-@media print{.sb-theme{display:none!important;}}
+/* 사이드바 테마 전환 — 프로필 줄 오른쪽 아이콘 하나(해↔달 토글) */
+.sb-th1{flex:0 0 auto;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+        color:var(--lbl3);background:transparent;cursor:pointer;transition:background var(--tr),color var(--tr);}
+.sb-th1:hover{background:var(--fill);color:var(--bt1);}
+.sb-th1 .icn{width:16px;height:16px;}
+@media print{.sb-th1{display:none!important;}}
 body.sb-collapsed .sb-theme{flex-direction:column;padding:4px;}
 
 /* LAYOUT */
@@ -1583,13 +1580,9 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     <div class="sb-acct" id="sbAcct" data-act="acct.open" data-tt="계정 · 이름/비밀번호 변경" aria-label="계정 · 이름/비밀번호 변경" style="display:none">
       <div class="sb-acct-av" id="sbAcctAv"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M12 13c-3.9 0-7 2.4-7 5.4 0 .9.5 1.6 1.6 1.6h10.8c1.1 0 1.6-.7 1.6-1.6 0-3-3.1-5.4-7-5.4z"/></svg></div>
       <div class="sb-acct-info"><div class="sb-acct-name" id="sbAcctName">—</div></div>
-      <span class="sb-acct-role" id="sbAcctRole"></span>
+      <button class="sb-th1" data-act="theme.toggle" data-tt="다크 모드" aria-label="테마 전환"><svg class="icn" aria-hidden="true"><use href="#i-sun" id="thIcon"></use></svg></button><span class="sb-acct-role" id="sbAcctRole"></span>
     </div>
-    <div class="sb-theme" id="sbTheme">
-      <button class="sb-th-b" data-act="theme.set" data-theme="light" data-tt="라이트 모드" aria-label="라이트 모드"><svg class="icn" aria-hidden="true"><use href="#i-sun"></use></svg></button>
-      <button class="sb-th-b" data-act="theme.set" data-theme="dark" data-tt="다크 모드" aria-label="다크 모드"><svg class="icn" aria-hidden="true"><use href="#i-moon"></use></svg></button>
-    </div>
-    </div>
+    
   </div>
 </aside>
 <main id="main">
