@@ -3,15 +3,15 @@
 <meta charset="UTF-8"><!-- 앱 스크립트는 외부 파일 app.js로 분리되어 script-src 'self'로 허용된다(인라인 스크립트 없음 · 해시 관리 불필요). index.html과 app.js는 항상 함께 배포할 것. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com; frame-src https://www.google.com https://recaptcha.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>H서비스센터 · 하자처리 현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js" integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js" integrity="sha384-0d+Gr7vM4Drod8E3hXKgciWJSWbjD/opKLLygI9ktiWbuvlDwQLzU46wJ9s5gsp7" crossorigin="anonymous"></script>
+<script src="./vendor/chart.umd.min.js"></script>
+<script src="./vendor/chartjs-plugin-datalabels.min.js"></script>
+<script src="./vendor/lz-string.min.js"></script>
 <!-- Firebase SDK: gstatic은 SRI 해시를 제공하지 않아 jsdelivr(npm firebase@10.12.5 미러 — 바이트 동일 보장)로 전환해 SRI 고정. gstatic 호스트는 reCAPTCHA용으로 CSP에 유지. -->
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.5/firebase-app-compat.js" integrity="sha384-mLD+wdwynYnAhgHAkdPP5hroWJXJTNy5C2OhPKM55zuiV2vjzFD1LtBohaHq2Ex8" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.5/firebase-auth-compat.js" integrity="sha384-NiuRnBs5Z0OgJ12kYJLSeWxANeJN369zH3+Zn0TGVPaCH/TKmbPFqfOmmLtrj+wg" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.5/firebase-database-compat.js" integrity="sha384-fXPb0uemoXlFCqQMtM0MOAv7FM0LsMegbR6x22q7lfnohaCNmTQzgA8BTrR8WqGx" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.5/firebase-app-check-compat.js" integrity="sha384-Ybv3lGuy/hHZj1VLzE7e+sawyrFSbMuEQaKRSfC9W4Q8MK+k/zQKNrxNVagHhXAj" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js" integrity="sha384-eEu5CTj3qGvu9PdJuS+YlkNi7d2XxQROAFYOr59zgObtlcux1ae1Il3u7jvdCSWu" crossorigin="anonymous"></script>
+<script src="./vendor/purify.min.js"></script>
 <style>
 @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('./PretendardVariable.woff2') format('woff2-variations');}
 :root{
@@ -21,6 +21,15 @@
 --sep:rgba(60,60,67,.13);--sepo:#C6C6C8;
 --lbl:#1C1C1E;--lbl2:rgba(60,60,67,.58);--lbl3:rgba(60,60,67,.45);
 --gn:#16A34A;--rd:#DC2626;--am:#D97706;
+/* 차트·그래픽 색 토큰 — 코드에 흩어져 있던 하드코딩을 한곳으로. 다크모드는 이 값만 재정의하면 된다 */
+--ch-d60:#DA6A60; --ch-d60h:#C65A50;   /* 60일 이상 */
+--ch-d30:#E89C9A; --ch-d30h:#C76F6D;   /* 30~59일 */
+--ch-d0:#B3C7DD;  --ch-d0h:#7E9BBC;    /* 30일 미만 */
+--ch-recv:#3E71D2;                     /* 전체 접수 라인 */
+--ch-done:#F0B144;                     /* 처리 완료 라인 */
+--ch-lbl:#1F2B4C; --ch-lbl2:#7A3434;   /* 데이터라벨 */
+--ch-ink:#1C1C1E;                      /* 축·범례 글자 */
+--ch-bg:#fff;                          /* 포인트·라벨 배경 */
 --rsm:8px;--rmd:12px;--rlg:16px;--rxl:20px;--rp:999px;
 --sw:240px;--swm:64px;--th:52px;--tr:.22s cubic-bezier(.4,0,.2,1);--ct:#5C5C60;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1639,7 +1648,10 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 <div id="toast" class=""></div>
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" data-act="modal.close" class=""><div id="mb" data-act="modal.stop"><div class="mt2" id="mt"></div><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>
-<script src="./app.js"></script>
+<script src="./app-core.js"></script>
+<script src="./app-data.js"></script>
+<script src="./app-view.js"></script>
+<script src="./app-boot.js"></script>
 
 
 
