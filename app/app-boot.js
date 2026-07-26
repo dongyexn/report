@@ -337,22 +337,11 @@ function openMP(){
   if(document.body.classList.contains('viewer')){toast('게시본은 기준월 선택기로 전환하세요');return;}
   document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
 function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;setRmChip();lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
-function stepMonth(delta){
-  if(document.body.classList.contains('snap')||document.body.classList.contains('viewer'))return; // 게시본·스냅샷은 기준월 고정(집계가 박제됨)
-  const [y,m]=S.rm.split('-').map(Number);
-  const d=new Date(y,m-1+delta,1);
-  const ym=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-  S.rm=ym;
-  setRmChip();
-  lsSave();
-  if(S.view==='dashboard')rDash();
-  if(S.view==='site'&&S.sid)rSite(S.sid);
-}
 function toggleShortcutHelp(){
   const mt=document.getElementById('mt'),mb=document.getElementById('mbody'),mf=document.getElementById('mf');
   if(!mt||!mb||!mf)return;
   mt.textContent='단축키';
-  mb.innerHTML=`<div style="font-size:13px;line-height:2.1"><div><kbd>[</kbd> <kbd>]</kbd> &nbsp;기준월 이전 / 다음</div><div><kbd>Esc</kbd> &nbsp;창 닫기</div><div><kbd>?</kbd> &nbsp;이 도움말</div></div><p style="margin-top:12px;font-size:12px;color:var(--lbl3)">입력 중에는 단축키가 동작하지 않습니다.</p>`;
+  mb.innerHTML=`<div style="font-size:13px;line-height:2.1"><div><kbd>Esc</kbd> &nbsp;창 닫기</div><div><kbd>?</kbd> &nbsp;이 도움말</div></div><p style="margin-top:12px;font-size:12px;color:var(--lbl3)">입력 중에는 단축키가 동작하지 않습니다.</p>`;
   mf.innerHTML='<button class="btn bg2 bsm" data-act="modal.close">닫기</button>';
   openMo();
 }
@@ -903,11 +892,8 @@ function bindGlobalUi(){
 
     if(e.metaKey||e.ctrlKey||e.altKey)return;
 
-    if(e.key==='['){e.preventDefault();stepMonth(-1);}
-
-    else if(e.key===']'){e.preventDefault();stepMonth(1);}
-
-    else if(e.key==='?'){e.preventDefault();toggleShortcutHelp();}
+    // 기준월 이동 단축키([ ])는 오조작 위험이 커서 제거함 — 월 선택은 상단 드롭다운으로만
+    if(e.key==='?'){e.preventDefault();toggleShortcutHelp();}
 
   });
 

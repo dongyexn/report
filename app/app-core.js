@@ -145,13 +145,13 @@ function applyTheme(dark){
   try{dark?localStorage.setItem('theme','dark'):localStorage.removeItem('theme');}catch(_){}
   const c=document.getElementById('darkChk');if(c)c.checked=!!dark;
   {const u=document.getElementById('thIcon');if(u)u.setAttribute('href',dark?'#i-moon':'#i-sun');   // 현재 모드를 아이콘으로 표시(해=라이트, 달=다크)
-   const b=document.querySelector('.sb-th1');if(b){b.dataset.tt=dark?'라이트 모드로':'다크 모드로';}}
+   const b=document.querySelector('.sb-th1');if(b){b.dataset.tt='라이트/다크 모드';}}
   fireHook('theme.changed',!!dark);   // 차트 재렌더는 boot가 받아서 처리
 }
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-25.4';
+const BUILD='2026-07-25.5';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
