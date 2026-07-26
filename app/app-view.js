@@ -117,6 +117,45 @@ function dashCoRowHTML(x,i,opt){
     `<td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${x.plt.toLocaleString()} → 금월 ${x.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;
 }
 
+
+// 현장 표(전체 하자처리 현황)의 축·행을 한 곳에서 만든다.
+//   화면 전체를 다시 그리지 않고 이 표만 갈아 끼울 때도 같은 함수를 쓴다.
+function siteAxParts(sid,st){
+  const ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
+  const all=aggNorm(ax==='co'?st.coAgg:st.trAgg,ax);
+  const unit=ax==='co'?'곳':'개';
+  let list=all, folded=false;
+  const named=all.filter(x=>x.key!=='(미기재)'), na=all.filter(x=>x.key==='(미기재)');
+  if(!S.axSiteAll && named.length>10){        // 상위 10개 + 나머지 한 줄(행을 누르면 펼침)
+    const rest=named.slice(10);
+    const f=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
+      {key:`그 외 ${rest.length}${unit}`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
+    list=[...named.slice(0,10),f,...na]; folded=true;
+  }
+  const rows=list.map((x,i)=>aggRowHTML(x,i,ax,sid,false,!!(x.fold||x.key==='(미기재)'),false,!!x.fold)).join('')
+    +(!folded&&named.length>10?`<tr class="axfold" data-act="axis.siteAll"><td colspan="11">접기 — 상위 10${unit}만 보기</td></tr>`:'');
+  const msg=(S.axSite==='co'&&!(st.coAgg||[]).length)?'이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다':'데이터 없음';
+  return {ax, rows, emptyRow:'<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">'+esc(msg)+'</td></tr>'};
+}
+// 표 하나만 갈아 끼운다 — 화면 전체를 다시 그리면 차트가 재생성돼 깜빡이고 스크롤도 튄다.
+function rSiteAxisOnly(sid){
+  const tbl=document.getElementById('trade-'+sid); if(!tbl){ rSite(sid); return; }
+  const site=(S.sites||[]).find(s=>s.id===sid); if(!site)return;
+  const st=calc(S.def[sid]||[],site,S.rm);
+  const P=siteAxParts(sid,st);
+  const ths=tbl.querySelectorAll('thead th');
+  if(ths[1])ths[1].firstChild.nodeValue=(P.ax==='co'?'시공업체':'공종')+' ';
+  if(ths[2])ths[2].firstChild.nodeValue=(P.ax==='co'?'주요 공종':'시공업체')+' ';
+  tbl.querySelector('tbody').innerHTML=P.rows||P.emptyRow;
+  const card=tbl.closest('.card');
+  if(card)card.querySelectorAll('.axseg button').forEach(b=>b.classList.toggle('on',b.dataset.ax===(S.axSite==='co'?'co':'trade')));
+}
+// 대시보드 표만 갈아 끼운다
+function rDashAxisOnly(){
+  const list=(typeof dashSites==='function'?dashSites():[]).map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));
+  if(!rDashAxis(list))rDash({tableOnly:true});   // 현장별 복귀 — 표만 다시 채운다
+}
+
 function rDashAxis(list){
   const tbl=document.getElementById('dtable'); if(!tbl)return false;
   if(_dtOrig===null)_dtOrig=tbl.innerHTML;
@@ -485,7 +524,7 @@ function snapSwitchMonth(rm){
   fireHook('data.teamsChanged');setRmChip();rTeamSel();rNav();
   if(S.view==='site'&&S.sid&&teamSites().some(s=>s.id===S.sid))rSite(S.sid);else go('dashboard');
 }
-function rDash(){
+function rDash(opt){   // opt.tableOnly: 표만 다시 그리고 차트·이슈는 그대로 둔다(축 전환용)
   setRmChip();
   const all=dashSites().map(s=>({s,st:calc(S.def[s.id]||[],s,S.rm)}));
   // 합계: all을 단일 패스로 집계 (KPI 4종 + 전월 3종 + 지연구간 3종 + 전월장기 1종).
@@ -521,6 +560,7 @@ function rDash(){
   const _late=()=>{
     if(rDash._flush!==_late)return;rDash._flush=null;
     if(S.view!=='dashboard')return; // 이탈 시 스킵 — 재진입 시 go()가 rDash를 다시 부름
+    if(opt&&opt.tableOnly)return;   // 축만 바꿨으면 차트를 다시 만들지 않는다(깜빡임·렉 방지)
     try{buildDashMonthTable();}catch(e){logErr('buildDashMonthTable',e);}
     try{rCharts(all);}catch(e){logErr('rCharts',e);}
     rInsights(all,tR,tRes,tU,tLt,rate,pRate);
@@ -1073,24 +1113,8 @@ function rSite(sid){
   // NO/공종/시공업체/전체접수/처리/처리율/미처리/장기미처리/장기미처리비율(바)/전월대비
   // 공종별 전체 처리현황 — calc의 trAgg(단일 출처)를 사용. 뷰어는 게시 kpi에 실린 trAgg를 그대로 받는다.
   // 전체 하자처리 현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
-  const _ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
-  const _axAll=aggNorm(_ax==='co'?st.coAgg:st.trAgg,_ax);
-  // 상위 10개만 먼저 보여주고, '그 외 N개' 행을 누르면 펼친다(따로 버튼을 두지 않는다).
-  let _axList=_axAll, _axFolded=false;
-  if(!S.axSiteAll){
-    const named=_axAll.filter(x=>x.key!=='(미기재)'), na=_axAll.filter(x=>x.key==='(미기재)');
-    if(named.length>10){
-      const rest=named.slice(10);
-      const f=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
-        {key:`그 외 ${rest.length}${_ax==='co'?'곳':'개'}`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
-      _axList=[...named.slice(0,10),f,...na]; _axFolded=true;
-    }
-  }
-  const _axRows=_axList.map((x,i)=>aggRowHTML(x,i,_ax,sid,false,!!(x.fold||x.key==='(미기재)'),false,!!x.fold))
-    .join('')+(!_axFolded&&_axAll.filter(x=>x.key!=='(미기재)').length>10
-      ? `<tr class="axfold" data-act="axis.siteAll"><td colspan="11">접기 — 상위 10${_ax==='co'?'곳':'개'}만 보기</td></tr>` : '');
-  const _axEmptyMsg=(S.axSite==='co'&&!(st.coAgg||[]).length)?'이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다':'데이터 없음';
-  const _axEmptyRow='<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">'+esc(_axEmptyMsg)+'</td></tr>';
+  const _axP=siteAxParts(sid,st);
+  const _ax=_axP.ax,_axRows=_axP.rows,_axEmptyRow=_axP.emptyRow;
 
   // 현장 헤더(서브타이틀)에 데이터 신선도 간단 표기
   (()=>{

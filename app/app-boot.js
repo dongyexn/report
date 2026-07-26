@@ -1160,13 +1160,13 @@ registerActions('click', {
   'theme.toggle':()=>applyTheme(!isDark()),
   'nlq.toggle':()=>nlqOpen(!document.getElementById('nqPanel').classList.contains('on')),
   'nlq.close':()=>nlqOpen(false),
-  'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';
+  'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';S.axSiteAll=false;
     try{localStorage.setItem('axSite',S.axSite);}catch(_){}
-    if(S.sid)rSite(S.sid);},
-  'axis.siteAll':()=>{S.axSiteAll=!S.axSiteAll;if(S.sid)rSite(S.sid);},
+    if(S.sid)rSiteAxisOnly(S.sid);},        // 표만 갈아 끼운다(화면 전체 재렌더 금지)
+  'axis.siteAll':()=>{S.axSiteAll=!S.axSiteAll;if(S.sid)rSiteAxisOnly(S.sid);},
   'axis.dash':(el)=>{S.axDash=el.dataset.ax==='co'?'co':'site';
     try{localStorage.setItem('axDash',S.axDash);}catch(_){}
-    rDash();},
+    rDashAxisOnly();},
   'nlq.clear':()=>{const q=document.getElementById('nqQ');if(q){q.value='';q.focus();}nlqRender();},
   'nlq.histUse':(el)=>{const q=document.getElementById('nqQ');if(!q)return;q.value=el.dataset.q||'';q.focus();nlqRender();},
   'nlq.histDel':(el)=>{nlqHistDel(el.dataset.q||'');nlqRender();},
