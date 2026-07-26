@@ -230,7 +230,7 @@ tr.axfold td[colspan]{text-align:center;color:var(--lbl3);font-size:12px;font-we
 .axfold-k{color:var(--lbl3)!important;font-style:italic;}
 .axfold-h{font-style:normal;font-weight:700;font-size:11px;color:var(--bt1);
   background:var(--b50);border:1px solid var(--b100);border-radius:6px;padding:1px 6px;margin-left:6px;}
-@media print{tr.axfold td[colspan]{display:none;}}
+@media print{tr.axfold td[colspan]{display:none;} .axfold-h{display:none!important;} tr.axfold{cursor:default;}}
 
 /* 표 묶는 기준 전환 — 카드 머리글 오른쪽 */
 .axseg{margin-left:auto;display:inline-flex;background:var(--fill);border-radius:9px;padding:3px;gap:2px;}
