@@ -58,8 +58,14 @@ const CRIT_DEF=[
 ];
 function buildRules(scope){let out='';for(const g of RULE_DEF){if(g.scope!==scope)continue;const body=g.rules.map(r=>String(ruleVal(r.id)).trim()).filter(Boolean).join('\n');if(!body)continue;out+=(out?'\n\n':'')+(g.hdr?g.hdr+'\n':'')+body;}return out;}
 let _critRxCache={}; // 정규식 캐시(규칙이 고정이라 무효화 불필요)
-function isVac(item,site){
-  return isVacUnit(item)||isVacStore(item,site);
+
+// 공종 집계에서 '기타'를 떼어낸다(표 맨 끝에 따로 붙이려고) — 두 화면이 같은 처리
+function takeEtc(am){const v=am['기타']||0;delete am['기타'];return v;}
+
+// 증감 표시(화살표·배지·부호) — 같은 계산이 여러 표에 있어 한곳으로 모음
+function deltaParts(dN){
+  return {dArrow:dN===0?'─':dN>0?'▲':'▼', dBadge:dN===0?'bgr':dN>0?'brd':'bgn',
+          dTxt:dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`};
 }
 
 // NAVIGATION
@@ -531,7 +537,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     const dtSiteLbl=dtSites.length?` · ${siteList(dtSites.slice(0,3).map(r=>r.s))} 집중`:' ';
     const score=0.6*Math.min(share/50,1)+0.4*Math.min(share/35,1);
     cand.push({score,cls:share>=40?'bad':'warn',icon:ICON.wrench,ttl:'특정 하자유형 집중',
-      sub:`<b>${top[0]}</b> 미처리 <b>${fmt(top[1])}건</b> (미처리의 <b>${share.toFixed(0)}%</b>) · 주 공종 <b>${tradeOf?.[0]||'-'}</b>${dtSiteLbl}<br>해당 하자유형 표준 보수절차 정비·자재 선조달로 일괄 해소 검토`});})();
+      sub:`<b>${esc(top[0])}</b> 미처리 <b>${fmt(top[1])}건</b> (미처리의 <b>${share.toFixed(0)}%</b>) · 주 공종 <b>${esc(tradeOf?.[0]||'-')}</b>${dtSiteLbl}<br>해당 하자유형 표준 보수절차 정비·자재 선조달로 일괄 해소 검토`});})();
   // 5. 공가세대 다수 — 공가 미처리 건수, 현장 z-score
   (()=>{const isVac=i=>isVacUnit(i); // 공식 공가세대 정의로 일원화 — 카드/탭과 동일(하자구분='세대' AND 입주상태∈{미분양,미납})
     const rows=all.map(({s})=>({s,v:siteUnr[s.id].filter(isVac).length})).filter(r=>r.v>0);if(!rows.length)return;
@@ -540,7 +546,7 @@ function rInsights(all,tR,tRes,tU,tLt,rate,pRate){
     const affSites=rows.sort((a,b)=>b.v-a.v).slice(0,3).map(r=>r.s);
     const score=0.6*Math.min(tot/150,1)+0.4*Math.min(Math.max(z.z,0)/2,1);
     cand.push({score,cls:'warn',icon:ICON.home,ttl:'공가세대 미처리 다수',
-      sub:`공가세대 미처리 <b>${fmt(tot)}건</b> · 집중 ${siteList(affSites)} · 주 공종 <b>${tradeOf?.[0]||'-'}</b><br>공가 일괄작업일 지정 — 단일 업체 다공종 보유 시 1회 투입으로 동선 절감`});})();
+      sub:`공가세대 미처리 <b>${fmt(tot)}건</b> · 집중 ${siteList(affSites)} · 주 공종 <b>${esc(tradeOf?.[0]||'-')}</b><br>공가 일괄작업일 지정 — 단일 업체 다공종 보유 시 1회 투입으로 동선 절감`});})();
   // 6. 전월대비 접수 급증
   (()=>{if(pT<=0)return;const r=(tR-pT)/pT;if(r<=0.15)return;const z=zTop(all.filter(x=>x.st.prev.total>0).map(x=>({s:x.s,v:(x.st.tR-x.st.prev.total)/x.st.prev.total})));
     const score=0.6*chg(tR,pT,true)+0.4*Math.min(Math.max(z?.z||0,0)/2,1);
@@ -735,7 +741,7 @@ function rChartsImpl(all){
   dC('mx');const mxEl=document.getElementById('c-mx');if(mxEl){
     const am=capAm(allDefRaw,S.rm); // 순수 집계 공유
     if(window.__SNAP__&&window.__SNAP__.am)Object.assign(am,window.__SNAP__.am);
-    const ownEtc=am['기타']||0;delete am['기타'];
+    const ownEtc=takeEtc(am);
     const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
     const tmData=top11.map(([t,c])=>({t,c}));if(etcTotal>0)tmData.push({t:'기타',c:etcTotal});
     const tot=tmData.reduce((a,x)=>a+x.c,0);
@@ -765,16 +771,14 @@ function vacRowsHTML(sid,stat,cm,planField){
     const plan=cm[planField]?.[S.rm+'@'+t.t]||'';
     const ratio=unr>0?(t.c/unr*100).toFixed(1):'0.0';
     const pc=topPrev[t.t]||0,dN=t.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(dN);
     const coCell=esc(t.co||'-');
     return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(t.t)}" data-vac="${_vk}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   const etcFn=(etc)=>{
     if(!etc)return'';
     const pc=(etc.keys||[]).reduce((a,k)=>a+(topPrev[k]||0),0),dN=etc.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(dN);
     const ratio=unr>0?(etc.c/unr*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planE=cm[planField]?.[S.rm+'@기타']||'';
@@ -869,8 +873,7 @@ function rSite(sid){
     const plan=planMap?.[S.rm+'@'+t.t]||'';
     const ratio=st.lt>0?(t.c/st.lt*100).toFixed(1):'0.0';
     const pc=st.topLtPrev?.[t.t]||0,dN=t.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(dN);
     const coCell=esc(t.co||'-');
     return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="lul" data-trade="${esc(t.t)}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
@@ -878,8 +881,7 @@ function rSite(sid){
   const trEtcFn=(etc,prevMap)=>{
     if(!etc)return'';
     const pc=(etc.keys||[]).reduce((a,k)=>a+(prevMap?.[k]||0),0),dN=etc.c-pc;
-    const dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(dN);
     const ratio=st.lt>0?(etc.c/st.lt*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planEtc=cm.processingPlan?.[S.rm+'@기타']||'';
@@ -1071,7 +1073,7 @@ function buildSiteTradeDonut(sid){
   if(!Chart.__ctReg){Chart.register({id:'centerText',afterDraw(chart,_,opts){if(!opts||!opts.display)return;const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=opts.valueColor||cvar('--lbl','#1C1C1E');ctx.font=`700 ${opts.valueSize||16}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.value||'',cx,cy-2);ctx.fillStyle=opts.labelColor||cvar('--ch-axis','rgba(60,60,67,.58)');ctx.font=`600 ${opts.labelSize||11}px 'Pretendard Variable',Pretendard,sans-serif`;ctx.fillText(opts.label||'',cx,cy+14);ctx.restore();}});Chart.__ctReg=true;}
   const am=capAm(S.def[sid]||[],S.rm); // 순수 집계 공유
   if(window.__SNAP__&&window.__SNAP__.siteAm&&window.__SNAP__.siteAm[sid]){for(const _k in am)delete am[_k];Object.assign(am,window.__SNAP__.siteAm[sid]);}
-  const ownEtc=am['기타']||0;delete am['기타'];
+  const ownEtc=takeEtc(am);
   const sorted=Object.entries(am).sort((a,b)=>b[1]-a[1]),top11=sorted.slice(0,11),restEtc=sorted.slice(11).reduce((a,[,c])=>a+c,0),etcTotal=ownEtc+restEtc;
   const tmData=top11.map(([t,c])=>({t,c}));if(etcTotal>0)tmData.push({t:'기타',c:etcTotal});
   const tot=tmData.reduce((a,x)=>a+x.c,0);
@@ -1196,12 +1198,20 @@ async function runDashAI(){
 
 // ── 자연어 찾기(화면) ──
 //   목록 창과 같은 원천(calc 결과의 미처리 목록)을 쓴다 — 편집자는 로컬 원본, 뷰어는 게시본으로 같은 경로.
+//   3만 행을 타이핑마다 다시 모으면 한 글자에 100ms가 든다 → 같은 팀·기준월·행수면 재사용한다.
+//   패널을 열 때마다 비우므로 게시본이 갱신돼도 다음에 열면 새로 모은다.
+let _nlqRowsCache=null;
+function nlqRowsClear(){ _nlqRowsCache=null; }
 function nlqRows(){
+  const sites=(typeof dashSites==='function'?dashSites():[]);
+  const key=[S.teamId,S.rm,sites.length,sites.reduce((a,s)=>a+((S.def[s.id]||[]).length),0)].join('|');
+  if(_nlqRowsCache&&_nlqRowsCache.k===key)return _nlqRowsCache.v;
   const out=[];
-  (typeof dashSites==='function'?dashSites():[]).forEach(s=>{
+  sites.forEach(s=>{
     const st=calc(S.def[s.id]||[],s,S.rm);
     (st.ul||[]).forEach(i=>out.push(Object.assign({},i,{siteName:s.name,__hc:!!s.hasCommercial})));
   });
+  _nlqRowsCache={k:key,v:out};
   return out;
 }
 function nlqRender(){
@@ -1219,7 +1229,7 @@ function nlqRender(){
         `<svg class="icn" aria-hidden="true"><use href="#i-close"></use></svg></button></div>`).join('')+'</div>';
   };
   if(!q.trim()){ if(ft)ft.hidden=true; body.innerHTML=HIST(); window.__NLQ=null; return; }
-  const {R,unknown}=nlqParse(q);
+  const {R}=nlqParse(q), unknown=R.text||[];
   let h='';
   const cs=nlqChips(R);
   h+='<div class="nq-chips">'+(cs.length

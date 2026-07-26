@@ -908,6 +908,16 @@ function recComputeView(){
   }
   R.view=rows;return rows;
 }
+// 메뉴를 화면 안쪽에 놓는다 — 피벗 행/열 메뉴와 값 메뉴가 같은 계산을 쓴다
+// 우클릭 메뉴 공통 항목 — 사이드바·표에서 같은 동작
+const MENU_OPEN_SITE=(sid)=>({label:'현장 화면 열기',act:()=>fireHook('nav.go','site',sid)});
+
+function placeMenu(m,x,y){
+  const mw=248,mh=Math.min(340,window.innerHeight*0.6);
+  m.style.left=Math.max(8,Math.min(x,window.innerWidth-mw-8))+'px';
+  m.style.top=Math.max(8,Math.min(y,window.innerHeight-mh-8))+'px';
+}
+
 function recFilterCellHTML(c){
   if(c.key==='__no')return '<td class="rl-fc"></td>';
   const R=window.__REC;
@@ -1154,9 +1164,7 @@ function recPivotAddMenu(zone,x,y){
   if(!m){m=document.createElement('div');m.id='pvMenu';m.className='rl-menu';document.body.appendChild(m);}
   m.innerHTML=`<div class="rl-menu-hd">${zone==='rows'?'행':'열'} 필드 추가</div>`+avail.map(f=>`<button class="rl-menu-row" data-act="rec.pivotPick" data-key="${f.key}">${esc(f.label)}</button>`).join('');
   m.style.display='block';
-  const mw=248,mh=Math.min(340,window.innerHeight*0.6);
-  m.style.left=Math.max(8,Math.min(x,window.innerWidth-mw-8))+'px';
-  m.style.top=Math.max(8,Math.min(y,window.innerHeight-mh-8))+'px';
+  placeMenu(m,x,y);
 }
 function recPivotValMenu(x,y){
   const R=window.__REC;if(!R)return;
@@ -1166,9 +1174,7 @@ function recPivotValMenu(x,y){
   const cur=R.pivot.val||'count';
   m.innerHTML=`<div class="rl-menu-hd">값 집계</div>`+[['count','건수'],['avgDelay','평균 지연일']].map(([k,l])=>`<button class="rl-menu-row${cur===k?' on':''}" data-act="rec.pivotValPick" data-val="${k}">${l}${cur===k?' ✓':''}</button>`).join('');
   m.style.display='block';
-  const mw=248,mh=Math.min(340,window.innerHeight*0.6);
-  m.style.left=Math.max(8,Math.min(x,window.innerWidth-mw-8))+'px';
-  m.style.top=Math.max(8,Math.min(y,window.innerHeight-mh-8))+'px';
+  placeMenu(m,x,y);
 }
 function recClosePvMenu(){const m=document.getElementById('pvMenu');if(m)m.style.display='none';window.__PVMENU=null;}
 function recHeadHTML(){
@@ -1369,7 +1375,7 @@ document.addEventListener('contextmenu',function(e){
       const sid=a.dataset.site;
       e.preventDefault();
       openCtx(e.clientX,e.clientY,[
-        {label:'현장 화면 열기',act:()=>fireHook('nav.go','site',sid)},
+        MENU_OPEN_SITE(sid),
         {sep:true},
         {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
         {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},
@@ -1384,7 +1390,7 @@ document.addEventListener('contextmenu',function(e){
   if(sti){
     const sid=sti.dataset.site;
     const items=[
-      {label:'현장 화면 열기',act:()=>fireHook('nav.go','site',sid)},
+      MENU_OPEN_SITE(sid),
       {sep:true},
       {label:'미처리 목록',act:()=>openRecList(sid,'ul')},
       {label:'장기미처리 목록',act:()=>openRecList(sid,'lul')},

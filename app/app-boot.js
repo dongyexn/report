@@ -344,7 +344,7 @@ function nlqOpen(on){
   p.classList.toggle('on',!!on); f.classList.toggle('on',!!on);
   p.setAttribute('aria-hidden',on?'false':'true');
   f.setAttribute('aria-expanded',on?'true':'false');
-  if(on){ try{nlqRender();}catch(e){logErr('nlqRender',e);} setTimeout(()=>{const q=document.getElementById('nqQ');if(q)q.focus();},60); }
+  if(on){ nlqRowsClear(); try{nlqRender();}catch(e){logErr('nlqRender',e);} setTimeout(()=>{const q=document.getElementById('nqQ');if(q)q.focus();},60); }
 }
 
 function toggleShortcutHelp(){

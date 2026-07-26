@@ -284,7 +284,8 @@ HCS 엑셀 다운로드
 | `vendor/` | 외부 자산 일체 — Chart.js·LZ-String·DOMPurify·marked·SheetJS·글꼴. **필수 배포** |
 | `docs/guide-*.png` | 사용 안내 화면 이미지 |
 | `docs/figs.html` | 위 이미지의 원본 도식 — 브라우저로 열어 수정 후 다시 캡처 |
-| `tests/ci.mjs` | 셀프테스트·클릭 전수·집계 불변식·스냅샷 왕복·테마/인쇄 검증 |
+| `tests/ci.mjs` | 셀프테스트·클릭 전수·집계 불변식·업로드 파싱·스냅샷 왕복·테마/인쇄 검증 |
+| `tests/coverage.py` | 검증이 코드의 얼마를 실행하는지 측정(미실행 함수 목록 출력) |
 | `tests/deps.mjs` | 계층 호출 방향 · 훅 이름 짝 검사 |
 | `tests/build.mjs` | 배포 파일 변경 시 `BUILD` 갱신 여부 검사 |
 | `.github/workflows/verify.yml` | push·PR마다 위 검증 자동 실행 |

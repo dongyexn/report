@@ -182,6 +182,41 @@ step('오프라인 스냅샷 실행', snap.app && snap.data && snap.kpi > 0 && s
 step('오프라인 스냅샷 오류 없음', offErr.filter(e => !/Pretendard/.test(e)).length === 0, offErr.slice(0,2).join(' | '));
 
 
+// ── 4.5) 엑셀 업로드 파싱 (모든 데이터의 입구인데 자동 검증이 없던 자리) ──
+console.log('\n[4.5] 업로드 파싱');
+const parse = await page.evaluate(`(() => {
+  const AOA = [
+    ['현대건설 하자 현황', '', '', '', '', ''],            // 제목 줄(헤더 아님)
+    ['', '', '', '', '', ''],                              // 빈 줄
+    ['현장','동','호','접수일','공종','처리상태','접수내용','보수주체','지연일'],
+    ['힐스테이트 두정역','101','1002','2026-05-02','타일','미처리','거실 누수','당사','40'],
+    ['힐스테이트 두정역','101','1003','2026-05-03','도배','처리완료','벽지 들뜸','협력사','0'],
+    ['', '', '', '', '', '', '', '', ''],                  // 빈 줄은 건너뛰어야 함
+    ['힐스테이트 유성','203','501','20260410','창호','미처리','창틀 결로','당사','61']
+  ];
+  const hi = findHeaderRow(AOA);
+  const { rows, headers } = rowsToObjs(AOA);
+  return {
+    헤더줄: hi,
+    행수: rows.length,
+    헤더수: headers.length,
+    첫행공종: rows[0] && rows[0]['공종'],
+    빈줄제거: rows.every(r => Object.values(r).some(v => String(v).trim() !== '')),
+    프로토오염: rows.some(r => Object.prototype.hasOwnProperty.call(r, '__proto__'))
+  };
+})()`);
+step('헤더 줄 자동 인식', parse.헤더줄 === 2, '인식 위치 ' + parse.헤더줄);
+step('빈 줄 건너뜀', parse.행수 === 3 && parse.빈줄제거 === true, parse.행수 + '행');
+step('헤더 매핑', parse.헤더수 === 9 && parse.첫행공종 === '타일', parse.첫행공종);
+step('프로토타입 오염 차단', parse.프로토오염 === false);
+
+// 헤더가 아예 없는 파일도 죽지 않아야 한다
+const noHead = await page.evaluate(`(() => {
+  try { const r = rowsToObjs([['a','b'],['1','2']]); return {ok:true, n:r.rows.length, hi:findHeaderRow([['a','b']])}; }
+  catch(e){ return {ok:false, err:String(e).slice(0,60)}; }
+})()`);
+step('헤더 없는 파일에도 예외 없음', noHead.ok === true && noHead.hi === 0, JSON.stringify(noHead));
+
 // ── 5) 테마·인쇄 (캔버스는 CSS가 안 닿으므로 '픽셀'로 확인한다) ──
 console.log('\n[5] 테마·인쇄');
 await page.evaluate("go('dashboard')"); await page.waitForTimeout(2000);

@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-26.5';
+const BUILD='2026-07-26.8';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -234,7 +234,7 @@ function nlqParse(q,dict){
   // 남은 말은 버리지 않고 '본문 검색어'로 쓴다 — 접수내용·하자유형·공간·업체까지 훑는다
   R.text=s.split(/[\s,·]+/).map(w=>w.replace(NLQ_JOSA,'').trim()).filter(w=>w&&!NLQ_NOISE.test(w));
   R.empty=!(R.site||R.trades.length||R.delay||R.vac||R.shop||R.dong||R.ho||R.text.length);
-  return {R,unknown:R.text};
+  return {R};   // 본문 검색어는 R.text 하나로 전달
 }
 // 해석 결과를 사람이 읽는 조건 칩으로
 function nlqChips(R){
