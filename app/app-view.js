@@ -89,6 +89,34 @@ function dashCoAgg(list){                      // 현장별 coAgg를 업체 기�
     return Object.assign(o,{side:top[0]?top[0][0]:'-',sideN:o.tr.size});
   }).sort((a,b)=>b.u-a.u);
 }
+
+// 대시보드 업체별 행 — 현장별 행과 '똑같은 마크업'을 쓴다(비율 칸의 ltrbar-wrap·건수 기준 증감).
+//   구조가 다르면 폭이 같아도 줄바꿈·정렬이 어긋난다(실제로 그랬음).
+function dashCoRowHTML(x,i,opt){
+  opt=opt||{};
+  const rate=x.r>0?(x.res/x.r*100):0, ltr=x.u>0?(x.lt/x.u*100):0;
+  const p60=x.u>0?Math.min(x.d60/x.u*100,100):0,p30=x.u>0?Math.min(x.d30/x.u*100,100):0,p0=x.u>0?Math.min(x.d0/x.u*100,100):0;
+  const uD=x.u-x.pu,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';
+  const ld=x.lt-x.plt,arrow=ld===0?'─':ld>0?'▲':'▼',sign=ld===0?'':ld>0?'+':'−',badge=ld===0?'bgr':ld>0?'brd':'bgn';
+  const muted=opt.tot||opt.muted;
+  const name = opt.tot ? `<b>${esc(x.key)}</b>`
+    : muted ? `<b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b>`
+    : `<b style="color:var(--bt1);cursor:pointer" data-act="rec.list" data-sid="__team" data-scope="ul" data-co="${esc(x.key)}">${esc(x.key)}</b>`;
+  const side = muted ? '<span style="color:var(--lbl3)">-</span>'
+    : esc(x.side||'-')+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
+  return `<tr${opt.tot?' class="tot"':''}>`+
+    `<td class="cc" style="white-space:nowrap">${muted?'':(i+1)}</td>`+
+    `<td>${name}</td><td>${side}</td>`+
+    `<td class="n">${x.r.toLocaleString()}</td>`+
+    `<td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td>`+
+    `<td class="n" style="font-weight:600">${rate.toFixed(1)}%</td>`+
+    `<td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td>`+
+    `<td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${x.pu.toLocaleString()} → 금월 ${x.u.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td>`+
+    `<td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td>`+
+    `<td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(x.key)}|${x.u}|${x.d60}|${x.d30}|${x.d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`+
+    `<td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${x.plt.toLocaleString()} → 금월 ${x.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;
+}
+
 function rDashAxis(list){
   const tbl=document.getElementById('dtable'); if(!tbl)return false;
   if(_dtOrig===null)_dtOrig=tbl.innerHTML;
@@ -115,10 +143,9 @@ function rDashAxis(list){
   const CLS=['cc','','','n','n','n','n','cc','n','cc','cc'];
   const thead='<thead><tr>'+H.map((h,i)=>`<th class="${CLS[i]}" style="width:${W[i]}%${CLS[i]==='cc'?';white-space:nowrap':''}">${h}</th>`).join('')+'</tr></thead>';
   const body = ordered.length
-    ? ordered.map((x,i)=>aggRowHTML(x,i,'co','__team',false,x.fold||x.key==='(미기재)'))
-        .join('')
+    ? ordered.map((x,i)=>dashCoRowHTML(x,i,{muted:!!(x.fold||x.key==='(미기재)')})).join('')
     : `<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다</td></tr>`;
-  const tfoot = ordered.length ? `<tfoot>${aggRowHTML(Object.assign({},T,{key:'합계',side:'',sideN:0}),0,'co','__team',false,true,true)}</tfoot>` : '';
+  const tfoot = ordered.length ? `<tfoot>${dashCoRowHTML(Object.assign({},T,{key:'합계',side:'',sideN:0}),0,{tot:true})}</tfoot>` : '';
   tbl.innerHTML = thead+'<tbody>'+body+'</tbody>'+tfoot;
   return true;
 }
@@ -131,7 +158,7 @@ function aggNorm(list,axis){
     : {key:x.t, side:x.coTop||'-', sideN:x.coN||0, r:x.r,res:x.res,u:x.u,lt:x.lt,d0:x.d0,d30:x.d30,d60:x.d60,pu:x.pu||0,plt:x.plt||0});
 }
 // 한 행 — 기존 공종별 표와 열·모양을 그대로 유지한다
-function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot){
+function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot,foldRow){
   const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
   const ltr=x.u>0?(x.lt/x.u*100):0, pLtr=x.pu>0?(x.plt/x.pu*100):0;
   const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0;
@@ -143,9 +170,10 @@ function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot){
     ? `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-co="${esc(x.key)}"`
     : `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(x.key)}"`;
   const sideTxt=esc(x.side)+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
-  return `<tr${isTot?' class="tot"':''}>`+(noIdx?'':`<td class="cc">${(blankIdx||isTot)?'':i+1}</td>`)+
+  return `<tr${isTot?' class="tot"':foldRow?' class="axfold" data-act="axis.siteAll"':''}>`+(noIdx?'':`<td class="cc">${(blankIdx||isTot)?'':i+1}</td>`)+
     (isTot?`<td><b>${esc(x.key)}</b></td>`
-       :(na||x.fold)?`<td><b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b></td>`
+       :x.fold?`<td><b class="axfold-k">${esc(x.key)} <span class="axfold-h">펼치기</span></b></td>`
+       :na?`<td><b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b></td>`
        :`<td class="rl-link" ${link}><b>${esc(x.key)}</b></td>`)+
     `<td>${sideTxt}</td>`+
     `<td class="n">${x.r.toLocaleString()}</td>`+
@@ -1047,21 +1075,20 @@ function rSite(sid){
   // 전체 하자처리 현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
   const _ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
   const _axAll=aggNorm(_ax==='co'?st.coAgg:st.trAgg,_ax);
-  // 업체는 수십 곳이라 상위 10곳 + 나머지 한 줄. '전부 보기'로 펼친다(합계는 어느 쪽이든 같다).
-  let _axList=_axAll, _axFold=null;
-  if(_ax==='co'&&!S.axSiteAll){
+  // 상위 10개만 먼저 보여주고, '그 외 N개' 행을 누르면 펼친다(따로 버튼을 두지 않는다).
+  let _axList=_axAll, _axFolded=false;
+  if(!S.axSiteAll){
     const named=_axAll.filter(x=>x.key!=='(미기재)'), na=_axAll.filter(x=>x.key==='(미기재)');
     if(named.length>10){
       const rest=named.slice(10);
-      _axFold=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
-        {key:`그 외 ${rest.length}곳`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
-      _axList=[...named.slice(0,10),_axFold,...na];
+      const f=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
+        {key:`그 외 ${rest.length}${_ax==='co'?'곳':'개'}`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
+      _axList=[...named.slice(0,10),f,...na]; _axFolded=true;
     }
   }
-  const _axRows=_axList.map((x,i)=>aggRowHTML(x,i,_ax,sid,false,!!(x.fold||x.key==='(미기재)'))).join('');
-  const _axNamed=_axAll.filter(x=>x.key!=='(미기재)').length;
-  const _axMore=(_ax==='co'&&_axNamed>10)
-    ? `<button class="btn bo bsm" style="width:100%;margin-top:10px" data-act="axis.siteAll">${S.axSiteAll?'상위 10곳만 보기':`업체 ${_axNamed}곳 전부 보기`}</button>` : '';
+  const _axRows=_axList.map((x,i)=>aggRowHTML(x,i,_ax,sid,false,!!(x.fold||x.key==='(미기재)'),false,!!x.fold))
+    .join('')+(!_axFolded&&_axAll.filter(x=>x.key!=='(미기재)').length>10
+      ? `<tr class="axfold" data-act="axis.siteAll"><td colspan="11">접기 — 상위 10${_ax==='co'?'곳':'개'}만 보기</td></tr>` : '');
   const _axEmptyMsg=(S.axSite==='co'&&!(st.coAgg||[]).length)?'이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다':'데이터 없음';
   const _axEmptyRow='<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">'+esc(_axEmptyMsg)+'</td></tr>';
 
@@ -1100,7 +1127,7 @@ function rSite(sid){
   <div class="as">
     ${ltrMomBar}
     <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div><button class="btn bo bsm no-print" data-act="panel.carryPlan" data-sid="${esc(sid)}" data-tt="전월(${pM(S.rm)}) 처리계획을 이번 달 빈 칸에만 복사합니다" aria-label="전월 처리계획 불러오기">전월 계획 불러오기</button></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table>${_axMore}</div>
+    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
   </div>
 </div>
 

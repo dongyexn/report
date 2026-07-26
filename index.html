@@ -214,6 +214,15 @@ body.snap .nq-fab,body.snap .nq-panel{right:24px;}
 }
 @media print{.nq-fab,.nq-panel{display:none!important;}}
 
+/* 접힌 나머지 행 — 행 자체가 펼치기 버튼 */
+tr.axfold{cursor:pointer;}
+tr.axfold:hover td{background:var(--surf2);}
+tr.axfold td[colspan]{text-align:center;color:var(--lbl3);font-size:12px;font-weight:700;padding:9px;}
+.axfold-k{color:var(--lbl3)!important;font-style:italic;}
+.axfold-h{font-style:normal;font-weight:700;font-size:11px;color:var(--bt1);
+  background:var(--b50);border:1px solid var(--b100);border-radius:6px;padding:1px 6px;margin-left:6px;}
+@media print{tr.axfold td[colspan]{display:none;}}
+
 /* 표 묶는 기준 전환 — 카드 머리글 오른쪽 */
 .axseg{margin-left:auto;display:inline-flex;background:var(--fill);border-radius:9px;padding:3px;gap:2px;}
 .axseg button{border:0;background:transparent;color:var(--lbl2);border-radius:7px;padding:5px 13px;
