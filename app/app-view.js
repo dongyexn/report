@@ -95,40 +95,31 @@ function rDashAxis(list){
   document.querySelectorAll('#dashAx button').forEach(b=>b.classList.toggle('on',b.dataset.ax===(S.axDash==='co'?'co':'site')));
   if(S.axDash!=='co'){                          // 현장별 — 원래 표 구조로 되돌린다
     if(!document.getElementById('dtbody'))tbl.innerHTML=_dtOrig;
-    {const m=document.getElementById('dashAxMore');if(m)m.hidden=true;}
     return false;
   }
   const rows=dashCoAgg(list);
   const named=rows.filter(r=>r.key!=='(미기재)'), na=rows.filter(r=>r.key==='(미기재)');
   let shown=named, folded=null;
-  if(!S.axDashAll && named.length>DASH_CO_TOP){
+  if(named.length>DASH_CO_TOP){                 // 업체는 수백 곳이라 상위 N + 나머지 한 줄(합계는 유지)
     shown=named.slice(0,DASH_CO_TOP);
     const rest=named.slice(DASH_CO_TOP);
     folded=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
       {key:`그 외 ${rest.length}곳`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
   }
   const ordered=[...shown,...(folded?[folded]:[]),...na];
-  const th=(w,c,txt)=>`<th class="${c}" style="width:${w}%">${txt}</th>`;
-  tbl.innerHTML =
-    `<thead><tr>${th(14,'','시공업체')}${th(11,'','주요 공종')}${th(8,'n','전체 접수')}${th(8,'n','처리')}`+
-    `${th(7,'n','처리율')}${th(8,'n','미처리')}${th(7,'cc','전월대비')}${th(8,'n','장기미처리')}`+
-    `${th(23,'cc','장기미처리 비율')}${th(6,'cc','전월대비')}</tr></thead><tbody>`+
-    (ordered.length?ordered.map(x=>aggRowHTML(Object.assign({},x,{sideN:x.sideN}),-1,'co','__team')
-        .replace('<td class="cc">0</td>','')      // NO 열은 쓰지 않는다
-      ).join(''):`<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--lbl3)">이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다</td></tr>`)+
-    `</tbody>`;
-  // 상위 N개만 보일 때 '전부 보기' 버튼을 표 아래에 둔다
-  let more=document.getElementById('dashAxMore');
-  if(named.length>DASH_CO_TOP){
-    if(!more){
-      more=document.createElement('button');
-      more.id='dashAxMore'; more.className='btn bo bsm'; more.style.cssText='width:100%;margin-top:10px';
-      more.setAttribute('data-act','axis.dashAll');
-      tbl.parentNode.insertBefore(more,tbl.nextSibling);
-    }
-    more.textContent=S.axDashAll?`상위 ${DASH_CO_TOP}곳만 보기`:`업체 ${named.length}곳 전부 보기`;
-    more.hidden=false;
-  }else if(more)more.hidden=true;
+  const T=rows.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
+    {r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0});
+  // 열 너비를 현장별 표와 맞춘다 — NO=권역(6%), 시공업체+주요공종=현장명+세대수(22%)
+  const W=[6,13,7.5,8.5,6.5,7,7,8,9,21,6.5];   // 현장별 표와 동일한 선언 폭
+  const H=['NO','시공업체','주요 공종','전체 접수','처리','처리율','미처리','전월대비','장기미처리','장기미처리 비율','전월대비'];
+  const CLS=['cc','','','n','n','n','n','cc','n','cc','cc'];
+  const thead='<thead><tr>'+H.map((h,i)=>`<th class="${CLS[i]}" style="width:${W[i]}%${CLS[i]==='cc'?';white-space:nowrap':''}">${h}</th>`).join('')+'</tr></thead>';
+  const body = ordered.length
+    ? ordered.map((x,i)=>aggRowHTML(x,i,'co','__team',false,x.fold||x.key==='(미기재)'))
+        .join('')
+    : `<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다</td></tr>`;
+  const tfoot = ordered.length ? `<tfoot>${aggRowHTML(Object.assign({},T,{key:'합계',side:'',sideN:0}),0,'co','__team',false,true,true)}</tfoot>` : '';
+  tbl.innerHTML = thead+'<tbody>'+body+'</tbody>'+tfoot;
   return true;
 }
 
@@ -140,7 +131,7 @@ function aggNorm(list,axis){
     : {key:x.t, side:x.coTop||'-', sideN:x.coN||0, r:x.r,res:x.res,u:x.u,lt:x.lt,d0:x.d0,d30:x.d30,d60:x.d60,pu:x.pu||0,plt:x.plt||0});
 }
 // 한 행 — 기존 공종별 표와 열·모양을 그대로 유지한다
-function aggRowHTML(x,i,axis,sid){
+function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot){
   const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
   const ltr=x.u>0?(x.lt/x.u*100):0, pLtr=x.pu>0?(x.plt/x.pu*100):0;
   const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0;
@@ -152,8 +143,9 @@ function aggRowHTML(x,i,axis,sid){
     ? `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-co="${esc(x.key)}"`
     : `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(x.key)}"`;
   const sideTxt=esc(x.side)+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
-  return `<tr><td class="cc">${i+1}</td>`+
-    (na?`<td><b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b></td>`
+  return `<tr${isTot?' class="tot"':''}>`+(noIdx?'':`<td class="cc">${(blankIdx||isTot)?'':i+1}</td>`)+
+    (isTot?`<td><b>${esc(x.key)}</b></td>`
+       :(na||x.fold)?`<td><b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b></td>`
        :`<td class="rl-link" ${link}><b>${esc(x.key)}</b></td>`)+
     `<td>${sideTxt}</td>`+
     `<td class="n">${x.r.toLocaleString()}</td>`+
@@ -1054,7 +1046,22 @@ function rSite(sid){
   // 공종별 전체 처리현황 — calc의 trAgg(단일 출처)를 사용. 뷰어는 게시 kpi에 실린 trAgg를 그대로 받는다.
   // 전체 하자처리 현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
   const _ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
-  const _axRows=aggNorm(_ax==='co'?st.coAgg:st.trAgg,_ax).map((x,i)=>aggRowHTML(x,i,_ax,sid)).join('');
+  const _axAll=aggNorm(_ax==='co'?st.coAgg:st.trAgg,_ax);
+  // 업체는 수십 곳이라 상위 10곳 + 나머지 한 줄. '전부 보기'로 펼친다(합계는 어느 쪽이든 같다).
+  let _axList=_axAll, _axFold=null;
+  if(_ax==='co'&&!S.axSiteAll){
+    const named=_axAll.filter(x=>x.key!=='(미기재)'), na=_axAll.filter(x=>x.key==='(미기재)');
+    if(named.length>10){
+      const rest=named.slice(10);
+      _axFold=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
+        {key:`그 외 ${rest.length}곳`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
+      _axList=[...named.slice(0,10),_axFold,...na];
+    }
+  }
+  const _axRows=_axList.map((x,i)=>aggRowHTML(x,i,_ax,sid,false,!!(x.fold||x.key==='(미기재)'))).join('');
+  const _axNamed=_axAll.filter(x=>x.key!=='(미기재)').length;
+  const _axMore=(_ax==='co'&&_axNamed>10)
+    ? `<button class="btn bo bsm" style="width:100%;margin-top:10px" data-act="axis.siteAll">${S.axSiteAll?'상위 10곳만 보기':`업체 ${_axNamed}곳 전부 보기`}</button>` : '';
   const _axEmptyMsg=(S.axSite==='co'&&!(st.coAgg||[]).length)?'이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다':'데이터 없음';
   const _axEmptyRow='<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">'+esc(_axEmptyMsg)+'</td></tr>';
 
@@ -1093,7 +1100,7 @@ function rSite(sid){
   <div class="as">
     ${ltrMomBar}
     <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div><button class="btn bo bsm no-print" data-act="panel.carryPlan" data-sid="${esc(sid)}" data-tt="전월(${pM(S.rm)}) 처리계획을 이번 달 빈 칸에만 복사합니다" aria-label="전월 처리계획 불러오기">전월 계획 불러오기</button></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
+    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table>${_axMore}</div>
   </div>
 </div>
 

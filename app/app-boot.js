@@ -1163,7 +1163,7 @@ registerActions('click', {
   'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';
     try{localStorage.setItem('axSite',S.axSite);}catch(_){}
     if(S.sid)rSite(S.sid);},
-  'axis.dashAll':()=>{S.axDashAll=!S.axDashAll;rDash();},
+  'axis.siteAll':()=>{S.axSiteAll=!S.axSiteAll;if(S.sid)rSite(S.sid);},
   'axis.dash':(el)=>{S.axDash=el.dataset.ax==='co'?'co':'site';
     try{localStorage.setItem('axDash',S.axDash);}catch(_){}
     rDash();},

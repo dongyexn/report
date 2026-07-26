@@ -1735,18 +1735,18 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
       </div>
       <div class="card mb12"><div class="sh"><div class="ct cardttl">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
       <div class="card mb12"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" id="dashAx" role="group" aria-label="묶는 기준"><button data-act="axis.dash" data-ax="site">현장별</button><button data-act="axis.dash" data-ax="co">업체별</button></div></div>
-        <table class="dt" id="dtable"><thead><tr>
+        <table class="dt" id="dtable" style="table-layout:fixed"><thead><tr>
           <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" tabindex="0" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
-          <th style="width:15%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="units" tabindex="0" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="tR" tabindex="0" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="res" tabindex="0" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
+          <th style="width:13%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.5%;text-align: right" data-sort="units" tabindex="0" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:8.5%;text-align: right" data-sort="tR" tabindex="0" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:6.5%;text-align: right" data-sort="res" tabindex="0" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
           <th class="n" style="width:7%;text-align: right" data-sort="rate" tabindex="0" data-act="dash.sort" data-key="rate">처리율 <span class="sortmk">↕</span></th>
           <th class="n" style="width:7%;text-align: right" data-sort="unr" tabindex="0" data-act="dash.sort" data-key="unr">미처리 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="deltaUnr" tabindex="0" data-act="dash.sort" data-key="deltaUnr">전월대비 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7%;text-align: right" data-sort="lt" tabindex="0" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:25%;min-width:160px;text-align: center" data-sort="ltr" tabindex="0" data-act="dash.sort" data-key="ltr">장기미처리 비율 <span class="sortmk">↕</span></th>
-          <th class="cc" style="width:6%;text-align: center;white-space:nowrap" data-sort="delta" tabindex="0" data-act="dash.sort" data-key="delta">전월대비 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:8%;text-align: center;white-space:nowrap" data-sort="deltaUnr" tabindex="0" data-act="dash.sort" data-key="deltaUnr">전월대비 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:9%;text-align: right" data-sort="lt" tabindex="0" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:21%;min-width:160px;text-align: center" data-sort="ltr" tabindex="0" data-act="dash.sort" data-key="ltr">장기미처리 비율 <span class="sortmk">↕</span></th>
+          <th class="cc" style="width:6.5%;text-align: center;white-space:nowrap" data-sort="delta" tabindex="0" data-act="dash.sort" data-key="delta">전월대비 <span class="sortmk">↕</span></th>
         </tr></thead>
         <tbody id="dtbody"></tbody><tfoot id="dtfoot"></tfoot></table>
       </div>
