@@ -317,7 +317,8 @@ firebase emulators:exec --only database "node --test tests/database.rules.test.m
 |---|---|---|
 | 로딩에서 멈춤 + 콘솔 CSP 차단 | `app/` 미배포 또는 reCAPTCHA 호스트 차단 | 콘솔의 차단 URL 확인 → 배포 여부·`script-src` 호스트 점검(20초 후 안내 표시) |
 | 라이브러리 404 · 데이터 파싱 실패 | `vendor/` 미배포 | `vendor/` 폴더 커밋 확인(안내 토스트 동반) |
-| 콘솔에 `.lp?start=t` CSP 차단 반복 | RTDB 롱폴링 폴백 호스트가 `script-src`에 없음 | CSP `script-src`에 RTDB 호스트 추가(웹소켓 차단 환경에서 발생) |
+| 콘솔에 `.lp?start=t` CSP 차단 반복 | 웹소켓 차단 환경에서 RTDB가 롱폴링으로 폴백 · 그 호스트가 `script-src`에 없음 | `script-src`에 `https://*.firebasedatabase.app` 허용(롱폴링은 서버별 호스트로 접속하므로 와일드카드 필요) |
+| 로그인 화면에서 `frame-src` 차단 | reCAPTCHA가 `recaptcha.net` 도메인으로 iframe 로드 | `frame-src`에 `https://www.recaptcha.net` 추가 |
 | 팀원 화면의 숫자·기준월 이상 | 잘못된 월의 구게시본 잔존 | 올바른 기준월로 재게시 → 미래 게시월 삭제 |
 | 목록이 일부만 표시된다는 안내 | 전체 목록 도입 이전의 구게시본 | 최신 빌드에서 재게시 |
 | 다른 PC에서 게시 내용이 안 보임 | 편집자 화면은 로컬 원본 기준(설계상 정상) | 설정 > 뷰어 시점으로 보기 |
