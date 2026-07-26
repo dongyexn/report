@@ -215,9 +215,13 @@ body.snap .nq-fab,body.snap .nq-panel{right:24px;}
 @media print{.nq-fab,.nq-panel{display:none!important;}}
 
 /* 지난달 계획 칸 — 읽기 전용 */
-td.pp-prev{padding:8px 9px;vertical-align:middle;text-align:left;}
-.pp-box{font-size:11.5px;line-height:1.5;color:var(--lbl2);}
-.pp-none{color:var(--lbl3);}
+td.pp-cell{padding:8px 9px;text-align:left;vertical-align:top;}
+.pp-stack{display:flex;gap:8px;align-items:flex-start;}
+.pp-stack+.pp-stack{margin-top:7px;padding-top:7px;border-top:1px dashed var(--sep);}
+.pp-lab{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--lbl3);letter-spacing:.02em;padding-top:3px;}
+.pp-box{flex:1;min-width:0;font-size:11.5px;line-height:1.55;color:var(--lbl2);white-space:pre-wrap;}
+.pp-none{flex:1;color:var(--lbl3);font-size:11.5px;padding-top:1px;}
+.pp-stack .plan-ta{flex:1;min-width:0;}
 
 /* 접힌 나머지 행 — 행 자체가 펼치기 버튼 */
 tr.axfold{cursor:pointer;}
