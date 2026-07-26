@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-26.1';
+const BUILD='2026-07-26.4';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -185,14 +185,30 @@ const NLQ_SYN={
   old:['오래된 순','오래된순','지연 순','지연순','밀린 순','오래된'], recent:['최신순','최근 순','최근순'],
   done:['처리완료','완료된','완료']
 };
-// 사전 — 팀 현장명 + 실제 데이터에 나타난 공종명(긴 이름부터 먹어야 부분일치 오인이 없다)
+// 사전 — 현장·공종 이름에서 '부를 만한 이름'을 자동으로 뽑는다.
+//   "힐스테이트 두정역" → 힐스테이트 두정역 · 두정역 · 두정 로도 찾히게.
+//   단, 여러 현장이 공유하는 말(브랜드명 등)은 어느 현장인지 못 정하므로 조건에서 뺀다.
+function _nlqKeys(names){
+  const cand=new Map();
+  const add=(k,n)=>{ k=(k||'').trim(); if(k.length<2)return;
+    if(!cand.has(k))cand.set(k,new Set()); cand.get(k).add(n); };
+  names.forEach(n=>{
+    add(n,n);
+    n.split(/[\s·,()\-\/]+/).forEach(w=>{ add(w,n); add(w.replace(/(역|지구|시티|아파트|단지|차)$/,''),n); });
+    (n.match(/[가-힣]{2,}/g)||[]).forEach(w=>{ add(w,n); add(w.replace(/(역|지구|시티|아파트|단지|차)$/,''),n); });
+  });
+  const uniq=[],ambig=[];
+  cand.forEach((set,k)=>{ if(set.size===1)uniq.push([k,[...set][0]]); else ambig.push(k); });
+  uniq.sort((a,b)=>b[0].length-a[0].length);
+  ambig.sort((a,b)=>b.length-a.length);
+  return {keys:uniq,ambig:ambig};
+}
 function nlqDict(){
   const sites=(typeof dashSites==='function'?dashSites():(S.sites||[])).map(s=>s.name).filter(Boolean);
   const tr=new Set();
   (S.sites||[]).forEach(s=>((S.def&&S.def[s.id])||[]).forEach(r=>{ if(r.trade)tr.add(r.trade); }));
-  if(!tr.size&&window.__NLQ_TRADES)window.__NLQ_TRADES.forEach(x=>tr.add(x));
-  const byLen=a=>a.slice().sort((x,y)=>y.length-x.length);
-  return {sites:byLen([...new Set(sites)]), trades:byLen([...tr])};
+  const A=_nlqKeys([...new Set(sites)]), B=_nlqKeys([...tr]);
+  return {siteKeys:A.keys, siteAmbig:A.ambig, tradeKeys:B.keys, tradeAmbig:B.ambig};
 }
 function nlqParse(q,dict){
   const D=dict||nlqDict();
@@ -211,8 +227,10 @@ function nlqParse(q,dict){
   NLQ_SYN.shop.forEach(v=>eat(rx(v),()=>R.shop=true));
   NLQ_SYN.old.forEach(v=>eat(rx(v),()=>R.sort='old'));
   NLQ_SYN.recent.forEach(v=>eat(rx(v),()=>R.sort='new'));
-  D.trades.forEach(v=>eat(rx(v),()=>{ if(!R.trades.includes(v))R.trades.push(v); }));
-  D.sites.forEach(v=>eat(rx(v),()=>{ R.site=R.site||v; }));
+  D.tradeKeys.forEach(kv=>eat(rx(kv[0]),()=>{ if(!R.trades.includes(kv[1]))R.trades.push(kv[1]); }));
+  D.siteKeys.forEach(kv=>eat(rx(kv[0]),()=>{ R.site=R.site||kv[1]; }));
+  // 여러 현장이 함께 쓰는 말은 조건이 되지 못한다 — 못 알아들은 말로 보고하지 말고 따로 알린다
+  D.siteAmbig.concat(D.tradeAmbig).forEach(v=>eat(rx(v),()=>{ R.ambig=v; }));
   const unknown=s.split(/[\s,·]+/).map(w=>w.replace(NLQ_JOSA,'').trim()).filter(w=>w&&!NLQ_NOISE.test(w));
   R.empty=!(R.site||R.trades.length||R.delay||R.vac||R.shop||R.dong||R.ho);
   return {R,unknown};

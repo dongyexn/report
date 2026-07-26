@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8">
+<style>
+:root{
+  --ink:#111827; --ink2:#5A6474; --ink3:#98A2B3;
+  --line:#E6EAF0; --line2:#EFF2F6; --fill:#F6F8FB;
+  --b50:#EEF3FC; --b100:#DBE6F8; --b600:#3E71D2; --b800:#2F4C9C;
+  --acc:#EA580C;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+     color:var(--ink);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
+.fig{width:1100px;padding:42px 28px 28px 46px;background:#fff;} /* 위·왼쪽 여백 = 배지 레이어 자리 */
+
+/* 번호 배지 — 블록 왼쪽 위 모서리, 위치·정렬을 CSS가 보장 */
+/* 번호 배지 — 절대배치 의사요소라 레이아웃 크기에 전혀 영향을 주지 않는다(별개 레이어).
+   자리는 도식의 바깥 여백만 쓴다: 카드 위쪽 띠(.b-top) 또는 왼쪽 띠(.b-left). */
+[data-n]{position:relative;}
+[data-n]::after{
+  content:attr(data-n);
+  position:absolute;left:var(--bl,0px);top:var(--bo,-30px);width:24px;height:24px;   /* 요소 위 예약 공간에 배치(살짝 내려 붙임) */
+  background:var(--acc);color:#fff;border:2px solid #fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;   /* 숫자 수직 중앙 */
+  font-size:12.5px;font-weight:800;line-height:1;letter-spacing:-.02em;padding-top:1px; /* 숫자 글리프가 살짝 위로 뜨는 것 보정 */
+  box-shadow:0 2px 5px rgba(15,23,42,.24);z-index:5;
+}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;}
+.blk{background:var(--fill);border:1px solid var(--line);border-radius:9px;
+     display:flex;align-items:center;padding:0 13px;font-size:12.5px;color:var(--ink2);}
+.blk.act{background:var(--b50);border-color:var(--b100);color:var(--b800);font-weight:700;}
+.blk.pri{background:var(--b600);border-color:var(--b600);color:#fff;font-weight:700;}
+
+/* ── 1. 화면 구성 ── */
+.app{display:flex;gap:16px;height:330px;}
+.sb{width:238px;display:flex;flex-direction:column;gap:12px;padding:15px;}
+.brand{font-size:13px;font-weight:800;letter-spacing:-.01em;}
+.brand span{display:block;font-size:11px;font-weight:500;color:var(--ink3);margin-top:2px;}
+.sb .blk{height:38px;}
+.sites{flex:1;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:14px 13px;gap:13px;} /* 현장 줄 간격 여유 */
+.sites .rg{font-size:11.5px;font-weight:800;color:var(--b800);}
+.sites .rg span{color:var(--ink3);font-weight:600;margin-left:4px;}
+.sites .st{font-size:12px;color:var(--ink2);padding-left:10px;}
+.sites .st::before{content:"·";margin-right:6px;color:var(--ink3);}
+.mainc{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.hdr{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;}
+.hdr .t{font-size:15.5px;font-weight:800;letter-spacing:-.01em;}
+.hdr .r{display:flex;gap:8px;align-items:center;}
+.hdr .blk{height:31px;font-size:12px;}
+.sq{width:31px;justify-content:center;padding:0;font-weight:700;}
+.kpis{display:flex;gap:10px;}
+.kpi{flex:1;border:1px solid var(--line);border-radius:11px;padding:12px 13px;background:#fff;min-width:0;}
+.kpi .kl{font-size:11.5px;color:var(--ink2);white-space:nowrap;}
+.kpi .kv{font-size:19px;font-weight:800;margin-top:6px;letter-spacing:-.02em;}
+.kpi .ks{font-size:10.5px;color:var(--ink3);margin-top:3px;}
+.kpi.f1{background:var(--b600);border-color:var(--b600);}
+.kpi.f2{background:#6E99E2;border-color:#6E99E2;}
+.kpi.f1 .kl,.kpi.f1 .kv,.kpi.f2 .kl,.kpi.f2 .kv{color:#fff;}
+.kpi.f1 .ks,.kpi.f2 .ks{color:rgba(255,255,255,.78);}
+.kpi.f3{background:var(--b50);border-color:var(--b100);}
+.chart{flex:1;padding:14px 15px;display:flex;flex-direction:column;gap:10px;min-height:0;}
+.chart .ct{font-size:13px;font-weight:700;}
+.bars{flex:1;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid var(--line2);padding-bottom:1px;}
+.bars i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#CFDFF6,#A9C6EE);}
+
+/* ── 2. KPI ── */
+.kpirow{display:flex;gap:10px;}
+.kpirow .kpi{padding:13px 14px;}
+.ktop{min-height:24px;}
+.kpirow .kv{font-size:21px;}
+.ktop{display:flex;align-items:center;gap:8px;}
+.b-left::after{left:var(--bl,-40px);top:var(--bo,3px);}   /* 세로로 쌓인 항목은 왼쪽 여백에 */
+ /* 카드 안 버튼이라 한 단계 낮음 → 카드 배지와 같은 줄로 정렬 */
+.cta{margin-left:auto;font-size:11px;font-weight:700;color:var(--b600);
+     background:var(--b50);border:1px solid var(--b100);border-radius:999px;padding:3px 10px;white-space:nowrap;}
+
+/* ── 3. 탭 ── */
+.tabs{display:flex;gap:8px;padding:9px;}
+.tab{flex:1;height:42px;border-radius:9px;background:var(--fill);border:1px solid var(--line);
+     display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink2);font-weight:600;}
+.tab.act{background:linear-gradient(135deg,#5A8CDF,#2F4C9C);border-color:#2F4C9C;color:#fff;}
+
+/* ── 4. 목록 창 ── */
+.wtop{display:flex;align-items:center;gap:12px;padding:14px 15px;border-bottom:1px solid var(--line2);}
+.wtitle{font-size:13.5px;font-weight:800;white-space:nowrap;}
+.search{width:236px;height:31px;border-radius:999px;border:1px solid var(--line);background:var(--fill);
+        display:flex;align-items:center;padding:0 13px;font-size:11.5px;color:var(--ink3);}
+.cnt{font-size:11.5px;color:var(--ink3);}
+.cnt b{color:var(--ink);font-weight:700;}
+.tools{margin-left:auto;display:flex;gap:7px;}
+.tools .blk{height:31px;font-size:12px;}
+.chips{display:flex;gap:7px;align-items:center;padding:12px 15px;border-bottom:1px solid var(--line2);}
+.chip{height:29px;border-radius:999px;border:1px solid var(--line);background:#fff;
+      display:flex;align-items:center;padding:0 13px;font-size:11.5px;color:var(--ink2);}
+.chip b{margin-left:5px;color:var(--ink);font-weight:700;}
+.chip.on{background:var(--b600);border-color:var(--b600);color:#fff;}
+.chip.on b{color:#fff;}
+.grid{padding:2px 15px 15px;}
+.grow{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line2);}
+.grow:last-child{border-bottom:none;}
+.grow.h{font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.04em;padding:11px 0 9px;}
+.grow i{flex:1;height:9px;background:#EFF2F7;border-radius:3px;}
+.grow.h i{background:none;font-style:normal;}
+
+/* ── 5. 무엇이든 찾기 ── */
+.nq-wrap{display:flex;gap:34px;align-items:stretch;}
+.nq-card{width:340px;flex:0 0 340px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);}
+.nq-h{padding:12px 14px;border-bottom:1px solid var(--line2);}
+.nq-h .t{font-size:13px;font-weight:800;}
+.nq-h .s{font-size:11px;color:var(--ink3);margin-top:2px;}
+.nq-q{margin:12px 14px 0;height:38px;border:1.5px solid var(--b600);border-radius:10px;
+  display:flex;align-items:center;padding:0 12px;font-size:12.5px;color:var(--ink);font-weight:600;}
+.nq-cs{display:flex;gap:5px;flex-wrap:wrap;padding:11px 14px 0;}
+.nq-c{border:1px solid var(--b100);background:var(--b50);color:var(--b800);border-radius:7px;
+  padding:4px 9px;font-size:11px;font-weight:700;}
+.nq-c s{text-decoration:none;color:#8FA6CE;font-size:10px;margin-right:4px;}
+.nq-n{display:flex;align-items:baseline;gap:6px;padding:12px 14px 0;}
+.nq-n b{font-size:21px;font-weight:800;letter-spacing:-.02em;}
+.nq-n span{font-size:11.5px;color:var(--ink3);}
+.nq-n .r{margin-left:auto;font-size:11px;color:var(--ink3);}
+.nq-hits{padding:10px 14px 0;display:flex;flex-direction:column;gap:6px;}
+.nq-hit{border:1px solid var(--line);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px;}
+.nq-hit .w{font-size:12px;font-weight:700;}
+.nq-hit .g{flex:1;height:8px;background:#EFF2F7;border-radius:3px;}
+.nq-hit .d{font-size:10.5px;font-weight:800;color:#fff;background:#DA6A60;border-radius:5px;padding:2px 6px;}
+.nq-ft{margin:12px 14px 14px;height:34px;border:1px solid var(--b100);background:var(--b50);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--b800);}
+
+/* 오른쪽: 말이 조건으로 쪼개지는 과정 */
+.nq-side{flex:1;display:flex;flex-direction:column;}
+.nq-cap{font-size:12px;font-weight:800;color:var(--ink2);letter-spacing:-.01em;margin-bottom:3px;}
+.nq-cap span{color:var(--ink3);font-weight:600;}
+.nq-flow{border:1px solid var(--line);border-radius:12px;background:#FCFDFE;padding:20px 22px 18px;}
+.nq-grid{display:grid;grid-template-columns:auto auto auto;gap:0 18px;justify-content:start;}
+.nq-tok{font-size:16px;font-weight:800;letter-spacing:-.02em;text-align:center;padding:3px 10px;
+  border-radius:7px;background:#FFF1E6;color:#9A3D0B;}
+.nq-arw{position:relative;height:28px;}
+.nq-arw::before{content:"";position:absolute;left:50%;top:4px;width:1.5px;height:15px;
+  background:#D6DEEA;transform:translateX(-50%);}
+.nq-arw::after{content:"";position:absolute;left:50%;top:17px;width:0;height:0;
+  border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:6px solid #C3CEDD;
+  transform:translateX(-50%);}
+.nq-fld{text-align:center;}
+.nq-fld .k{font-size:10.5px;font-weight:800;color:var(--ink3);letter-spacing:.05em;}
+.nq-fld .v{margin-top:4px;border:1px solid var(--b100);background:var(--b50);color:var(--b800);
+  border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:800;white-space:nowrap;}
+.nq-notes{margin-top:14px;display:flex;flex-direction:column;gap:7px;}
+.nq-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ink2);line-height:1.5;}
+.nq-note b{color:var(--ink);font-weight:700;}
+.nq-note i{flex:0 0 auto;width:15px;height:15px;border-radius:50%;background:var(--b50);color:var(--b800);
+  font-style:normal;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+.nq-fabrow{margin-top:auto;display:flex;align-items:center;gap:11px;padding-top:16px;}
+.nq-fabx{width:48px;height:48px;border-radius:50%;background:linear-gradient(140deg,#5A8CDF,#2F4C9C);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 5px 14px rgba(47,76,156,.3);}
+.nq-fabx i{width:16px;height:16px;border:2.4px solid #fff;border-radius:50%;position:relative;font-style:normal;}
+.nq-fabx i::after{content:"";position:absolute;right:-5px;bottom:-4px;width:8px;height:2.4px;background:#fff;
+  border-radius:2px;transform:rotate(45deg);}
+.nq-fabt{font-size:12px;color:var(--ink2);line-height:1.5;}
+.nq-fabt b{color:var(--ink);font-weight:700;display:block;}
+</style></head><body>
+
+<!-- 1. 화면 구성 -->
+<div class="fig" id="fig-layout">
+  <div class="app">
+    <div class="sb card">
+      <div class="brand">H서비스센터<span>하자처리 현황</span></div>
+      <div class="blk b-left" data-n="1">H서비스중부팀</div>
+      <div class="blk act b-left" data-n="2">대시보드</div>
+      <div class="blk sites b-left" data-n="3">
+        <div class="rg">1권역 <span>4</span></div>
+        <div class="st">힐스테이트 두정역</div>
+        <div class="st">힐스테이트 고덕 스카이시티</div>
+        <div class="st">힐스테이트 오산 더퍼스트</div>
+      </div>
+    </div>
+    <div class="mainc">
+      <div class="hdr card">
+        <div class="t">전체 현황 대시보드</div>
+        <div class="r">
+          <div class="blk act" data-n="4" style="--bo:-38px">기준월 2026-06</div>
+          <div class="blk">기준월 변경</div>
+          <div class="blk sq" data-n="5" style="--bo:-38px">?</div>
+          <div class="blk pri" data-n="6" style="--bo:-38px">인쇄</div>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi f1"><div class="kl">관리대상현장</div><div class="kv">8,564</div><div class="ks">12개 현장</div></div>
+        <div class="kpi f2"><div class="kl">전체 접수</div><div class="kv">783,425</div><div class="ks">세대당 91.5건</div></div>
+        <div class="kpi f3"><div class="kl">처리 완료</div><div class="kv">756,293</div><div class="ks">처리율 96.5%</div></div>
+        <div class="kpi"><div class="kl">미처리</div><div class="kv">27,132</div><div class="ks">세대당 3.2건</div></div>
+        <div class="kpi"><div class="kl">장기미처리(30일+)</div><div class="kv">22,547</div><div class="ks">미처리의 83.1%</div></div>
+      </div>
+      <div class="chart card">
+        <div class="ct">하자접수 · 처리 주차별 추이</div>
+        <div class="bars">
+          <i style="height:26%"></i><i style="height:34%"></i><i style="height:40%"></i><i style="height:37%"></i>
+          <i style="height:49%"></i><i style="height:55%"></i><i style="height:51%"></i><i style="height:63%"></i>
+          <i style="height:69%"></i><i style="height:64%"></i><i style="height:77%"></i><i style="height:88%"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. KPI 카드 -->
+<div class="fig" id="fig-kpi">
+  <div class="kpirow">
+    <div class="kpi f1" data-n="1"><div class="kl">관리대상현장</div><div class="kv">8,564</div><div class="ks">12개 현장</div></div>
+    <div class="kpi f2"><div class="kl">전체 접수</div><div class="kv">783,425</div><div class="ks">세대당 91.5건</div></div>
+    <div class="kpi f3"><div class="kl">처리 완료</div><div class="kv">756,293</div><div class="ks">처리율 96.5%</div></div>
+    <div class="kpi"><div class="ktop"><div class="kl">미처리</div><div class="cta" data-n="2" style="--bo:-43px">목록 보기 ›</div></div><div class="kv">27,132</div><div class="ks">세대당 3.2건</div></div>
+    <div class="kpi"><div class="ktop"><div class="kl">장기미처리(30일+)</div></div><div class="kv">22,547</div><div class="ks">미처리의 83.1%</div></div>
+  </div>
+</div>
+
+<!-- 3. 현장 화면 탭 -->
+<div class="fig" id="fig-tabs">
+  <div class="tabs card">
+    <div class="tab act" data-n="1" style="--bo:-38px">종합</div>
+    <div class="tab" data-n="2" style="--bo:-38px">장기미처리</div>
+    <div class="tab" data-n="3" style="--bo:-38px">공가세대</div>
+    <div class="tab" data-n="4" style="--bo:-38px">상세 현황</div>
+  </div>
+</div>
+
+<!-- 4. 목록 창 -->
+<div class="fig" id="fig-list">
+  <div class="card">
+    <div class="wtop">
+      <div class="wtitle">힐스테이트 두정역 · 미처리</div>
+      <div class="search" data-n="1" style="--bo:-43px">동·호·공종·내용 검색</div>
+      <div class="cnt">결과 <b>1,907</b> / 전체 <b>1,907</b></div>
+      <div class="tools">
+        <div class="blk">표 복사</div>
+        <div class="blk" data-n="2" style="--bo:-43px">엑셀</div>
+        <div class="blk" data-n="3" style="--bo:-43px">피벗</div>
+        <div class="blk">닫기</div>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip on b-left" data-n="4">전체 <b>1,907</b></div>
+      <div class="chip">60일 이상 <b>1,060</b></div>
+      <div class="chip">30~59일 <b>272</b></div>
+      <div class="chip">30일 미만 <b>575</b></div>
+    </div>
+    <div class="grid">
+      <div class="grow h"><i style="flex:.45">NO</i><i style="flex:.5">동</i><i style="flex:.5">호</i><i style="flex:1">접수일</i><i style="flex:.8">공종</i><i style="flex:2">접수내용</i><i style="flex:.6">지연일</i></div>
+      <div class="grow"><i style="flex:.45"></i><i style="flex:.5"></i><i style="flex:.5"></i><i style="flex:1"></i><i style="flex:.8"></i><i style="flex:2"></i><i style="flex:.6"></i></div>
+      <div class="grow"><i style="flex:.45"></i><i style="flex:.5"></i><i style="flex:.5"></i><i style="flex:1"></i><i style="flex:.8"></i><i style="flex:2"></i><i style="flex:.6"></i></div>
+      <div class="grow"><i style="flex:.45"></i><i style="flex:.5"></i><i style="flex:.5"></i><i style="flex:1"></i><i style="flex:.8"></i><i style="flex:2"></i><i style="flex:.6"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 무엇이든 찾기 -->
+<div class="fig" id="fig-nlq">
+  <div class="nq-wrap">
+    <div class="nq-card">
+      <div class="nq-h"><div class="t">무엇이든 찾기</div><div class="s">미처리 목록에서 · 현장 · 공종 · 기간</div></div>
+      <div class="nq-q" data-n="2" style="--bl:-39px;--bo:7px">두정 타일 60일 넘은 거</div>
+      <div class="nq-cs" data-n="3" style="--bl:-25px;--bo:9px">
+        <div class="nq-c"><s>현장</s>힐스테이트 두정역</div>
+        <div class="nq-c"><s>공종</s>타일</div>
+        <div class="nq-c"><s>지연</s>60일 이상</div>
+      </div>
+      <div class="nq-n"><b>11</b><span>건</span><span class="r">평균 73일 · 60일+ 11건</span></div>
+      <div class="nq-hits">
+        <div class="nq-hit"><span class="w">101동 341호</span><span class="g"></span><span class="d">64일</span></div>
+        <div class="nq-hit"><span class="w">101동 421호</span><span class="g"></span><span class="d">72일</span></div>
+        <div class="nq-hit"><span class="w">103동 902호</span><span class="g"></span><span class="d">88일</span></div>
+      </div>
+      <div class="nq-ft" data-n="4" style="--bl:-39px;--bo:5px">이 조건으로 목록 창 열기</div>
+    </div>
+
+    <div class="nq-side">
+      <div class="nq-cap">쓰신 말이 조건으로 나뉩니다 <span>— 세는 일은 앱이 합니다</span></div>
+      <div class="nq-flow">
+        <div class="nq-grid">
+          <div class="nq-tok">두정</div><div class="nq-tok">타일</div><div class="nq-tok">60일 넘은 거</div>
+          <div class="nq-arw"></div><div class="nq-arw"></div><div class="nq-arw"></div>
+          <div class="nq-fld"><div class="k">현장</div><div class="v">힐스테이트 두정역</div></div>
+          <div class="nq-fld"><div class="k">공종</div><div class="v">타일</div></div>
+          <div class="nq-fld"><div class="k">지연</div><div class="v">60일 이상</div></div>
+        </div>
+        <div class="nq-notes">
+          <div class="nq-note"><i>·</i><span>현장 이름은 <b>일부만</b> 쳐도 됩니다 — <b>두정</b> · <b>두정역</b> · <b>힐스테이트 두정역</b> 모두 같은 현장</span></div>
+          <div class="nq-note"><i>·</i><span>못 알아들은 말은 <b>숨기지 않고 알려 줍니다</b> — 무엇을 빼고 찾았는지 보이도록</span></div>
+        </div>
+      </div>
+      <div class="nq-fabrow">
+        <div class="nq-fabx" data-n="1" style="--bo:-32px"><i></i></div>
+        <div class="nq-fabt"><b>어느 화면에서든 오른쪽 아래</b>대시보드·현장 어디서나 같은 자리에 있습니다</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>

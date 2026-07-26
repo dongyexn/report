@@ -1217,6 +1217,7 @@ function nlqRender(){
     ? cs.map(c=>`<span class="nq-chip"><span class="k">${esc(c[0])}</span>${esc(c[1])}</span>`).join('')
     : '<span class="nq-chip no">알아들은 조건이 없습니다</span>')+'</div>';
   if(R.doneAsked) h+='<div class="nq-miss">이 검색은 <b>미처리 목록</b>만 봅니다 · 처리완료 건은 나오지 않습니다</div>';
+  if(R.ambig&&!R.site) h+=`<div class="nq-miss"><b>${esc(R.ambig)}</b> 은(는) 여러 현장이 함께 쓰는 이름입니다 · 현장을 구분할 수 있게 더 적어 주세요</div>`;
   if(unknown.length) h+=`<div class="nq-miss">무시한 말 — <b>${unknown.map(esc).join('</b>, <b>')}</b></div>`;
   if(R.empty){ if(ft)ft.hidden=true; body.innerHTML=h+HINT; window.__NLQ=null; return; }
   const rows=nlqApply(nlqRows(),R), show=rows.slice(0,20);
