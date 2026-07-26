@@ -1163,6 +1163,13 @@ registerActions('click', {
   'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';S.axSiteAll=false;
     try{localStorage.setItem('axSite',S.axSite);}catch(_){}
     if(S.sid)rSiteAxisOnly(S.sid);},        // 표만 갈아 끼운다(화면 전체 재렌더 금지)
+  'panel.usePrevPlan':(el)=>{   // 지난달 계획을 이번 달 칸으로 — 빈 칸일 때만 채운다
+    const tr=el.closest('tr'); if(!tr)return;
+    const ta=tr.querySelector('textarea.plan-ta'); if(!ta)return;
+    if(ta.value.trim()){toast('이미 이번 달 계획이 있습니다');return;}
+    ta.value=(el.textContent||'').trim(); ta.focus();
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    ta.dispatchEvent(new Event('change',{bubbles:true}));},
   'axis.siteAll':()=>{S.axSiteAll=!S.axSiteAll;if(S.sid)rSiteAxisOnly(S.sid);},
   'axis.dash':(el)=>{S.axDash=el.dataset.ax==='co'?'co':'site';
     try{localStorage.setItem('axDash',S.axDash);}catch(_){}
@@ -1226,7 +1233,6 @@ registerActions('click', {
   'team.addTeam':()=>tmAddTeam(), 'team.addRegion':()=>tmAddRegion(), 'region.del':(el)=>tmDeleteRegion(el.dataset.rgn),
   'uz':()=>{const fi=document.getElementById('fi');if(fi)fi.click();},
   'smt.sort':(el)=>sortSMT(el.dataset.key), 'site.del':(el)=>delS(el.dataset.sid), 'site.addModal':()=>openSM(null),
-  'panel.carryPlan':(el)=>{const sid=el.dataset.sid;const n=carryPlansForward(sid);if(n){toast('전월 계획 '+n+'건 복사됨');rSite(sid);}else toast('가져올 전월 계획 없음 · 또는 이미 입력됨');},
   'panel.tab':(el)=>setTab(el.dataset.tab), 'panel.ai':(el)=>runAI(el.dataset.sid), 'panel.sort':(el)=>sortPanel(el.dataset.tbl, el),
   'vac.edit':(el)=>openVacEdit(el.dataset.sid, el.dataset.vl, el.dataset.sf),
   'ul.cancel':()=>{cancelUL();closeMo();}, 'ul.confirmSite':(el)=>confirmNewSite(el.dataset.name, Number(el.dataset.idx), Number(el.dataset.total))

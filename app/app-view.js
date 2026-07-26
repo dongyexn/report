@@ -927,6 +927,13 @@ function rChartsImpl(all){
 // 예: "힐스테이트 두정역"→"두정", "갑천1 트리풀시티 힐스테이트"→"갑천"
 function shortName(name){if(!name)return'-';const stripped=String(name).replace(/힐스테이트/g,'').trim();const core=stripped||String(name).trim();return core.slice(0,2)||name;}
 
+// 지난달 계획 셀 — 이번 달 결과(전월→금월) 바로 옆에 두면 이행 여부가 드러난다.
+//   누르면 이번 달 빈 칸으로 옮겨 적는다(전월 계획 불러오기 버튼을 대신함).
+function prevPlanCell(planMap,trade){
+  const txt=(planMap&&planMap[pM(S.rm)+'@'+trade])||'';
+  if(!txt)return '<td class="pp-prev"><div class="pp-none">지난달 계획 없음</div></td>';
+  return '<td class="pp-prev"><div class="pp-box" data-act="panel.usePrevPlan" data-tt="누르면 이번 달 칸으로 옮겨 적습니다">'+esc(txt)+'</div></td>';
+}
 // SITE PANEL
 // 공가 미처리 상위 공종 표 (세대/상가 공용)
 function vacRowsHTML(sid,stat,cm,planField){
@@ -1040,7 +1047,7 @@ function rSite(sid){
     const pc=st.topLtPrev?.[t.t]||0,dN=t.c-pc;
     const {dArrow,dBadge,dTxt}=deltaParts(dN);
     const coCell=esc(t.co||'-');
-    return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="lul" data-trade="${esc(t.t)}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
+    return`<tr><td class="cc"><b>${i+1}</b></td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="lul" data-trade="${esc(t.t)}"><b>${esc(t.t)}</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${t.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${t.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td>${prevPlanCell(planMap,t.t)}<td><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planKey}-${esc(t.t)}" data-plan-id="cmt|${sid}|${planKey==='pp'?'processingPlan':'vacantProcessingPlan'}|${esc(S.rm+'@'+t.t)}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(plan)}</textarea></td></tr>`;
   };
   // 기타 행 — 순위 없음, 시공업체는 외 N개 업체, 전월=기타 묶음 공종들의 전월 합
   const trEtcFn=(etc,prevMap)=>{
@@ -1050,21 +1057,21 @@ function rSite(sid){
     const ratio=st.lt>0?(etc.c/st.lt*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planEtc=cm.processingPlan?.[S.rm+'@기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td>${prevPlanCell(cm.processingPlan,'기타')}<td><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-pp-기타" data-plan-id="cmt|${sid}|processingPlan|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planEtc)}</textarea></td></tr>`;
   };
   // 합계 행
   const trTotFn=(tot,prevTot)=>{
     if(!tot)return'';
     const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td class="pp-prev"></td><td><div style="min-height:32px"></div></td></tr>`;
   };
   const trBase=st.topLt.filter(t=>!t.isT&&!t.isO);
   const trEtc=st.topLt.find(t=>t.isO),trTot=st.topLt.find(t=>t.isT);
   const prevTrTot=Object.values(st.topLtPrev||{}).reduce((a,b)=>a+b,0);
   const trRows=(trBase.map((t,i)=>trRowFn(t,i,cm.processingPlan,'pp')).join('')
     +trEtcFn(trEtc,st.topLtPrev)+trTotFn(trTot,prevTrTot))
-    ||'<tr><td colspan="8" style="text-align:center;padding:14px;color:var(--lbl3)">장기미처리 없음</td></tr>';
+    ||'<tr><td colspan="9" style="text-align:center;padding:14px;color:var(--lbl3)">장기미처리 없음</td></tr>';
   // ── 상세 현황 (월별/주차별) — 기존 .dt 디자인, 연도 피커로 필터 ──
   // 월별/주차별 공유 헬퍼 별칭(단일 출처) — _metrics는 ltRatio 포함 상위집합
   const _nf=tblNF,_dlt=tblDlt,_ltrCells=tblLtrCells,_metrics=tblMetrics;
@@ -1156,7 +1163,7 @@ function rSite(sid){
 <div class="tpane ${S.tab==='trade'?'act':''}" data-tab="trade">
   <div class="as">
     ${ltrMomBar}
-    <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div><button class="btn bo bsm no-print" data-act="panel.carryPlan" data-sid="${esc(sid)}" data-tt="전월(${pM(S.rm)}) 처리계획을 이번 달 빈 칸에만 복사합니다" aria-label="전월 처리계획 불러오기">전월 계획 불러오기</button></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
+    <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:5%">순위</th><th style="width:8.5%">공종</th><th style="width:9.5%">시공업체</th><th class="n" style="width:6.5%">전월</th><th class="n" style="width:6.5%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:6%">비율</th><th style="width:25.5%">지난달 계획</th><th style="width:25.5%">이번 달 계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
     <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">${_ax==='co'?'업체별':'공종별'} 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
   </div>
 </div>
