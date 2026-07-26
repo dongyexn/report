@@ -1208,7 +1208,7 @@ function recListBodyHTML(){
   const cols=recVisCols().map(c=>{const w=(R.colW&&R.colW[c.key])||c.w;return `<col${w?` style="width:${w}px"`:''}>`;}).join('');
   return `<div class="rl-scroll"><table class="dt rl-table"><colgroup>${cols}</colgroup>${recHeadHTML()}<tbody id="rlBody">${recRowsCapped(R)}</tbody></table></div>`;
 }
-function openRecList(sid,scope,trade,vac){
+function openRecList(sid,scope,trade,vac,nlq){  // nlq: 자연어 찾기가 넘긴 추가 조건(선택)
   let base,dispName;
   let expCnt=0; // 게시 KPI상 기대 건수 — 구게시본(전체 목록 미포함, 300건 캡)일 때 목록 축소 안내용
   let vacHC=false,hasHC=false; // 공가상가 판별용 — 단일 현장은 현장 플래그, 팀 병합은 행별 __hc 사용
@@ -1233,7 +1233,9 @@ function openRecList(sid,scope,trade,vac){
     dispName=site.name||'';
     vacHC=hasHC=!!site.hasCommercial;
   }
-  const rows=(trade?base.filter(i=>(i.trade||'기타')===trade):base.slice())
+  let _base=trade?base.filter(i=>(i.trade||'기타')===trade):base.slice();
+  if(nlq)_base=nlqApply(_base,nlq);   // 자연어 조건은 목록 필터와 같은 필드를 본다
+  const rows=(_base)
     .sort((a,b)=>String(a.receiptDate||'').localeCompare(String(b.receiptDate||''))); // 해제 시 복귀할 기준 순서(접수일 오름차순)
   const _rmP=S.rm.split('-').map(Number),_rmEnd=`${S.rm}-${String(new Date(_rmP[0],_rmP[1],0).getDate()).padStart(2,'0')}`;
   window.__REC={all:rows,view:rows,filters:{},valueFilters:{},sort:{key:null,dir:-1},filterRow:false,pivotOn:false,pivot:(sid==='__team'?{rows:['siteName'],col:'trade',sort:{key:'__total',dir:-1},val:'count'}:{rows:['contractor','trade'],col:null,sort:{key:'__total',dir:-1},val:'count'}),label:dispName+(trade?('_'+trade):''),scope:scope,rmEnd:_rmEnd,band:null,limit:500,withSite:sid==='__team',hidden:new Set(),colW:{},vac:(vac==='unit'||vac==='store')?vac:null,vacHC:vacHC,hasHC:hasHC};

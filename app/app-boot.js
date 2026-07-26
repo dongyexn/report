@@ -337,6 +337,16 @@ function openMP(){
   if(document.body.classList.contains('viewer')){toast('게시본은 기준월 선택기로 전환하세요');return;}
   document.getElementById('mt').textContent='기준월 변경';document.getElementById('mbody').innerHTML=`<p style="font-size:12px;color:var(--lbl2);margin-bottom:12px">월초 회의 기준으로 직전 달 전체 데이터를 분석합니다.</p><div class="ig2"><label class="il" for="mmo">기준월</label><input type="month" class="inp" id="mmo" value="${S.rm}"></div>`;document.getElementById('mf').innerHTML=`<button class="btn bg2 bsm" data-act="modal.close">취소</button><button class="btn bp bsm" data-act="modal.applyM">적용</button>`;openMo();}
 function applyM(){const v=document.getElementById('mmo').value;if(v){S.rm=v;setRmChip();lsSave();}closeMo();if(S.view==='dashboard')rDash();if(S.view==='site')rSite(S.sid);}
+// 자연어 찾기 패널 — 어느 화면에서든 같은 자리. Esc·바깥 클릭으로 닫힌다.
+function nlqOpen(on){
+  const p=document.getElementById('nqPanel'), f=document.getElementById('nqFab');
+  if(!p||!f)return;
+  p.classList.toggle('on',!!on); f.classList.toggle('on',!!on);
+  p.setAttribute('aria-hidden',on?'false':'true');
+  f.setAttribute('aria-expanded',on?'true':'false');
+  if(on){ try{nlqRender();}catch(e){logErr('nlqRender',e);} setTimeout(()=>{const q=document.getElementById('nqQ');if(q)q.focus();},60); }
+}
+
 function toggleShortcutHelp(){
   const mt=document.getElementById('mt'),mb=document.getElementById('mbody'),mf=document.getElementById('mf');
   if(!mt||!mb||!mf)return;
@@ -886,6 +896,10 @@ function bindGlobalUi(){
 
   document.addEventListener('keydown',e=>{
 
+    // 찾기 패널은 입력 중에도 Esc로 닫혀야 하므로 shEditing() 앞에서 처리한다
+    if(e.key==='Escape'){const np=document.getElementById('nqPanel');
+      if(np&&np.classList.contains('on')){e.preventDefault();nlqOpen(false);return;}}
+
     if(shEditing())return;
 
     const mo=document.getElementById('mo');if(mo&&mo.classList.contains('open'))return;
@@ -895,6 +909,13 @@ function bindGlobalUi(){
     // 기준월 이동 단축키([ ])는 오조작 위험이 커서 제거함 — 월 선택은 상단 드롭다운으로만
     if(e.key==='?'){e.preventDefault();toggleShortcutHelp();}
 
+  });
+
+  document.addEventListener('mousedown',e=>{
+    const p=document.getElementById('nqPanel');
+    if(!p||!p.classList.contains('on'))return;
+    if(p.contains(e.target)||e.target.closest('#nqFab'))return;
+    nlqOpen(false);
   });
 
   document.addEventListener('contextmenu',e=>{
@@ -1133,6 +1154,13 @@ registerActions('click', {
   'snap.rm':(el)=>snapSwitchMonth(el.value),
   'set.dark':(el)=>applyTheme(el.checked),
   'theme.toggle':()=>applyTheme(!isDark()),
+  'nlq.toggle':()=>nlqOpen(!document.getElementById('nqPanel').classList.contains('on')),
+  'nlq.close':()=>nlqOpen(false),
+  'nlq.list':()=>{const N=window.__NLQ;if(!N)return;nlqOpen(false);
+    const site=N.R.site?dashSites().find(s=>s.name===N.R.site):null;
+    // 단일 현장으로 열면 그 현장 목록이라 siteName이 없다 → 현장 조건은 빼고 나머지만 넘긴다
+    const spec=site?Object.assign({},N.R,{site:null}):N.R;
+    openRecList(site?site.id:'__team','ul',null,false,spec);},
   'set.copyErr':()=>{const s=errLogText();
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(s).then(()=>toast('버전·오류 기록 복사됨'),()=>toast('복사 실패 · 콘솔을 확인하세요'));
     else{console.log(s);toast('복사 미지원 브라우저 · 콘솔에 출력함');}},
@@ -1190,6 +1218,7 @@ registerActions('click', {
 });
 // ── [전환 완료] input 액션 ──
 registerActions('input', {
+  'nlq.q':()=>nlqRender(),
   'set.aiKey':(el)=>{S.ck=el.value;localStorage.setItem('ck',el.value);},
   'rec.filter':(el)=>{const R=window.__REC;if(!R)return;R.filters[el.dataset.key]=el.value;clearTimeout(R._ft);R._ft=setTimeout(recRenderBody,150);}, // 디바운스 — 키스트로크마다 수천 행 재렌더 방지
   'rec.qsearch':(el)=>{const R=window.__REC;if(!R)return;R.q=el.value;clearTimeout(R._qt);R._qt=setTimeout(recRenderModalBody,150);}, // 목록 내 통합 검색(디바운스) — 피벗 모드도 함께 갱신

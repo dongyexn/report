@@ -1193,3 +1193,48 @@ async function runDashAI(){
     toast('AI 분석 실패: '+e.message);
   }
 }
+
+// ── 자연어 찾기(화면) ──
+//   목록 창과 같은 원천(calc 결과의 미처리 목록)을 쓴다 — 편집자는 로컬 원본, 뷰어는 게시본으로 같은 경로.
+function nlqRows(){
+  const out=[];
+  (typeof dashSites==='function'?dashSites():[]).forEach(s=>{
+    const st=calc(S.def[s.id]||[],s,S.rm);
+    (st.ul||[]).forEach(i=>out.push(Object.assign({},i,{siteName:s.name,__hc:!!s.hasCommercial})));
+  });
+  return out;
+}
+function nlqRender(){
+  const body=document.getElementById('nqBody'), ft=document.getElementById('nqFt');
+  if(!body)return;
+  const q=(document.getElementById('nqQ')||{}).value||'';
+  const HINT='<div class="nq-blank">현장·공종·기간을 섞어서 물어보세요<br><b>신용 도배 60일 넘은 거</b><br><b>두정 공가세대</b><br><b>익산 101동</b></div>';
+  if(!q.trim()){ if(ft)ft.hidden=true; body.innerHTML=HINT; window.__NLQ=null; return; }
+  const {R,unknown}=nlqParse(q);
+  let h='';
+  const cs=nlqChips(R);
+  h+='<div class="nq-chips">'+(cs.length
+    ? cs.map(c=>`<span class="nq-chip"><span class="k">${esc(c[0])}</span>${esc(c[1])}</span>`).join('')
+    : '<span class="nq-chip no">알아들은 조건이 없습니다</span>')+'</div>';
+  if(R.doneAsked) h+='<div class="nq-miss">이 검색은 <b>미처리 목록</b>만 봅니다 · 처리완료 건은 나오지 않습니다</div>';
+  if(unknown.length) h+=`<div class="nq-miss">무시한 말 — <b>${unknown.map(esc).join('</b>, <b>')}</b></div>`;
+  if(R.empty){ if(ft)ft.hidden=true; body.innerHTML=h+HINT; window.__NLQ=null; return; }
+  const rows=nlqApply(nlqRows(),R), show=rows.slice(0,20);
+  const avg=rows.length?Math.round(rows.reduce((a,r)=>a+(Number(r.delayDays)||0),0)/rows.length):0;
+  const d60=rows.filter(r=>(Number(r.delayDays)||0)>=60).length;
+  h+=`<div class="nq-cnt"><span class="n">${rows.length.toLocaleString()}</span><span class="u">건</span>`+
+     (rows.length?`<span class="s">평균 ${avg}일 · 60일+ ${d60}건</span>`:'')+'</div>';
+  if(rows.length){
+    h+=show.map(r=>{
+      const d=Number(r.delayDays)||0, k=d>=60?'d60':d>=30?'d30':'d0', lb=d>=60?'60일+':d>=30?'30~59':'30일-';
+      const who=[r.siteName,(r.building?r.building+'동':''),(r.unit?r.unit+'호':'')].filter(Boolean).join(' ');
+      const sub=[r.trade||'기타',r.space,(r.receiptContent||'').slice(0,26)].filter(Boolean).join(' · ');
+      return `<div class="nq-hit"><div class="r1"><span class="who">${esc(who)}</span>`+
+             `<span class="nq-tag ${k}">${lb} · ${d}일</span></div><div class="r2">${esc(sub)}</div></div>`;
+    }).join('');
+    if(rows.length>show.length) h+=`<div class="nq-blank">아래 ${rows.length-show.length}건 더 — 목록 창에서 전체 보기</div>`;
+  } else h+='<div class="nq-blank">조건에 맞는 건이 없습니다</div>';
+  body.innerHTML=h;
+  if(ft)ft.hidden=!rows.length;
+  window.__NLQ={R:R,n:rows.length};
+}

@@ -139,6 +139,61 @@ body.sb-collapsed .sb-theme{flex-direction:column;padding:4px;}
 .ck-recv{border-color:var(--ch-recv)!important;}
 .ck-done{border-color:var(--ch-done)!important;}
 
+/* 자연어 찾기 — 플로팅 버튼 + 패널 */
+.nq-fab{position:fixed;right:24px;bottom:24px;width:52px;height:52px;border:0;border-radius:50%;z-index:60;
+  background:linear-gradient(140deg,var(--b600),var(--b700));color:#fff;cursor:pointer;
+  box-shadow:0 6px 20px rgba(50,89,182,.34),0 2px 6px rgba(0,0,0,.12);
+  display:flex;align-items:center;justify-content:center;transition:transform var(--tr),box-shadow var(--tr);}
+.nq-fab:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(50,89,182,.42),0 3px 8px rgba(0,0,0,.14);}
+.nq-fab .icn{width:22px;height:22px;}
+.nq-fab .x{display:none;} .nq-fab.on .x{display:block;} .nq-fab.on .s{display:none;}
+.nq-panel{position:fixed;right:24px;bottom:88px;width:392px;max-height:min(600px,calc(100vh - 128px));z-index:61;
+  background:var(--bg2);border:1px solid var(--sep);border-radius:18px;overflow:hidden;
+  box-shadow:0 18px 50px rgba(20,26,40,.18),0 4px 14px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;opacity:0;transform:translateY(10px) scale(.98);pointer-events:none;
+  transition:opacity var(--tr),transform var(--tr);}
+.nq-panel.on{opacity:1;transform:none;pointer-events:auto;}
+.nq-hd{display:flex;align-items:flex-start;gap:8px;padding:14px 14px 12px;border-bottom:1px solid var(--sep);}
+.nq-tt{font-size:14px;font-weight:700;}
+.nq-sb{font-size:11.5px;color:var(--lbl3);margin-top:2px;}
+.nq-cl{margin-left:auto;width:28px;height:28px;border:0;background:transparent;border-radius:8px;color:var(--lbl3);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background var(--tr),color var(--tr);}
+.nq-cl:hover{background:var(--fill);color:var(--lbl);}
+.nq-cl .icn{width:15px;height:15px;}
+.nq-in{padding:12px 14px 0;}
+.nq-in input{width:100%;height:42px;border:1.5px solid var(--sep);border-radius:11px;padding:0 13px;
+  font:inherit;font-size:14px;color:var(--lbl);background:var(--bg2);transition:border-color var(--tr);}
+.nq-in input:focus{outline:none;border-color:var(--b600);}
+.nq-body{flex:1;overflow-y:auto;padding:12px 14px 14px;}
+.nq-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.nq-chip{border-radius:8px;padding:4px 9px;font-size:11.5px;font-weight:600;
+  background:var(--b50);color:var(--bt1);border:1px solid var(--b100);}
+.nq-chip .k{font-size:10px;opacity:.62;font-weight:700;margin-right:4px;}
+.nq-chip.no{background:var(--tint-rd);color:var(--rd);border-color:var(--tint-rd);}
+.nq-miss{font-size:11.5px;color:var(--lbl2);background:var(--surf2);border-radius:9px;padding:8px 10px;margin-bottom:10px;}
+.nq-miss b{color:var(--lbl);}
+.nq-cnt{display:flex;align-items:baseline;gap:7px;margin:2px 0 10px;}
+.nq-cnt .n{font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+.nq-cnt .u{font-size:12px;color:var(--lbl2);}
+.nq-cnt .s{margin-left:auto;font-size:11.5px;color:var(--lbl3);}
+.nq-hit{border:1px solid var(--sep);border-radius:11px;padding:9px 11px;margin-bottom:6px;font-size:12.5px;}
+.nq-hit .r1{display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.nq-hit .who{font-weight:700;}
+.nq-hit .r2{color:var(--lbl2);margin-top:2px;font-size:12px;}
+.nq-tag{padding:2px 6px;border-radius:6px;font-size:10.5px;font-weight:700;color:#fff;white-space:nowrap;}
+.nq-tag.d60{background:var(--ch-d60);} .nq-tag.d30{background:var(--ch-d30);}
+.nq-tag.d0{background:var(--ch-d0);color:var(--bt2);}
+.nq-blank{text-align:center;color:var(--lbl3);font-size:12.5px;padding:22px 6px;line-height:1.95;}
+.nq-blank b{color:var(--lbl2);}
+.nq-ft{border-top:1px solid var(--sep);padding:10px 14px;background:var(--surf2);}
+.nq-ft .btn{width:100%;}
+body.snap .nq-fab,body.snap .nq-panel{right:24px;}
+@media (max-width:640px){
+  .nq-fab{right:16px;bottom:16px;}
+  .nq-panel{right:0;left:0;bottom:0;width:auto;max-height:82vh;border-radius:18px 18px 0 0;}
+}
+@media print{.nq-fab,.nq-panel{display:none!important;}}
+
 /* LAYOUT */
 #app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
 
@@ -1738,6 +1793,20 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 </div>
 <div id="scrim" data-act="nav.mobileClose"></div>
 <div id="htooltip" class="gl"></div>
+  <!-- 자연어 찾기 — 어느 화면에서든 같은 자리. 인쇄·스냅샷 캡처에서는 숨긴다. -->
+  <button class="nq-fab" id="nqFab" data-act="nlq.toggle" data-tt="무엇이든 찾기" aria-label="찾기" aria-expanded="false">
+    <svg class="icn s" aria-hidden="true"><use href="#i-search"></use></svg>
+    <svg class="icn x" aria-hidden="true"><use href="#i-close"></use></svg>
+  </button>
+  <div class="nq-panel" id="nqPanel" role="dialog" aria-label="찾기" aria-hidden="true">
+    <div class="nq-hd">
+      <div><div class="nq-tt">무엇이든 찾기</div><div class="nq-sb">미처리 목록에서 · 현장 · 공종 · 기간</div></div>
+      <button class="nq-cl" data-act="nlq.close" aria-label="닫기"><svg class="icn" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="nq-in"><input id="nqQ" data-act="nlq.q" placeholder="예: 신용 도배 60일 넘은 거" autocomplete="off" aria-label="찾을 내용"></div>
+    <div class="nq-body" id="nqBody"></div>
+    <div class="nq-ft" id="nqFt" hidden><button class="btn bo bsm" data-act="nlq.list">이 조건으로 목록 창 열기</button></div>
+  </div>
 <div id="toast" class=""></div>
 <div id="uprog" class="uprog"><div class="uprog-box"><div class="uprog-spin"></div><div class="uprog-msg" id="uprogMsg">데이터 내보내는 중...</div><div class="uprog-bar"><div class="uprog-fill" id="uprogFill" style="width: 0%;"></div></div><div class="uprog-sub" id="uprogSub">HTML 골격 생성</div></div></div>
 <div id="mo" data-act="modal.close" class=""><div id="mb" data-act="modal.stop"><div class="mt2" id="mt"></div><button class="mo-x no-print" data-act="modal.close" aria-label="닫기" data-tt="닫기"><svg class="icn" aria-hidden="true"><use href="#i-close"></use></svg></button><div id="mbody"></div><div class="mf2" id="mf"></div></div></div>

@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-25.5';
+const BUILD='2026-07-26.1';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -174,6 +174,80 @@ function errLogText(){
 }
 window.addEventListener('error',e=>logErr('window',e.error||e.message));
 window.addEventListener('unhandledrejection',e=>logErr('promise',e));
+
+// ── 자연어 찾기(해석) ──
+//   외부 API를 쓰지 않는다. 사전은 화면에 있는 현장·공종에서 그때그때 만들고,
+//   해석기는 '조건'만 만든다. 세는 일은 앱이 하므로 숫자를 지어낼 수 없다.
+const NLQ_JOSA=/(에서|으로|에게|까지|부터|이랑|하고|이야|인거|인 거|랑|만|도|은|는|이|가|을|를|의|에|로|와|과)$/;
+const NLQ_NOISE=/^(거|것|좀|중|해줘|알려줘|보여줘|찾아줘|줘|해|목록|건|개|다|전부|모두|세대|어때|뭐|얼마나|건수|몇)$/;
+const NLQ_SYN={
+  vac:['공가세대','공가','빈집'], shop:['상가','근생'],
+  old:['오래된 순','오래된순','지연 순','지연순','밀린 순','오래된'], recent:['최신순','최근 순','최근순'],
+  done:['처리완료','완료된','완료']
+};
+// 사전 — 팀 현장명 + 실제 데이터에 나타난 공종명(긴 이름부터 먹어야 부분일치 오인이 없다)
+function nlqDict(){
+  const sites=(typeof dashSites==='function'?dashSites():(S.sites||[])).map(s=>s.name).filter(Boolean);
+  const tr=new Set();
+  (S.sites||[]).forEach(s=>((S.def&&S.def[s.id])||[]).forEach(r=>{ if(r.trade)tr.add(r.trade); }));
+  if(!tr.size&&window.__NLQ_TRADES)window.__NLQ_TRADES.forEach(x=>tr.add(x));
+  const byLen=a=>a.slice().sort((x,y)=>y.length-x.length);
+  return {sites:byLen([...new Set(sites)]), trades:byLen([...tr])};
+}
+function nlqParse(q,dict){
+  const D=dict||nlqDict();
+  let s=' '+String(q||'').trim()+' ';
+  const R={site:null,trades:[],delay:null,vac:false,shop:false,dong:null,ho:null,sort:null,doneAsked:false};
+  const rx=v=>new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+  const eat=(re,fn)=>{ s=s.replace(re,(...a)=>{ fn(...a); return ' '; }); };
+  eat(/(\d+)\s*일\s*(이상|넘는|넘은|넘어|초과)/g,(m,n)=>R.delay={op:'gte',n:+n});
+  eat(/(\d+)\s*일\s*(미만|이내|이하)/g,(m,n)=>R.delay={op:'lt',n:+n});
+  eat(/장기\s*미?처리?/g,()=>{ R.delay=R.delay||{op:'gte',n:30}; });
+  eat(/미처리/g,()=>{});                     // 목록 자체가 미처리라 조건이 아니다
+  eat(/(\d+)\s*동/g,(m,n)=>R.dong=String(+n));
+  eat(/(\d+)\s*호/g,(m,n)=>R.ho=String(+n));
+  NLQ_SYN.done.forEach(v=>eat(rx(v),()=>R.doneAsked=true));
+  NLQ_SYN.vac.forEach(v=>eat(rx(v),()=>R.vac=true));
+  NLQ_SYN.shop.forEach(v=>eat(rx(v),()=>R.shop=true));
+  NLQ_SYN.old.forEach(v=>eat(rx(v),()=>R.sort='old'));
+  NLQ_SYN.recent.forEach(v=>eat(rx(v),()=>R.sort='new'));
+  D.trades.forEach(v=>eat(rx(v),()=>{ if(!R.trades.includes(v))R.trades.push(v); }));
+  D.sites.forEach(v=>eat(rx(v),()=>{ R.site=R.site||v; }));
+  const unknown=s.split(/[\s,·]+/).map(w=>w.replace(NLQ_JOSA,'').trim()).filter(w=>w&&!NLQ_NOISE.test(w));
+  R.empty=!(R.site||R.trades.length||R.delay||R.vac||R.shop||R.dong||R.ho);
+  return {R,unknown};
+}
+// 해석 결과를 사람이 읽는 조건 칩으로
+function nlqChips(R){
+  const c=[];
+  if(R.site)c.push(['현장',R.site]);
+  if(R.trades.length)c.push(['공종',R.trades.join(', ')]);
+  if(R.delay)c.push(['지연',R.delay.op==='gte'?(R.delay.n+'일 이상'):(R.delay.n+'일 미만')]);
+  if(R.vac)c.push(['구분','공가세대']);
+  if(R.shop)c.push(['구분','상가']);
+  if(R.dong)c.push(['동',R.dong+'동']);
+  if(R.ho)c.push(['호',R.ho+'호']);
+  if(R.sort)c.push(['정렬',R.sort==='old'?'오래된 순':'최근 순']);
+  return c;
+}
+// 조건으로 행 거르기 — 목록 창의 필터와 같은 필드를 본다
+function nlqApply(rows,R){
+  const out=(rows||[]).filter(r=>{
+    if(R.site&&(r.siteName||'')!==R.site)return false;
+    if(R.trades.length&&!R.trades.includes(r.trade||'기타'))return false;
+    if(R.dong&&String(r.building||'').replace(/[^0-9]/g,'')!==R.dong)return false;
+    if(R.ho&&String(r.unit||'').replace(/[^0-9]/g,'')!==R.ho)return false;
+    if(R.vac&&!isVacUnit(r))return false;
+    if(R.shop&&!r.__hc)return false;
+    if(R.delay){ const d=Number(r.delayDays)||0;
+      if(R.delay.op==='gte'&&!(d>=R.delay.n))return false;
+      if(R.delay.op==='lt'&&!(d<R.delay.n))return false; }
+    return true;
+  });
+  if(R.sort==='old')out.sort((a,b)=>(Number(b.delayDays)||0)-(Number(a.delayDays)||0));
+  else if(R.sort==='new')out.sort((a,b)=>(Number(a.delayDays)||0)-(Number(b.delayDays)||0));
+  return out;
+}
 
 // ── 계층 훅 ──
 //   아래 계층(core·data)이 위 계층(view·boot)의 함수를 직접 부르면 의존 방향이 뒤집힌다.
