@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-26.9';
+const BUILD='2026-07-26.10';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -255,6 +255,7 @@ function nlqApply(rows,R){
   const out=(rows||[]).filter(r=>{
     if(R.site&&(r.siteName||'')!==R.site)return false;
     if(R.trades.length&&!R.trades.includes(r.trade||'기타'))return false;
+    if(R.co&&(r.contractor||'(미기재)')!==R.co)return false;   // 업체별 표에서 목록을 열 때
     if(R.dong&&String(r.building||'').replace(/[^0-9]/g,'')!==R.dong)return false;
     if(R.ho&&String(r.unit||'').replace(/[^0-9]/g,'')!==R.ho)return false;
     if(R.vac&&!isVacUnit(r))return false;
@@ -499,7 +500,26 @@ function _calcImpl(items,site,rm){
     if(!done){o.pu++;if(daysBetween(i.receiptDate,pmEnd)>=30)o.plt++;}
   }
   const trAgg=Object.values(_trm).sort((a,b)=>b.u-a.u).map(o=>({t:o.t,r:o.r,res:o.res,u:o.u,lt:o.lt,d0:o.d0,d30:o.d30,d60:o.d60,coTop:Object.entries(o.co).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-',coN:Object.keys(o.co).length,pu:o.pu,plt:o.plt}));
-  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul,trAgg};
+  // 시공업체별 집계(coAgg) — 같은 원본을 업체로 묶은 것. 표의 축 전환에 쓰이고 게시본에도 실려 뷰어가 같은 표를 본다.
+  //   업체가 비어 있는 행은 '(미기재)'로 따로 센다 — 숨기면 합계가 안 맞는다.
+  const _com={};
+  for(const i of all){
+    if(i.receiptDate>rmEnd)continue;
+    const c=i.contractor||'(미기재)';
+    const o=_com[c]||(_com[c]={c,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,tr:{},pu:0,plt:0});
+    o.r++;
+    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=rmEnd;
+    if(done)o.res++;else{o.u++;const dd=daysBetween(i.receiptDate,rmEnd);if(dd>=60){o.d60++;o.lt++;}else if(dd>=30){o.d30++;o.lt++;}else o.d0++;}
+    const tr=i.trade||'기타';o.tr[tr]=(o.tr[tr]||0)+1;
+  }
+  for(const i of all){
+    if(i.receiptDate>pmEnd)continue;
+    const o=_com[i.contractor||'(미기재)'];if(!o)continue;
+    const done=i.status==='처리'&&i.completionDate&&i.completionDate<=pmEnd;
+    if(!done){o.pu++;if(daysBetween(i.receiptDate,pmEnd)>=30)o.plt++;}
+  }
+  const coAgg=Object.values(_com).sort((a,b)=>b.u-a.u).map(o=>({c:o.c,r:o.r,res:o.res,u:o.u,lt:o.lt,d0:o.d0,d30:o.d30,d60:o.d60,trTop:Object.entries(o.tr).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-',trN:Object.keys(o.tr).length,pu:o.pu,plt:o.plt}));
+  return{tR,res,unr,rate,lt,ltr,prev:{total:pT,res:pRes,unr:pUnr,rate:pRate,lt:pLt,ltr:pLtr,dd:[pd0,pd30,pd60]},weekly:calcW(ref,rmEnd,pmEnd),monthly:calcMo(all),top,topPrev,topLt,topLtPrev,dd:[d0,d30,d60],vT,vRes,vUnr,vRate,vLt,vUnits,vTop,vTopPrev,vacU,vacS,rpb,dtb,critT,critUnr,critPrevUnr,critUl,rm,pm,rmEnd,pmEnd,ul,lul,trAgg,coAgg};
 }
 
 // 상가 표기 감지 — 동/호 오타 변형 포함 ([강산살상성싱]+[가거기], 뒤에 숫자 허용)

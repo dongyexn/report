@@ -1160,6 +1160,13 @@ registerActions('click', {
   'theme.toggle':()=>applyTheme(!isDark()),
   'nlq.toggle':()=>nlqOpen(!document.getElementById('nqPanel').classList.contains('on')),
   'nlq.close':()=>nlqOpen(false),
+  'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';
+    try{localStorage.setItem('axSite',S.axSite);}catch(_){}
+    if(S.sid)rSite(S.sid);},
+  'axis.dashAll':()=>{S.axDashAll=!S.axDashAll;rDash();},
+  'axis.dash':(el)=>{S.axDash=el.dataset.ax==='co'?'co':'site';
+    try{localStorage.setItem('axDash',S.axDash);}catch(_){}
+    rDash();},
   'nlq.clear':()=>{const q=document.getElementById('nqQ');if(q){q.value='';q.focus();}nlqRender();},
   'nlq.histUse':(el)=>{const q=document.getElementById('nqQ');if(!q)return;q.value=el.dataset.q||'';q.focus();nlqRender();},
   'nlq.histDel':(el)=>{nlqHistDel(el.dataset.q||'');nlqRender();},
@@ -1260,6 +1267,7 @@ registerActions('dragleave', {'uz':(el)=>el.classList.remove('drag')});
 registerActions('drop',      {'uz':(el,e)=>{e.preventDefault();el.classList.remove('drag');const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)onFile(f);}});
 
 document.addEventListener('DOMContentLoaded',async()=>{
+  try{S.axSite=localStorage.getItem('axSite')||'trade';S.axDash=localStorage.getItem('axDash')||'site';}catch(_){}
   console.info('[build]',BUILD);
   document.documentElement.classList.toggle('dark',isDark()); // 렌더 전에 테마 확정 — 밝은 화면이 번쩍이지 않도록
   await ensureVendors(); // vendor/ 로컬 실패 시 CDN 폴백 — 이후 로직이 LZString·Chart 존재를 전제한다

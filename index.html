@@ -214,6 +214,14 @@ body.snap .nq-fab,body.snap .nq-panel{right:24px;}
 }
 @media print{.nq-fab,.nq-panel{display:none!important;}}
 
+/* 표 묶는 기준 전환 — 카드 머리글 오른쪽 */
+.axseg{margin-left:auto;display:inline-flex;background:var(--fill);border-radius:9px;padding:3px;gap:2px;}
+.axseg button{border:0;background:transparent;color:var(--lbl2);border-radius:7px;padding:5px 13px;
+  font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:background var(--tr),color var(--tr);}
+.axseg button:hover{color:var(--lbl);}
+.axseg button.on{background:var(--bg2);color:var(--bt1);box-shadow:0 1px 2px rgba(0,0,0,.10);}
+@media print{.axseg{display:none!important;}}
+
 /* LAYOUT */
 #app{display:flex;height:100vh;height:100dvh;overflow:hidden;}
 
@@ -1726,7 +1734,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
         </div>
       </div>
       <div class="card mb12"><div class="sh"><div class="ct cardttl">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
-      <div class="card mb12"><div class="ct cardttl">현장별 하자처리 현황</div>
+      <div class="card mb12"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" id="dashAx" role="group" aria-label="묶는 기준"><button data-act="axis.dash" data-ax="site">현장별</button><button data-act="axis.dash" data-ax="co">업체별</button></div></div>
         <table class="dt" id="dtable"><thead><tr>
           <th style="width:6%;text-align: center;white-space:nowrap" data-sort="region" tabindex="0" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
           <th style="width:15%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>

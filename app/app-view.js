@@ -68,6 +68,104 @@ function deltaParts(dN){
           dTxt:dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`};
 }
 
+
+
+// ── 대시보드 '전체 하자처리 현황' — 현장별(기본 표) ↔ 업체별(팀 전체 coAgg 병합) ──
+//   현장별은 index.html의 표를 그대로 쓰고, 업체별일 때만 표를 통째로 갈아 끼운다.
+let _dtOrig=null;
+const DASH_CO_TOP=10;
+function dashCoAgg(list){                      // 현장별 coAgg를 업체 기준으로 합친다
+  const m=new Map();
+  (list||[]).forEach(({st})=>{
+    (st.coAgg||[]).forEach(x=>{
+      let o=m.get(x.c);
+      if(!o){o={key:x.c,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,tr:new Map()};m.set(x.c,o);}
+      o.r+=x.r;o.res+=x.res;o.u+=x.u;o.lt+=x.lt;o.d0+=x.d0;o.d30+=x.d30;o.d60+=x.d60;o.pu+=x.pu||0;o.plt+=x.plt||0;
+      if(x.trTop&&x.trTop!=='-')o.tr.set(x.trTop,(o.tr.get(x.trTop)||0)+x.u);
+    });
+  });
+  return [...m.values()].map(o=>{
+    const top=[...o.tr.entries()].sort((a,b)=>b[1]-a[1]);
+    return Object.assign(o,{side:top[0]?top[0][0]:'-',sideN:o.tr.size});
+  }).sort((a,b)=>b.u-a.u);
+}
+function rDashAxis(list){
+  const tbl=document.getElementById('dtable'); if(!tbl)return false;
+  if(_dtOrig===null)_dtOrig=tbl.innerHTML;
+  document.querySelectorAll('#dashAx button').forEach(b=>b.classList.toggle('on',b.dataset.ax===(S.axDash==='co'?'co':'site')));
+  if(S.axDash!=='co'){                          // 현장별 — 원래 표 구조로 되돌린다
+    if(!document.getElementById('dtbody'))tbl.innerHTML=_dtOrig;
+    {const m=document.getElementById('dashAxMore');if(m)m.hidden=true;}
+    return false;
+  }
+  const rows=dashCoAgg(list);
+  const named=rows.filter(r=>r.key!=='(미기재)'), na=rows.filter(r=>r.key==='(미기재)');
+  let shown=named, folded=null;
+  if(!S.axDashAll && named.length>DASH_CO_TOP){
+    shown=named.slice(0,DASH_CO_TOP);
+    const rest=named.slice(DASH_CO_TOP);
+    folded=rest.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
+      {key:`그 외 ${rest.length}곳`,r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0,side:'-',sideN:0,fold:true});
+  }
+  const ordered=[...shown,...(folded?[folded]:[]),...na];
+  const th=(w,c,txt)=>`<th class="${c}" style="width:${w}%">${txt}</th>`;
+  tbl.innerHTML =
+    `<thead><tr>${th(14,'','시공업체')}${th(11,'','주요 공종')}${th(8,'n','전체 접수')}${th(8,'n','처리')}`+
+    `${th(7,'n','처리율')}${th(8,'n','미처리')}${th(7,'cc','전월대비')}${th(8,'n','장기미처리')}`+
+    `${th(23,'cc','장기미처리 비율')}${th(6,'cc','전월대비')}</tr></thead><tbody>`+
+    (ordered.length?ordered.map(x=>aggRowHTML(Object.assign({},x,{sideN:x.sideN}),-1,'co','__team')
+        .replace('<td class="cc">0</td>','')      // NO 열은 쓰지 않는다
+      ).join(''):`<tr><td colspan="10" style="text-align:center;padding:14px;color:var(--lbl3)">이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다</td></tr>`)+
+    `</tbody>`;
+  // 상위 N개만 보일 때 '전부 보기' 버튼을 표 아래에 둔다
+  let more=document.getElementById('dashAxMore');
+  if(named.length>DASH_CO_TOP){
+    if(!more){
+      more=document.createElement('button');
+      more.id='dashAxMore'; more.className='btn bo bsm'; more.style.cssText='width:100%;margin-top:10px';
+      more.setAttribute('data-act','axis.dashAll');
+      tbl.parentNode.insertBefore(more,tbl.nextSibling);
+    }
+    more.textContent=S.axDashAll?`상위 ${DASH_CO_TOP}곳만 보기`:`업체 ${named.length}곳 전부 보기`;
+    more.hidden=false;
+  }else if(more)more.hidden=true;
+  return true;
+}
+
+// ── 전체 하자처리 현황 표 — 공종/업체/현장 어느 축으로 묶어도 같은 열 구성 ──
+//   normalize: {key, side, sideN, r,res,u,lt,d0,d30,d60,pu,plt} 로 맞춘 뒤 한 곳에서 그린다.
+function aggNorm(list,axis){
+  return (list||[]).map(x=> axis==='co'
+    ? {key:x.c, side:x.trTop||'-', sideN:x.trN||0, r:x.r,res:x.res,u:x.u,lt:x.lt,d0:x.d0,d30:x.d30,d60:x.d60,pu:x.pu||0,plt:x.plt||0}
+    : {key:x.t, side:x.coTop||'-', sideN:x.coN||0, r:x.r,res:x.res,u:x.u,lt:x.lt,d0:x.d0,d30:x.d30,d60:x.d60,pu:x.pu||0,plt:x.plt||0});
+}
+// 한 행 — 기존 공종별 표와 열·모양을 그대로 유지한다
+function aggRowHTML(x,i,axis,sid){
+  const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
+  const ltr=x.u>0?(x.lt/x.u*100):0, pLtr=x.pu>0?(x.plt/x.pu*100):0;
+  const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0;
+  const arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';
+  const p60=x.u>0?Math.min(x.d60/x.u*100,100):0,p30=x.u>0?Math.min(x.d30/x.u*100,100):0,p0=x.u>0?Math.min(x.d0/x.u*100,100):0;
+  const uD=x.u-x.pu,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';
+  const na=x.key==='(미기재)';
+  const link=axis==='co'
+    ? `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-co="${esc(x.key)}"`
+    : `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(x.key)}"`;
+  const sideTxt=esc(x.side)+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
+  return `<tr><td class="cc">${i+1}</td>`+
+    (na?`<td><b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b></td>`
+       :`<td class="rl-link" ${link}><b>${esc(x.key)}</b></td>`)+
+    `<td>${sideTxt}</td>`+
+    `<td class="n">${x.r.toLocaleString()}</td>`+
+    `<td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td>`+
+    `<td class="n" style="font-weight:600">${rt}%</td>`+
+    `<td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td>`+
+    `<td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${x.pu.toLocaleString()} → 금월 ${x.u.toLocaleString()}" aria-label="전월 ${x.pu.toLocaleString()} → 금월 ${x.u.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td>`+
+    `<td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td>`+
+    `<td><span class="ltrbar" data-tt="60일+ ${x.d60.toLocaleString()} · 30~59일 ${x.d30.toLocaleString()} · 30일 미만 ${x.d0.toLocaleString()}"><span class="seg s60" style="width:${p60}%"></span><span class="seg s30" style="width:${p30}%"></span><span class="seg s0" style="width:${p0}%"></span></span> <span style="font-size:11.5px;font-weight:700">${ltr.toFixed(0)}%</span></td>`+
+    `<td class="cc" style="white-space:nowrap"><span class="ba ${badge}">${arrow} ${sign}${Math.abs(dN).toFixed(1)}p</span></td></tr>`;
+}
+
 // NAVIGATION
 function go(view,sid){
   if(document.body.classList.contains('snap')&&view!=='dashboard'&&view!=='site'){view='dashboard';sid=null;} // 정적 스냅샷 파일: 대시보드·현장만 허용(Firebase 뷰어는 현장관리·설정 접근 가능)
@@ -382,10 +480,11 @@ function rDash(){
     {cls:'wh',label:'미처리',val:tU,unit:'건',meta:`세대당 ${tUnits>0?(tU/tUnits).toFixed(1):'0.0'}건`,act:'ul',tt:'팀 전체 미처리 목록 보기'},
     {cls:'wh',label:'장기미처리(30일+)',val:tLt,unit:'건',meta:`미처리의 ${tU>0?(tLt/tU*100).toFixed(1):0}%`,act:'lul',tt:'팀 전체 장기미처리 목록 보기'},
   ].map(k=>`<div class="kc ${k.cls}${k.act?' kc-click':''}"${k.act?` data-act="rec.list" data-sid="__team" data-scope="${k.act}"`:''}${k.tt?` data-tt="${esc(k.tt)}"`:''}><div class="kl">${k.label}</div><div class="kv">${k.valHTML!==undefined?k.valHTML:k.val.toLocaleString()+(k.unit?`<span class="u">${k.unit}</span>`:'')}</div><div class="km">${k.meta}</div>${k.act?`<span class="kc-cta"><span class="kc-cta-t">목록 보기</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>`:''}</div>`).join('');
-  document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const ld=st.lt-st.prev.lt,isUp=ld>0,isFlat=ld===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--bt1);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}" aria-label="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
+  const _axDone=rDashAxis(all);   // 업체별이면 표를 통째로 갈아 끼운다
+  if(!_axDone)document.getElementById('dtbody').innerHTML=sortDR(all).map(({s,st})=>{const ld=st.lt-st.prev.lt,isUp=ld>0,isFlat=ld===0,p60=st.unr>0?Math.min(st.dd[2]/st.unr*100,100):0,p30=st.unr>0?Math.min(st.dd[1]/st.unr*100,100):0,p0=st.unr>0?Math.min(st.dd[0]/st.unr*100,100):0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';const uD=st.unr-st.prev.unr,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';return`<tr><td class="cc" style="white-space:nowrap"><span class="ba bbl">${esc(s.region)}</span></td><td><b style="color:var(--bt1);cursor:pointer" data-act="nav.site" data-site="${esc(s.id)}">${esc(s.name)}</b></td><td class="n">${s.units.toLocaleString()}</td><td class="n">${st.tR.toLocaleString()}</td><td class="n" style="color:var(--gn)">${st.res.toLocaleString()}</td><td class="n" style="font-weight:600">${st.rate.toFixed(1)}%</td><td class="n" style="color:var(--am)">${st.unr.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}" aria-label="전월 ${st.prev.unr.toLocaleString()} → 금월 ${st.unr.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${st.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(s.name)}|${st.unr}|${st.dd[2]}|${st.dd[1]}|${st.dd[0]}|${st.ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${st.ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}" aria-label="전월 ${st.prev.lt.toLocaleString()} → 금월 ${st.lt.toLocaleString()}">${arrow} ${sign}${Math.abs(ld).toLocaleString()}</span></td></tr>`;}).join('')||'<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--lbl3)">현장리스트에서 현장을 추가하고 리스트를 업로드하세요.</td></tr>';
   // 합계 행 — sortDT에도 위치 고정 (tfoot에 별도 배치). 데이터 0건일 땐 비움.
-  const ft=document.getElementById('dtfoot');
-  if(ft){
+  const ft=document.getElementById('dtfoot');   // 업체별에서는 표를 갈아 끼워 tfoot이 없다
+  if(ft&&!_axDone){
     if(!all.length){ft.innerHTML='';}
     else{
       const tLtr=tU>0?tLt/tU*100:0,pLtr=pU>0?pLt/pU*100:0,fld=tLt-pLt;
@@ -953,16 +1052,11 @@ function rSite(sid){
   // 공종별 전체 처리 현황 — 현장별 하자처리 현황과 동일 구성
   // NO/공종/시공업체/전체접수/처리/처리율/미처리/장기미처리/장기미처리비율(바)/전월대비
   // 공종별 전체 처리현황 — calc의 trAgg(단일 출처)를 사용. 뷰어는 게시 kpi에 실린 trAgg를 그대로 받는다.
-  const allTradeRows=(st.trAgg||[]).map((x,i)=>{
-    const rt=x.r>0?(x.res/x.r*100).toFixed(1):'0.0';
-    const coTop=x.coTop||'-';
-    const ltr=x.u>0?(x.lt/x.u*100):0;
-    const p={u:x.pu||0,lt:x.plt||0},pLtr=p.u>0?(p.lt/p.u*100):0;
-    const dN=Number((ltr-pLtr).toFixed(1)),isUp=dN>0,isFlat=dN===0,arrow=isFlat?'─':isUp?'▲':'▼',sign=isFlat?'':isUp?'+':'−',badge=isFlat?'bgr':isUp?'brd':'bgn';
-    const p60=x.u>0?Math.min(x.d60/x.u*100,100):0,p30=x.u>0?Math.min(x.d30/x.u*100,100):0,p0=x.u>0?Math.min(x.d0/x.u*100,100):0;
-    const uD=x.u-p.u,uArrow=uD===0?'─':uD>0?'▲':'▼',uSign=uD>0?'+':uD<0?'−':'',uBadge=uD===0?'bgr':uD>0?'brd':'bgn';
-    return`<tr><td class="cc">${i+1}</td><td class="rl-link" data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(x.t)}"><b>${esc(x.t)}</b></td><td>${esc(coTop)}</td><td class="n">${x.r.toLocaleString()}</td><td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td><td class="n" style="font-weight:600">${rt}%</td><td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${p.u.toLocaleString()} → 금월 ${x.u.toLocaleString()}" aria-label="전월 ${p.u.toLocaleString()} → 금월 ${x.u.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td><td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td><td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(x.t)}|${x.u}|${x.d60}|${x.d30}|${x.d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td><td class="cc" style="white-space:nowrap"><span class="ba ${badge}" data-tt="전월 ${pLtr.toFixed(1)}% → 금월 ${ltr.toFixed(1)}%" aria-label="전월 ${pLtr.toFixed(1)}% → 금월 ${ltr.toFixed(1)}%">${arrow} ${sign}${Math.abs(dN).toFixed(1)}%</span></td></tr>`;
-  }).join('');
+  // 전체 하자처리 현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
+  const _ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
+  const _axRows=aggNorm(_ax==='co'?st.coAgg:st.trAgg,_ax).map((x,i)=>aggRowHTML(x,i,_ax,sid)).join('');
+  const _axEmptyMsg=(S.axSite==='co'&&!(st.coAgg||[]).length)?'이 게시본에는 업체별 자료가 없습니다 · 재게시하면 보입니다':'데이터 없음';
+  const _axEmptyRow='<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">'+esc(_axEmptyMsg)+'</td></tr>';
 
   // 현장 헤더(서브타이틀)에 데이터 신선도 간단 표기
   (()=>{
@@ -999,7 +1093,7 @@ function rSite(sid){
   <div class="as">
     ${ltrMomBar}
     <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div><button class="btn bo bsm no-print" data-act="panel.carryPlan" data-sid="${esc(sid)}" data-tt="전월(${pM(S.rm)}) 처리계획을 이번 달 빈 칸에만 복사합니다" aria-label="전월 처리계획 불러오기">전월 계획 불러오기</button></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th class="cc" style="width:7%">비율</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card" data-print="tr-all"><div class="ct">공종별 전체 처리 현황</div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">공종 <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">시공업체 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${allTradeRows||'<tr><td colspan="11" style="text-align:center;padding:14px;color:var(--lbl3)">데이터 없음</td></tr>'}</tbody></table></div>
+    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">전체 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
   </div>
 </div>
 
