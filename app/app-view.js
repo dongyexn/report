@@ -182,7 +182,7 @@ function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot,foldRow){
     `<td class="n" style="color:var(--am)">${x.u.toLocaleString()}</td>`+
     `<td class="cc" style="white-space:nowrap"><span class="ba ${uBadge}" data-tt="전월 ${x.pu.toLocaleString()} → 금월 ${x.u.toLocaleString()}" aria-label="전월 ${x.pu.toLocaleString()} → 금월 ${x.u.toLocaleString()}">${uArrow} ${uSign}${Math.abs(uD).toLocaleString()}</span></td>`+
     `<td class="n" style="color:var(--rd)">${x.lt.toLocaleString()}</td>`+
-    `<td><span class="ltrbar" data-tt="60일+ ${x.d60.toLocaleString()} · 30~59일 ${x.d30.toLocaleString()} · 30일 미만 ${x.d0.toLocaleString()}"><span class="seg s60" style="width:${p60}%"></span><span class="seg s30" style="width:${p30}%"></span><span class="seg s0" style="width:${p0}%"></span></span> <span style="font-size:11.5px;font-weight:700">${ltr.toFixed(0)}%</span></td>`+
+    `<td><div class="ltrbar-wrap"><div class="ltrbar" data-tip="${esc(x.key)}|${x.u}|${x.d60}|${x.d30}|${x.d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60}%"></div><div class="seg s30" style="width:${p30}%"></div><div class="seg s0" style="width:${p0}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`+
     `<td class="cc" style="white-space:nowrap"><span class="ba ${badge}">${arrow} ${sign}${Math.abs(dN).toFixed(1)}p</span></td></tr>`;
 }
 
