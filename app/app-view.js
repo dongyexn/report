@@ -1208,8 +1208,17 @@ function nlqRender(){
   const body=document.getElementById('nqBody'), ft=document.getElementById('nqFt');
   if(!body)return;
   const q=(document.getElementById('nqQ')||{}).value||'';
-  const HINT='<div class="nq-blank">현장·공종·기간을 섞어서 물어보세요<br><b>신용 도배 60일 넘은 거</b><br><b>두정 공가세대</b><br><b>익산 101동</b></div>';
-  if(!q.trim()){ if(ft)ft.hidden=true; body.innerHTML=HINT; window.__NLQ=null; return; }
+  {const x=document.getElementById('nqX');if(x)x.hidden=!q.length;}
+  const HIST=()=>{
+    const h=nlqHist();
+    if(!h.length)return '<div class="nq-blank">현장·공종·기간·내용을 섞어서 물어보세요</div>';
+    return '<div class="nq-hist"><div class="nq-hh">최근 찾은 것'+
+      '<button data-act="nlq.histClear">모두 지우기</button></div>'+
+      h.map(x=>`<div class="nq-hi" data-act="nlq.histUse" data-q="${esc(x)}"><span class="t">${esc(x)}</span>`+
+        `<button class="d" data-act="nlq.histDel" data-q="${esc(x)}" aria-label="지우기">`+
+        `<svg class="icn" aria-hidden="true"><use href="#i-close"></use></svg></button></div>`).join('')+'</div>';
+  };
+  if(!q.trim()){ if(ft)ft.hidden=true; body.innerHTML=HIST(); window.__NLQ=null; return; }
   const {R,unknown}=nlqParse(q);
   let h='';
   const cs=nlqChips(R);
@@ -1218,8 +1227,8 @@ function nlqRender(){
     : '<span class="nq-chip no">알아들은 조건이 없습니다</span>')+'</div>';
   if(R.doneAsked) h+='<div class="nq-miss">이 검색은 <b>미처리 목록</b>만 봅니다 · 처리완료 건은 나오지 않습니다</div>';
   if(R.ambig&&!R.site) h+=`<div class="nq-miss"><b>${esc(R.ambig)}</b> 은(는) 여러 현장이 함께 쓰는 이름입니다 · 현장을 구분할 수 있게 더 적어 주세요</div>`;
-  if(unknown.length) h+=`<div class="nq-miss">무시한 말 — <b>${unknown.map(esc).join('</b>, <b>')}</b></div>`;
-  if(R.empty){ if(ft)ft.hidden=true; body.innerHTML=h+HINT; window.__NLQ=null; return; }
+  if(unknown.length) h+=`<div class="nq-miss">접수내용 등 <b>본문</b>에서 함께 찾는 말 — <b>${unknown.map(esc).join('</b>, <b>')}</b></div>`;
+  if(R.empty){ if(ft)ft.hidden=true; body.innerHTML=h+HIST(); window.__NLQ=null; return; }
   const rows=nlqApply(nlqRows(),R), show=rows.slice(0,20);
   const avg=rows.length?Math.round(rows.reduce((a,r)=>a+(Number(r.delayDays)||0),0)/rows.length):0;
   const d60=rows.filter(r=>(Number(r.delayDays)||0)>=60).length;
@@ -1237,5 +1246,5 @@ function nlqRender(){
   } else h+='<div class="nq-blank">조건에 맞는 건이 없습니다</div>';
   body.innerHTML=h;
   if(ft)ft.hidden=!rows.length;
-  window.__NLQ={R:R,n:rows.length};
+  window.__NLQ={R:R,n:rows.length,q:q};
 }

@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-26.4';
+const BUILD='2026-07-26.5';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -231,9 +231,10 @@ function nlqParse(q,dict){
   D.siteKeys.forEach(kv=>eat(rx(kv[0]),()=>{ R.site=R.site||kv[1]; }));
   // 여러 현장이 함께 쓰는 말은 조건이 되지 못한다 — 못 알아들은 말로 보고하지 말고 따로 알린다
   D.siteAmbig.concat(D.tradeAmbig).forEach(v=>eat(rx(v),()=>{ R.ambig=v; }));
-  const unknown=s.split(/[\s,·]+/).map(w=>w.replace(NLQ_JOSA,'').trim()).filter(w=>w&&!NLQ_NOISE.test(w));
-  R.empty=!(R.site||R.trades.length||R.delay||R.vac||R.shop||R.dong||R.ho);
-  return {R,unknown};
+  // 남은 말은 버리지 않고 '본문 검색어'로 쓴다 — 접수내용·하자유형·공간·업체까지 훑는다
+  R.text=s.split(/[\s,·]+/).map(w=>w.replace(NLQ_JOSA,'').trim()).filter(w=>w&&!NLQ_NOISE.test(w));
+  R.empty=!(R.site||R.trades.length||R.delay||R.vac||R.shop||R.dong||R.ho||R.text.length);
+  return {R,unknown:R.text};
 }
 // 해석 결과를 사람이 읽는 조건 칩으로
 function nlqChips(R){
@@ -245,6 +246,7 @@ function nlqChips(R){
   if(R.shop)c.push(['구분','상가']);
   if(R.dong)c.push(['동',R.dong+'동']);
   if(R.ho)c.push(['호',R.ho+'호']);
+  if(R.text&&R.text.length)c.push(['내용',R.text.join(' ')]);
   if(R.sort)c.push(['정렬',R.sort==='old'?'오래된 순':'최근 순']);
   return c;
 }
@@ -260,12 +262,28 @@ function nlqApply(rows,R){
     if(R.delay){ const d=Number(r.delayDays)||0;
       if(R.delay.op==='gte'&&!(d>=R.delay.n))return false;
       if(R.delay.op==='lt'&&!(d<R.delay.n))return false; }
+    if(R.text&&R.text.length){
+      const hay=[r.siteName,r.building,r.unit,r.space,r.trade,r.defectType,r.receiptContent,
+                 r.defectClass,r.saleStatus,r.repairParty,r.contractor,r.repairContractor,r.receiptDate]
+                .filter(Boolean).join(' ').toLowerCase();
+      for(const w of R.text){ if(hay.indexOf(w.toLowerCase())<0)return false; }   // 모두 포함(AND)
+    }
     return true;
   });
   if(R.sort==='old')out.sort((a,b)=>(Number(b.delayDays)||0)-(Number(a.delayDays)||0));
   else if(R.sort==='new')out.sort((a,b)=>(Number(a.delayDays)||0)-(Number(b.delayDays)||0));
   return out;
 }
+
+// 최근 검색 기록 — 이 PC의 브라우저에만 남는다(팀 공유 아님).
+const NLQ_HKEY='nlqHist', NLQ_HMAX=8;
+function nlqHist(){ try{ const a=JSON.parse(localStorage.getItem(NLQ_HKEY)||'[]'); return Array.isArray(a)?a.slice(0,NLQ_HMAX):[]; }catch(_){ return []; } }
+function nlqHistAdd(q){
+  q=String(q||'').trim(); if(q.length<2)return;
+  try{ const a=nlqHist().filter(x=>x!==q); a.unshift(q); localStorage.setItem(NLQ_HKEY,JSON.stringify(a.slice(0,NLQ_HMAX))); }catch(_){}
+}
+function nlqHistDel(q){ try{ localStorage.setItem(NLQ_HKEY,JSON.stringify(nlqHist().filter(x=>x!==q))); }catch(_){} }
+function nlqHistClear(){ try{ localStorage.removeItem(NLQ_HKEY); }catch(_){} }
 
 // ── 계층 훅 ──
 //   아래 계층(core·data)이 위 계층(view·boot)의 함수를 직접 부르면 의존 방향이 뒤집힌다.

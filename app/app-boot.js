@@ -897,6 +897,10 @@ function bindGlobalUi(){
   document.addEventListener('keydown',e=>{
 
     // 찾기 패널은 입력 중에도 Esc로 닫혀야 하므로 shEditing() 앞에서 처리한다
+    if(e.key==='Enter'&&e.target&&e.target.id==='nqQ'){
+      const N=window.__NLQ; if(N&&N.n)nlqHistAdd(N.q);
+      e.target.blur(); return;                     // 기록에 남기고 결과에 집중
+    }
     if(e.key==='Escape'){const np=document.getElementById('nqPanel');
       if(np&&np.classList.contains('on')){e.preventDefault();nlqOpen(false);return;}}
 
@@ -1156,7 +1160,11 @@ registerActions('click', {
   'theme.toggle':()=>applyTheme(!isDark()),
   'nlq.toggle':()=>nlqOpen(!document.getElementById('nqPanel').classList.contains('on')),
   'nlq.close':()=>nlqOpen(false),
-  'nlq.list':()=>{const N=window.__NLQ;if(!N)return;nlqOpen(false);
+  'nlq.clear':()=>{const q=document.getElementById('nqQ');if(q){q.value='';q.focus();}nlqRender();},
+  'nlq.histUse':(el)=>{const q=document.getElementById('nqQ');if(!q)return;q.value=el.dataset.q||'';q.focus();nlqRender();},
+  'nlq.histDel':(el)=>{nlqHistDel(el.dataset.q||'');nlqRender();},
+  'nlq.histClear':()=>{nlqHistClear();nlqRender();},
+  'nlq.list':()=>{const N=window.__NLQ;if(!N)return;nlqHistAdd(N.q);nlqOpen(false);
     const site=N.R.site?dashSites().find(s=>s.name===N.R.site):null;
     // 단일 현장으로 열면 그 현장 목록이라 siteName이 없다 → 현장 조건은 빼고 나머지만 넘긴다
     const spec=site?Object.assign({},N.R,{site:null}):N.R;
