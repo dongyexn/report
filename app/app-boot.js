@@ -1163,13 +1163,6 @@ registerActions('click', {
   'axis.site':(el)=>{S.axSite=el.dataset.ax==='co'?'co':'trade';S.axSiteAll=false;
     try{localStorage.setItem('axSite',S.axSite);}catch(_){}
     if(S.sid)rSiteAxisOnly(S.sid);},        // 표만 갈아 끼운다(화면 전체 재렌더 금지)
-  'panel.usePrevPlan':(el)=>{   // 지난달 계획을 이번 달 칸으로 — 빈 칸일 때만 채운다
-    const tr=el.closest('tr'); if(!tr)return;
-    const ta=tr.querySelector('textarea.plan-ta'); if(!ta)return;
-    if(ta.value.trim()){toast('이미 이번 달 계획이 있습니다');return;}
-    ta.value=(el.textContent||'').trim(); ta.focus();
-    ta.dispatchEvent(new Event('input',{bubbles:true}));
-    ta.dispatchEvent(new Event('change',{bubbles:true}));},
   'axis.siteAll':()=>{S.axSiteAll=!S.axSiteAll;if(S.sid)rSiteAxisOnly(S.sid);},
   'axis.dash':(el)=>{S.axDash=el.dataset.ax==='co'?'co':'site';
     try{localStorage.setItem('axDash',S.axDash);}catch(_){}
