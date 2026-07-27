@@ -933,7 +933,7 @@ function shortName(name){if(!name)return'-';const stripped=String(name).replace(
 //   좌우로 나누면 각 칸이 절반이라 줄바꿈이 심해 위아래로 둔다.
 function prevPlanTop(planMap,trade){
   const txt=(planMap&&planMap[pM(S.rm)+'@'+trade])||'';
-  return '<div class="pp-stack"><span class="pp-lab">지난달</span>'+
+  return '<div class="pp-stack'+(txt?'':' pp-empty')+'"><span class="pp-lab">지난달</span>'+
     (txt?'<div class="pp-box">'+esc(txt)+'</div>':'<span class="pp-none">-</span>')+'</div>';
 }
 // SITE PANEL
@@ -956,13 +956,13 @@ function vacRowsHTML(sid,stat,cm,planField){
     const ratio=unr>0?(etc.c/unr*100).toFixed(1):'0.0';
     const coCell=etc.coN>0?`외 ${etc.coN.toLocaleString()}개 업체`:'-';
     const planE=cm[planField]?.[S.rm+'@기타']||'';
-    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc" style="font-weight:600">${ratio}%</td><td style="padding-left:20px"><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></td></tr>`;
+    return`<tr data-fixed="1"><td class="cc"></td><td><b>기타</b></td><td>${coCell}</td><td class="n">${pc.toLocaleString()}</td><td class="n" style="color:var(--bt1);font-weight:700">${etc.c.toLocaleString()}</td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}" aria-label="전월 ${pc.toLocaleString()} → 금월 ${etc.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="n" style="font-weight:600">${ratio}%</td><td class="pp-cell">${prevPlanTop(cm[planField],'기타')}<div class="pp-stack"><span class="pp-lab">이번 달</span><textarea class="inp plan-ta" maxlength="5000" aria-label="처리계획" name="plan-${sid}-${planField}-기타" data-plan-id="cmt|${sid}|${planField}|${esc(S.rm+'@기타')}" style="padding:5px 9px;font-size:11.5px;min-height:32px;resize:none;font-family:inherit;width:100%;overflow:hidden" placeholder="" data-act="panel.plan">${esc(planE)}</textarea></div></td></tr>`;
   };
   const totFn=(tot,prevTot)=>{
     if(!tot)return'';
     const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
     const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
-    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="cc"><b>100.0%</b></td><td style="padding-left:20px"><div style="min-height:32px"></div></td></tr>`;
+    return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="n"><b>100.0%</b></td><td class="pp-cell"><div style="min-height:32px"></div></td></tr>`;
   };
   const base=(stat.Top||[]).filter(t=>!t.isT&&!t.isO);
   const etc=(stat.Top||[]).find(t=>t.isO),tot=(stat.Top||[]).find(t=>t.isT);

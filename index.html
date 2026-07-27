@@ -222,6 +222,13 @@ td.pp-cell{padding:8px 9px;text-align:left;vertical-align:top;}
 .pp-box{flex:1;min-width:0;font-size:11.5px;line-height:1.55;color:var(--lbl2);white-space:pre-wrap;}
 .pp-none{flex:1;color:var(--lbl3);font-size:11.5px;padding-top:1px;}
 .pp-stack .plan-ta{flex:1;min-width:0;}
+@media print{
+  .pp-empty{display:none!important;}
+  .pp-stack+.pp-stack{margin-top:4px;padding-top:4px;}
+  td.pp-cell{padding:5px 7px;}
+  .pp-box,.plan-print{font-size:8pt!important;line-height:1.35!important;}
+  .pp-lab{flex-basis:28px;font-size:7pt!important;padding-top:1px;}
+}
 
 /* 접힌 나머지 행 — 행 자체가 펼치기 버튼 */
 tr.axfold{cursor:pointer;}

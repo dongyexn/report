@@ -485,6 +485,9 @@ function doPrint(){
           div.textContent=ta.value||'';
           ta.parentNode.insertBefore(div,ta.nextSibling);
           _planNodes.push(div);
+          // 내용이 없는 계획 단은 인쇄에서 자리만 먹는다 — 통째로 숨긴다
+          const _st=ta.closest('.pp-stack');
+          if(_st)_st.classList.toggle('pp-empty',!(ta.value||'').trim());
         });
       });
 
