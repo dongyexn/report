@@ -102,8 +102,7 @@ function dashCoRowHTML(x,i,opt){
   const name = opt.tot ? `<b>${esc(x.key)}</b>`
     : muted ? `<b style="color:var(--lbl3);font-style:italic">${esc(x.key)}</b>`
     : `<b style="color:var(--bt1);cursor:pointer" data-act="rec.list" data-sid="__team" data-scope="ul" data-co="${esc(x.key)}">${esc(x.key)}</b>`;
-  const side = muted ? '<span style="color:var(--lbl3)">-</span>'
-    : esc(x.side||'-')+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
+  const side = muted ? '<span style="color:var(--lbl3)">-</span>' : esc(x.side||'-');
   return `<tr${opt.tot?' class="tot"':''}>`+
     `<td class="cc" style="white-space:nowrap">${muted?'':(i+1)}</td>`+
     `<td>${name}</td><td>${side}</td>`+
@@ -184,7 +183,7 @@ function rDashAxis(list){
   const T=rows.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
     {r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0});
   // 열 너비를 현장별 표와 맞춘다 — NO=권역(6%), 시공업체+주요공종=현장명+세대수(22%)
-  const W=[10.8,13,7.5,8.5,6.5,7,7.2,7.2,7.2,17.7,7.2];   // 현장별·월별 표와 동일한 선언 폭
+  const W=[5.1,19.35,7.2,7.2,7.2,7.2,7.2,7.2,7.2,17.75,7.2];   // 현장별·월별 표와 동일한 선언 폭
   const H=['NO','시공업체','주요 공종','전체 접수','처리','처리율','미처리','전월대비','장기미처리','장기미처리 비율','전월대비'];
   const CLS=['cc','','','n','n','n','n','cc','n','cc','cc'];
   const thead='<thead><tr>'+H.map((h,i)=>`<th class="${CLS[i]}" style="width:${W[i]}%${CLS[i]==='cc'?';white-space:nowrap':''}">${h}</th>`).join('')+'</tr></thead>';
@@ -215,7 +214,7 @@ function aggRowHTML(x,i,axis,sid,noIdx,blankIdx,isTot,foldRow){
   const link=axis==='co'
     ? `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-co="${esc(x.key)}"`
     : `data-act="rec.list" data-sid="${esc(sid)}" data-scope="ul" data-trade="${esc(x.key)}"`;
-  const sideTxt=esc(x.side)+(x.sideN>1?` <span style="color:var(--lbl3);font-size:11.5px">외 ${x.sideN-1}</span>`:'');
+  const sideTxt=esc(x.side);   // 가장 많은 것 하나만 — '외 N'은 표를 어지럽힌다
   return `<tr${isTot?' class="tot"':foldRow?' class="axfold" data-act="axis.siteAll"':''}>`+(noIdx?'':`<td class="cc">${(blankIdx||isTot)?'':i+1}</td>`)+
     (isTot?`<td><b>${esc(x.key)}</b></td>`
        :x.fold?`<td><b class="axfold-k">${esc(x.key)} <span class="axfold-h">펼치기</span></b></td>`
