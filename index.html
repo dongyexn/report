@@ -215,7 +215,7 @@ body.snap .nq-fab,body.snap .nq-panel{right:24px;}
 @media print{.nq-fab,.nq-panel{display:none!important;}}
 
 /* 지난달 계획 칸 — 읽기 전용 */
-td.pp-cell{padding:8px 9px;text-align:left;vertical-align:top;}
+td.pp-cell{padding:8px 9px 8px 18px;text-align:left;vertical-align:top;}
 .pp-stack{display:flex;gap:8px;align-items:flex-start;}
 .pp-stack+.pp-stack{margin-top:7px;padding-top:7px;border-top:1px dashed var(--sep);}
 .pp-lab{flex:0 0 34px;font-size:10.5px;font-weight:800;color:var(--lbl3);letter-spacing:.02em;padding-top:3px;}
@@ -226,7 +226,7 @@ td.pp-cell{padding:8px 9px;text-align:left;vertical-align:top;}
   .pp-empty{display:none!important;}
   .pp-stack+.pp-stack{margin-top:4px;padding-top:4px;}
   td.pp-cell{padding:5px 7px;}
-  .pp-box,.plan-print{font-size:8pt!important;line-height:1.35!important;}
+  .pp-box,.plan-print{font-size:8pt!important;line-height:1.4!important;}
   .pp-lab{flex-basis:28px;font-size:7pt!important;padding-top:1px;}
 }
 
@@ -658,7 +658,7 @@ table.dt-detail th{text-align:center!important;}
 .mt2{font-size:17px;font-weight:700;color:var(--lbl);margin-bottom:18px;}
 .mf2{margin-top:22px;display:flex;justify-content:flex-end;gap:8px;}
 /* 미처리 레코드 리스트 (드릴다운) */
-#mb.wide{width:88vw;max-width:88vw;height:88vh;}
+#mb.wide{width:88vw;max-width:1280px;height:88vh;}
 .rl-thead{display:flex;align-items:center;gap:8px;width:100%;}
 .rl-title{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rl-thead .rl-count{margin-left:auto;font-size:12px;font-weight:500;color:var(--lbl2);white-space:nowrap;}
@@ -976,7 +976,7 @@ canvas{max-width:100%!important;height:auto!important;}
 /* mom-row, aib */
 .mom-row{padding:5px 0!important;} .mom-row .label{font-size:8pt!important;}
 .mom-row .bar{font-size:7.5pt!important;}
-.aib{padding:8px 10px!important;} .ait{font-size:8pt!important;line-height:1.55!important;} .ait ul{padding-left:15px!important;margin:2px 0 7px!important;} .ait>div{font-size:9pt!important;margin-top:9px!important;margin-bottom:4px!important;}
+   
 
 /* LTR 바 — 인쇄 시에도 보이게 + 막대와 % 간격 좁힘 */
 .ltrbar-wrap{gap:2px!important;padding:0 1px!important;}
@@ -1071,14 +1071,14 @@ input,select,textarea,button{display:none!important;}
 #view-site.printing #_sp_p3 .sp-trade-card td:nth-child(3){width:14%!important;}
 
 /* 4페이지 종합 분석 의견: 본문 9pt, 소제목 10pt, 헤더 포함 한 페이지 내 수용 */
-#view-site.printing #_sp_p4 .ait{font-size:9pt!important;line-height:1.5!important;}
-#view-site.printing #_sp_p4 .ait p{font-size:9pt!important;line-height:1.5!important;margin:0 0 5px!important;}
-#view-site.printing #_sp_p4 .ait ul{padding-left:15px!important;margin:3px 0 8px!important;}
-#view-site.printing #_sp_p4 .ait li{font-size:9pt!important;line-height:1.5!important;margin-bottom:3px!important;}
-#view-site.printing #_sp_p4 .ait>div{font-size:10pt!important;font-weight:700!important;margin-top:9px!important;margin-bottom:4px!important;}
+
+
+
+
+
 #view-site.printing #_sp_p4 .ait>div:first-child{margin-top:0!important;}
-#view-site.printing #_sp_p4 .aib{padding:9px 11px!important;}
-#view-site.printing #_sp_p4 .ail{font-size:8pt!important;margin-bottom:6px!important;}
+
+
 /* 분석 카드는 페이지 내부에서 분할 허용 → 빈 페이지 후 다음 장으로 통째 밀리는 현상 방지 */
 #view-site.printing #_sp_p4 .card,
 #view-site.printing #_sp_p4 .aib,
@@ -1123,9 +1123,9 @@ input,select,textarea,button{display:none!important;}
 #view-site.printing .sp-p2 .sp-top5-card .dt td,
 #view-site.printing .sp-p2 .sp-vactop5-card .dt td{padding-top:6px!important;padding-bottom:6px!important;line-height:1.25!important;}
 #view-site.printing .sp-p2 .sp-top5-card .plan-ta,
-#view-site.printing .sp-p2 .sp-vactop5-card .plan-ta{font-size:7pt!important;}
+#view-site.printing .sp-p2 .sp-vactop5-card .plan-ta{font-size:8pt!important;}
 /* 처리계획: 인쇄 시 textarea는 숨겨지므로 값 복제 텍스트(.plan-print)를 표시 */
-#view-site.printing .sp-p2 .plan-print{display:block!important;font-size:7pt!important;line-height:1.3!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
+#view-site.printing .sp-p2 .plan-print{display:block!important;font-size:8pt!important;line-height:1.4!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
 /* 데이터/기타 행 — 자연 높이, 상단 정렬로 균일한 시작점 */
 #view-site.printing .sp-p2 .sp-top5-card .dt tbody td,
 #view-site.printing .sp-p2 .sp-vactop5-card .dt tbody td{vertical-align:top!important;height:auto!important;}
