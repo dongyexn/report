@@ -223,14 +223,14 @@ td.pp-cell{padding:8px 9px 8px 30px;text-align:left;vertical-align:top;}
 .pp-none{flex:1;color:var(--lbl3);font-size:11.5px;padding-top:1px;}
 .pp-stack .plan-ta{flex:1;min-width:0;}
 @media print{
-  .ait{font-size:10px!important;line-height:13px!important;}
-  .ait p,.ait li{font-size:10px!important;line-height:13px!important;}
-  .ait>div{font-size:11px!important;line-height:15px!important;}
+  .ait{font-size:11px!important;line-height:12px!important;}
+  .ait p,.ait li{font-size:11px!important;line-height:12px!important;}
+  .ait>div{font-size:12px!important;line-height:14px!important;}
   .pp-empty{display:none!important;}
   .pp-stack+.pp-stack{margin-top:4px;padding-top:4px;}
   td.pp-cell{padding:5px 7px;}
-  .pp-box,.plan-print{font-size:8pt!important;line-height:1.4!important;}
-  .pp-lab{flex-basis:28px;font-size:7pt!important;padding-top:1px;}
+  .pp-box,.plan-print{font-size:7pt!important;line-height:1.45!important;}
+  .pp-lab{flex-basis:26px;font-size:6pt!important;padding-top:1px;}
 }
 
 /* 접힌 나머지 행 — 행 자체가 펼치기 버튼 */
@@ -243,7 +243,9 @@ tr.axfold td[colspan]{text-align:center;color:var(--lbl3);font-size:12px;font-we
 @media print{tr.axfold td[colspan]{display:none;} .axfold-h{display:none!important;} tr.axfold{cursor:default;}}
 
 /* 대시보드 표: 위쪽 월별 표와 같은 가운데정렬 — 두 표가 한 장처럼 읽히도록 */
-#dtable td.n,#dtable th.n{text-align:center;}
+
+/* 대시보드 표: 위쪽 월별 표와 같은 가운데정렬 — 머리글도 내용을 따라간다 */
+#dtable td.n,#dtable th.n{text-align:center!important;}
 
 /* 표 묶는 기준 전환 — 카드 머리글 오른쪽 */
 .axseg{margin-left:auto;display:inline-flex;background:var(--fill);border-radius:9px;padding:3px;gap:2px;}
@@ -933,7 +935,7 @@ html,body,#app,#main,#content{display:block!important;height:auto!important;over
 #dtable th[data-sort="tR"],#dtable td:nth-child(4){width:10%!important;}
 #dtable th[data-sort="res"],#dtable td:nth-child(5){width:9%!important;}
 /* 인쇄 시 숫자 셀 우측정렬 강제 (일부 행 정렬 어긋남 방지) */
-#dtable td.n,#dtable th.n{text-align:right!important;}
+#dtable td.n,#dtable th.n{text-align:center!important;}   /* 위쪽 월별 표와 같은 가운데정렬 */
 /* 인쇄 시 권역 스티커(1열)·전월대비 배지(10열) 동일 사이즈 축소 */
 #dtable td:nth-child(1) .ba,#dtable td:nth-child(10) .ba{font-size:5.5pt!important;padding:1px 3px!important;}
 /* 인쇄 시 모든 배지 5.5pt 통일 */
@@ -1129,9 +1131,9 @@ input,select,textarea,button{display:none!important;}
 #view-site.printing .sp-p2 .sp-top5-card .dt td,
 #view-site.printing .sp-p2 .sp-vactop5-card .dt td{padding-top:6px!important;padding-bottom:6px!important;line-height:1.25!important;}
 #view-site.printing .sp-p2 .sp-top5-card .plan-ta,
-#view-site.printing .sp-p2 .sp-vactop5-card .plan-ta{font-size:8pt!important;}
+#view-site.printing .sp-p2 .sp-vactop5-card .plan-ta{font-size:7pt!important;}
 /* 처리계획: 인쇄 시 textarea는 숨겨지므로 값 복제 텍스트(.plan-print)를 표시 */
-#view-site.printing .sp-p2 .plan-print{display:block!important;font-size:8pt!important;line-height:1.4!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
+#view-site.printing .sp-p2 .plan-print{display:block!important;font-size:7pt!important;line-height:1.45!important;color:var(--lbl)!important;white-space:pre-wrap!important;word-break:break-word!important;padding-right:4px!important;}
 /* 데이터/기타 행 — 자연 높이, 상단 정렬로 균일한 시작점 */
 #view-site.printing .sp-p2 .sp-top5-card .dt tbody td,
 #view-site.printing .sp-p2 .sp-vactop5-card .dt tbody td{vertical-align:top!important;height:auto!important;}
@@ -1151,12 +1153,12 @@ input,select,textarea,button{display:none!important;}
 #view-site.printing .sp-p2 .sp-top5-card td:nth-child(3),
 #view-site.printing .sp-p2 .sp-vactop5-card th:nth-child(3),
 #view-site.printing .sp-p2 .sp-vactop5-card td:nth-child(3),
-  #view-site.printing .sp-p2 .sp-top5-card td:nth-child(3){width:11%!important;}
+  #view-site.printing .sp-p2 .sp-top5-card td:nth-child(3){width:12.5%!important;}
 #view-site.printing .sp-p2 .sp-top5-card th:nth-child(8),
 #view-site.printing .sp-p2 .sp-top5-card td:nth-child(8),
 #view-site.printing .sp-p2 .sp-vactop5-card th:nth-child(8),
 #view-site.printing .sp-p2 .sp-vactop5-card td:nth-child(8),
-  #view-site.printing .sp-p2 .sp-top5-card td:nth-child(8){width:49%!important;}
+  #view-site.printing .sp-p2 .sp-top5-card td:nth-child(8){width:47.5%!important;}
 }
 
 /* FILTER BAR */
@@ -1772,13 +1774,13 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
         <table class="dt" id="dtable" style="table-layout:fixed"><thead><tr>
           <th style="width:7.7%;text-align: center;white-space:nowrap" data-sort="region" tabindex="0" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
           <th style="width:16.75%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="units" tabindex="0" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="tR" tabindex="0" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="res" tabindex="0" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="rate" tabindex="0" data-act="dash.sort" data-key="rate">처리율 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="unr" tabindex="0" data-act="dash.sort" data-key="unr">미처리 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="units" tabindex="0" data-act="dash.sort" data-key="units">세대수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="tR" tabindex="0" data-act="dash.sort" data-key="tR">전체 접수 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="res" tabindex="0" data-act="dash.sort" data-key="res">처리 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="rate" tabindex="0" data-act="dash.sort" data-key="rate">처리율 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="unr" tabindex="0" data-act="dash.sort" data-key="unr">미처리 <span class="sortmk">↕</span></th>
           <th class="cc" style="width:7.2%;text-align: center;white-space:nowrap" data-sort="deltaUnr" tabindex="0" data-act="dash.sort" data-key="deltaUnr">전월대비 <span class="sortmk">↕</span></th>
-          <th class="n" style="width:7.2%;text-align: right" data-sort="lt" tabindex="0" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
+          <th class="n" style="width:7.2%" data-sort="lt" tabindex="0" data-act="dash.sort" data-key="lt">장기미처리 <span class="sortmk">↕</span></th>
           <th class="cc" style="width:17.75%;min-width:160px;text-align: center" data-sort="ltr" tabindex="0" data-act="dash.sort" data-key="ltr">장기미처리 비율 <span class="sortmk">↕</span></th>
           <th class="cc" style="width:7.2%;text-align: center;white-space:nowrap" data-sort="delta" tabindex="0" data-act="dash.sort" data-key="delta">전월대비 <span class="sortmk">↕</span></th>
         </tr></thead>
