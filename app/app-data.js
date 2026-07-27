@@ -1499,7 +1499,7 @@ async function openReadme(){
     mbody.innerHTML='<div class="md-scroll"></div>';
     mbody.firstChild.appendChild(wrap);
     document.getElementById('mf').innerHTML='';
-    const mb=document.getElementById('mb');if(mb){mb.classList.add('wide');mb.classList.add('has-x');} // 자체 닫기 버튼이 없어 헤더 X 노출
+    const mb=document.getElementById('mb');if(mb){mb.classList.add('wide');mb.classList.add('rdw');mb.classList.add('has-x');} // 자체 닫기 버튼이 없어 헤더 X 노출
     openMo();
   }catch(e){
     console.warn('[README] 열기 실패',e);

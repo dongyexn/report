@@ -105,7 +105,7 @@ function dashCoRowHTML(x,i,opt){
   const side = muted ? '<span style="color:var(--lbl3)">-</span>' : esc(x.side||'-');
   return `<tr${opt.tot?' class="tot"':''}>`+
     `<td class="cc" style="white-space:nowrap">${muted?'':(i+1)}</td>`+
-    `<td>${name}</td><td>${side}</td>`+
+    `<td>${name}</td><td class="cc">${side}</td>`+
     `<td class="n">${x.r.toLocaleString()}</td>`+
     `<td class="n" style="color:var(--gn)">${x.res.toLocaleString()}</td>`+
     `<td class="n" style="font-weight:600">${rate.toFixed(1)}%</td>`+
@@ -185,7 +185,7 @@ function rDashAxis(list){
   // 열 너비를 현장별 표와 맞춘다 — NO=권역(6%), 시공업체+주요공종=현장명+세대수(22%)
   const W=[7.7,16.75,7.2,7.2,7.2,7.2,7.2,7.2,7.2,17.75,7.2];   // 현장별과 완전히 같은 폭   // 현장별·월별 표와 동일한 선언 폭
   const H=['NO','시공업체','주요 공종','전체 접수','처리','처리율','미처리','전월대비','장기미처리','장기미처리 비율','전월대비'];
-  const CLS=['cc','','','n','n','n','n','cc','n','cc','cc'];
+  const CLS=['cc','','cc','n','n','n','n','cc','n','cc','cc'];   // 주요 공종은 세대수 자리 — 가운데
   const thead='<thead><tr>'+H.map((h,i)=>`<th class="${CLS[i]}" style="width:${W[i]}%${CLS[i]==='cc'?';white-space:nowrap':''}">${h}</th>`).join('')+'</tr></thead>';
   const body = ordered.length
     ? ordered.map((x,i)=>dashCoRowHTML(x,i,{muted:!!(x.fold||x.key==='(미기재)')})).join('')
