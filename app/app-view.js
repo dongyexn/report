@@ -960,8 +960,7 @@ function vacRowsHTML(sid,stat,cm,planField){
   };
   const totFn=(tot,prevTot)=>{
     if(!tot)return'';
-    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(tot.c-prevTot);
     return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc"><b>100.0%</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="pp-cell"><div style="min-height:32px"></div></td></tr>`;
   };
   const base=(stat.Top||[]).filter(t=>!t.isT&&!t.isO);
@@ -1064,8 +1063,7 @@ function rSite(sid){
   // 합계 행
   const trTotFn=(tot,prevTot)=>{
     if(!tot)return'';
-    const dN=tot.c-prevTot,dArrow=dN===0?'─':dN>0?'▲':'▼',dBadge=dN===0?'bgr':dN>0?'brd':'bgn';
-    const dTxt=dN===0?'0':`${dN>0?'+':'−'}${Math.abs(dN).toLocaleString()}`;
+    const {dArrow,dBadge,dTxt}=deltaParts(tot.c-prevTot);
     return`<tr class="tot"><td class="cc"></td><td><b>합계</b></td><td></td><td class="n"><b>${prevTot.toLocaleString()}</b></td><td class="n" style="color:var(--bt1)"><b>${tot.c.toLocaleString()}</b></td><td class="cc"><b>100.0%</b></td><td class="cc" style="white-space:nowrap"><span class="ba ${dBadge}" data-tt="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}" aria-label="전월 ${prevTot.toLocaleString()} → 금월 ${tot.c.toLocaleString()}">${dArrow} ${dTxt}</span></td><td class="pp-cell"><div style="min-height:32px"></div></td></tr>`;
   };
   const trBase=st.topLt.filter(t=>!t.isT&&!t.isO);
