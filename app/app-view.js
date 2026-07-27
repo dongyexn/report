@@ -183,7 +183,7 @@ function rDashAxis(list){
   const T=rows.reduce((a,r)=>{a.r+=r.r;a.res+=r.res;a.u+=r.u;a.lt+=r.lt;a.d0+=r.d0;a.d30+=r.d30;a.d60+=r.d60;a.pu+=r.pu;a.plt+=r.plt;return a;},
     {r:0,res:0,u:0,lt:0,d0:0,d30:0,d60:0,pu:0,plt:0});
   // 열 너비를 현장별 표와 맞춘다 — NO=권역(6%), 시공업체+주요공종=현장명+세대수(22%)
-  const W=[5.1,19.35,7.2,7.2,7.2,7.2,7.2,7.2,7.2,17.75,7.2];   // 현장별·월별 표와 동일한 선언 폭
+  const W=[7.7,16.75,7.2,7.2,7.2,7.2,7.2,7.2,7.2,17.75,7.2];   // 현장별과 완전히 같은 폭   // 현장별·월별 표와 동일한 선언 폭
   const H=['NO','시공업체','주요 공종','전체 접수','처리','처리율','미처리','전월대비','장기미처리','장기미처리 비율','전월대비'];
   const CLS=['cc','','','n','n','n','n','cc','n','cc','cc'];
   const thead='<thead><tr>'+H.map((h,i)=>`<th class="${CLS[i]}" style="width:${W[i]}%${CLS[i]==='cc'?';white-space:nowrap':''}">${h}</th>`).join('')+'</tr></thead>';
