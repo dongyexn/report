@@ -1429,28 +1429,29 @@ function nlqRender(){
    모든 값은 calc()·capWks()에서 나오므로 화면·게시본·스냅샷 어디서든 같은 문서가 나온다. */
 const RP_COL=['#08213f','#14395f','#22537f','#3a6f9f','#6b96bd','#b9c9d8'];
 const rpN=v=>Number(v||0).toLocaleString();
-const rpDelta=d=>d===0?'— 0':(d>0?'▲ ':'▼ ')+rpN(Math.abs(d));
+const rpDelta=d=>d===0?'— 0':`<span class="${d>0?'up':'dn2'}">${d>0?'▲ ':'▼ '}${rpN(Math.abs(d))}</span>`;
 const rpPct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'0.0%';
 
 // 주차별 스택 막대 + 누계 선 2종
 function rpTrend(wks){
   const W=523,H=112,L=40,R=494,T=14,B=96;
-  if(!wks.length)return '';
+  if(!wks||!wks.length)return '';
   const n=wks.length,step=(R-L)/n,bw=Math.min(16,step*0.7);
-  const umax=Math.max(...wks.map(w=>w.u))*1.15||1;
-  const tv=wks.map(w=>w.cumR),rv=wks.map(w=>w.cumR-w.u);
+  const umax=Math.max(...wks.map(w=>w.u||0))*1.15||1;
+  const tv=wks.map(w=>w.r||0),rv=wks.map(w=>w.res||0);
   let tmin=Math.max(0,Math.min(...rv)*0.98),tmax=Math.max(...tv)*1.02||1;
-  if(tmax<=tmin)tmax=tmin+1; // 처리 누계가 0이거나 변화가 없을 때 축이 뒤집히지 않도록
-  const uy=v=>B-(v/umax)*(B-T), ty=v=>B-((v-tmin)/((tmax-tmin)||1))*(B-T);
+  if(tmax<=tmin)tmax=tmin+1;
+  const uy=v=>B-(v/umax)*(B-T), ty=v=>B-((v-tmin)/(tmax-tmin))*(B-T);
+  const kUnit=v=>v>=10000?Math.round(v/1000)+'천':rpN(Math.round(v));
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   for(let g=0;g<=4;g++){const v=umax*g/4,y=uy(v);
     s+=`<line x1="${L}" y1="${y.toFixed(1)}" x2="${R}" y2="${y.toFixed(1)}" stroke="#e4e7eb"/>`+
        `<text x="${L-4}" y="${(y+2.4).toFixed(1)}" font-size="6.5" fill="#6b7280" text-anchor="end">${rpN(Math.round(v))}</text>`;}
   for(let g=0;g<=2;g++){const v=tmin+(tmax-tmin)*g/2;
-    s+=`<text x="${R+4}" y="${(ty(v)+2.4).toFixed(1)}" font-size="6.5" fill="#6b7280">${Math.round(v/1000)}천</text>`;}
+    s+=`<text x="${R+4}" y="${(ty(v)+2.4).toFixed(1)}" font-size="6.5" fill="#6b7280">${kUnit(v)}</text>`;}
   wks.forEach((w,i)=>{
     const cx=L+step*i+step/2,x=cx-bw/2;let base=B;
-    [[w.lt60,RP_COL[0]],[Math.max(0,w.lt-w.lt60),RP_COL[3]],[Math.max(0,w.u-w.lt),RP_COL[5]]].forEach(([v,c])=>{
+    [[w.d60||0,RP_COL[0]],[w.d30||0,RP_COL[3]],[w.d0||0,RP_COL[5]]].forEach(([v,c])=>{
       const hh=(v/umax)*(B-T);
       s+=`<rect x="${x.toFixed(1)}" y="${(base-hh).toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" fill="${c}"/>`;
       base-=hh;});
@@ -1459,9 +1460,10 @@ function rpTrend(wks){
   s+=`<polyline fill="none" stroke="#22537f" stroke-width="1.4" points="${pts(tv)}"/>`;
   s+=`<polyline fill="none" stroke="#6b96bd" stroke-width="1.4" stroke-dasharray="3 2" points="${pts(rv)}"/>`;
   s+=`<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" stroke="#c8cdd4"/>`;
-  let lastM=0;
-  wks.forEach((w,i)=>{if(w.m!==lastM){lastM=w.m;
-    s+=`<text x="${(L+step*i+step/2).toFixed(1)}" y="${B+12}" font-size="7" fill="#4a5568" text-anchor="middle">${w.m}월</text>`;}});
+  let lastM='';
+  wks.forEach((w,i)=>{const mm=String(w.week||'').slice(5,7);
+    if(mm&&mm!==lastM){lastM=mm;
+      s+=`<text x="${(L+step*i+step/2).toFixed(1)}" y="${B+12}" font-size="7" fill="#4a5568" text-anchor="middle">${Number(mm)}월</text>`;}});
   return s+'</svg>';
 }
 
@@ -1473,12 +1475,12 @@ function rpDonut(items,total,cap){
     circ+=`<circle cx="50" cy="50" r="42" stroke="${c}" stroke-dasharray="${ln.toFixed(1)} ${(C-ln).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}"/>`;
     rows+=`<div class="r"><i style="background:${c}"></i><span class="nm">${esc(it.n)}</span><span class="vl">${rpN(it.v)}</span><span class="pc">${pc.toFixed(1)}%</span></div>`;
     off+=ln;});
-  return `<div><div class="cap">${esc(cap)}</div>
-    <svg width="70" height="70" viewBox="0 0 100 100" style="float:left;margin-right:9px">
+  return `<div><div class="cap">${esc(cap)}</div><div class="dwrap">
+    <svg width="70" height="70" viewBox="0 0 100 100" class="dnut">
       <g transform="rotate(-90 50 50)" fill="none" stroke-width="15">${circ}</g>
       <text x="50" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#08213f">${rpN(total)}</text>
       <text x="50" y="59" text-anchor="middle" font-size="7" fill="#6b7280">미처리</text></svg>
-    <div class="dl" style="overflow:hidden">${rows}</div></div>`;
+    <div class="dl">${rows}</div></div></div>`;
 }
 
 function rpSec(no,title,note,inner,style){
@@ -1494,7 +1496,7 @@ function rpPage(n,total,hdr,body,slim){
   return `<div class="page"><div class="sheet">${hdr}
     ${body}
     <div class="foot"><div><b>현대건설</b> · ${esc(curTeam()?curTeam().name:'')}</div>
-      <div class="pg">${n} / ${total}</div></div></div></div>`;
+      </div></div></div>`;
 }
 function rpHdr(title,subs,asof,slim){
   return `<div class="titlewrap"><div class="thead-row"><h1>${esc(title)}</h1>
@@ -1553,12 +1555,12 @@ function rptDashboard(){
   const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
 
   // 4) 월별 처리 현황
-  const mo=(st[0]&&st[0].c.monthly)?st[0].c.monthly.map(x=>x.month):[];
   const moMap={};
   st.forEach(x=>(x.c.monthly||[]).forEach(m=>{
     const o=moMap[m.month]||(moMap[m.month]={month:m.month,r:0,res:0,u:0,lt:0});
     o.r+=m.r||0;o.res+=m.res||0;o.u+=m.u||0;o.lt+=m.lt||0;}));
-  const mos=Object.values(moMap).sort((a,b)=>a.month<b.month?-1:1);
+  const _yr=S.rm.slice(0,4);
+  const mos=Object.values(moMap).filter(m=>m.month.slice(0,4)===_yr).sort((a,b)=>a.month<b.month?-1:1);
   let prevU=null,prevL=null,moRows='';
   mos.forEach((m,i)=>{
     const last=i===mos.length-1,B=v=>last?`<b>${v}</b>`:v;
@@ -1661,7 +1663,8 @@ function rptSite(sid){
   const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
 
   let prevU=null,prevL=null,moRows='';
-  (c.monthly||[]).forEach((m,i,arr)=>{
+  const _yr=S.rm.slice(0,4);
+  (c.monthly||[]).filter(m=>String(m.month).slice(0,4)===_yr).forEach((m,i,arr)=>{
     const last=i===arr.length-1,B=v=>last?`<b>${v}</b>`:v;
     const mi=i?m.r-arr[i-1].r:m.r, mp=i?m.res-arr[i-1].res:m.res;
     moRows+=`<tr><td>${B(Number(m.month.slice(5))+'월')}</td><td>${B(rpN(m.r))}</td><td>${B(rpN(mi))}</td>`+
@@ -1684,33 +1687,49 @@ function rptSite(sid){
   const byTy=Object.entries(tyMap).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
   const dist=`<div class="two">${rpDonut(cut(byTr,'개 공종'),c.unr,'공종별')}${rpDonut(cut(byTy,'개'),c.unr,'공종 · 유형별')}</div>`;
 
-  const planTbl=(rows,field,note,num)=>{
-    const body=rows.map((t,i)=>{
-      const prev=(cm[field]||{})[pM(S.rm)+'@'+t.t]||'', cur=(cm[field]||{})[S.rm+'@'+t.t]||'';
+  const planTbl=(rows,prevMap,field,num)=>{
+    const body=rows.map((x,i)=>{
+      const pc=(prevMap&&prevMap[x.t])||0, d=x.c-pc;
+      const prev=(cm[field]||{})[pM(S.rm)+'@'+x.t]||'', cur=(cm[field]||{})[S.rm+'@'+x.t]||'';
       const cell=v=>v?esc(v):'<span style="color:#9aa3ad">−</span>';
-      return `<tr><td>${i+1}</td><td class="l">${esc(t.t)}</td><td class="l">${esc(t.co||'-')}</td>`+
-        `<td>${rpN(t.pu||0)}</td><td class="dn">${rpN(t.u)}</td><td>${rpDelta(t.u-(t.pu||0))}</td>`+
-        `<td>${rpPct(t.u,num)}</td><td class="plan">`+
-        `<div class="prev"><span class="lb">전월</span><span class="tx">${cell(prev)}</span></div>`+
-        `<div class="cur"><span class="lb">금월</span><span class="tx">${cell(cur)}</span></div></td></tr>`;}).join('');
+      return `<tr><td>${i+1}</td><td class="l">${esc(x.t)}</td><td class="l">${esc(x.co||'-')}</td>`+
+        `<td>${rpN(pc)}</td><td class="dn">${rpN(x.c)}</td><td>${rpDelta(d)}</td>`+
+        `<td>${num?rpPct(x.c,num):'-'}</td><td class="plan">`+
+        `<div class="prev"><span class="lb">지난달</span><span class="tx">${cell(prev)}</span></div>`+
+        `<div class="cur"><span class="lb">이번 달</span><span class="tx">${cell(cur)}</span></div></td></tr>`;}).join('');
     return `<table><thead><tr>
       <th style="width:5%">순위</th><th class="l" style="width:10%">공종</th><th class="l" style="width:18%">시공업체</th>
       <th style="width:7%">전월</th><th style="width:7%">금월</th><th style="width:8%">전월 대비</th><th style="width:7%">비율</th>
       <th class="l" style="width:38%">처리계획</th></tr></thead><tbody>${body}</tbody></table>`;};
-  const ltTop=(c.topLt||[]).filter(t=>!t.isT&&!t.isO).slice(0,5);
-  const vacTop=((c.vacU&&c.vacU.top)||c.vTop||[]).slice(0,5);
+  const ltTop=(c.topLt||[]).filter(x=>!x.isT&&!x.isO).slice(0,5);
+  const vacTop=(c.vTop||[]).filter(x=>!x.isT&&!x.isO).slice(0,5);
 
-  let ai=(S.ana&&S.ana[sid]&&S.ana[sid][S.rm])||'';
-  const aiHTML=ai?`<div class="ai">${themeHTML(safeHTML(ai))}</div>`
+  const ai=(S.ana&&S.ana[sid]&&S.ana[sid][S.rm])||'';
+  const aiHTML=ai?`<div class="ai">${rptAI(ai)}</div>`
     :`<div class="ai"><ul><li>AI 분석이 아직 생성되지 않았습니다.</li></ul></div>`;
 
   const p1=rpSec(1,'종합 현황','전월 대비',kpi)+rpSec(2,'하자접수 · 처리 주차별 추이','',trend)
     +rpSec(3,'주요 이슈','전월 대비 변화·공종 간 편차 기준 자동 선별',issHTML)
     +rpSec(4,'월별 처리 현황',S.rm.slice(0,4)+'년 누계',moTbl);
   const p2=rpSec(5,'미처리 분포',`미처리 ${rpN(c.unr)}건 기준`,dist)
-    +rpSec(6,'장기미처리 처리계획','30일 이상 · 상위 5개 공종',planTbl(ltTop,'processingPlan','',c.lt))
+    +rpSec(6,'장기미처리 처리계획','30일 이상 · 상위 5개 공종',planTbl(ltTop,c.topLtPrev,'processingPlan',c.lt))
     +(vacTop.length?rpSec(7,'공가세대 처리계획',`공가세대 미처리 ${rpN(c.vUnr||0)}건 · 상위 ${vacTop.length}개 공종`,
-        planTbl(vacTop,'vacantProcessingPlan','',c.vUnr||1)):'');
+        planTbl(vacTop,c.vTopPrev,'vacantProcessingPlan',c.vUnr)):'');
   const p3=rpSec(vacTop.length?8:7,'종합 분석 의견','AI 분석',aiHTML);
   return `<div class="rpt">${rpPage(1,3,hdrF,p1)}${rpPage(2,3,hdrS,p2)}${rpPage(3,3,hdrS,p3)}</div>`;
+}
+
+/* AI 분석 원문을 보고서 서식으로 — 짧은 줄은 소제목(.ai-h), 나머지는 목록 */
+function rptAI(src){
+  const lines=String(src).replace(/\r/g,'').split('\n').map(s=>s.trim()).filter(Boolean);
+  let out='',ul=false;
+  const close=()=>{if(ul){out+='</ul>';ul=false;}};
+  lines.forEach(ln=>{
+    const body=ln.replace(/^[#*\u2022\-\s]+/,'').replace(/\*\*/g,'');
+    const isHead=body.length<=30&&!/[.。]$/.test(body);
+    if(isHead){close();out+='<div class="ai-h">'+esc(body)+'</div>';}
+    else{if(!ul){out+='<ul>';ul=true;}out+='<li>'+esc(body)+'</li>';}
+  });
+  close();
+  return out||'<ul><li>내용 없음</li></ul>';
 }
