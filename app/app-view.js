@@ -1423,3 +1423,294 @@ function nlqRender(){
   if(ft)ft.hidden=!rows.length;
   window.__NLQ={R:R,n:rows.length,q:q};
 }
+
+/* ══════════ 인쇄용 보고서 양식 ══════════
+   화면 카드를 그대로 옮기는 기존 인쇄와 달리, 집계 결과로 A4 문서를 새로 조립한다.
+   모든 값은 calc()·capWks()에서 나오므로 화면·게시본·스냅샷 어디서든 같은 문서가 나온다. */
+const RP_COL=['#08213f','#14395f','#22537f','#3a6f9f','#6b96bd','#b9c9d8'];
+const rpN=v=>Number(v||0).toLocaleString();
+const rpDelta=d=>d===0?'— 0':(d>0?'▲ ':'▼ ')+rpN(Math.abs(d));
+const rpPct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'0.0%';
+
+// 주차별 스택 막대 + 누계 선 2종
+function rpTrend(wks){
+  const W=523,H=112,L=40,R=494,T=14,B=96;
+  if(!wks.length)return '';
+  const n=wks.length,step=(R-L)/n,bw=Math.min(16,step*0.7);
+  const umax=Math.max(...wks.map(w=>w.u))*1.15||1;
+  const tv=wks.map(w=>w.cumR),rv=wks.map(w=>w.cumR-w.u);
+  let tmin=Math.max(0,Math.min(...rv)*0.98),tmax=Math.max(...tv)*1.02||1;
+  if(tmax<=tmin)tmax=tmin+1; // 처리 누계가 0이거나 변화가 없을 때 축이 뒤집히지 않도록
+  const uy=v=>B-(v/umax)*(B-T), ty=v=>B-((v-tmin)/((tmax-tmin)||1))*(B-T);
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
+  for(let g=0;g<=4;g++){const v=umax*g/4,y=uy(v);
+    s+=`<line x1="${L}" y1="${y.toFixed(1)}" x2="${R}" y2="${y.toFixed(1)}" stroke="#e4e7eb"/>`+
+       `<text x="${L-4}" y="${(y+2.4).toFixed(1)}" font-size="6.5" fill="#6b7280" text-anchor="end">${rpN(Math.round(v))}</text>`;}
+  for(let g=0;g<=2;g++){const v=tmin+(tmax-tmin)*g/2;
+    s+=`<text x="${R+4}" y="${(ty(v)+2.4).toFixed(1)}" font-size="6.5" fill="#6b7280">${Math.round(v/1000)}천</text>`;}
+  wks.forEach((w,i)=>{
+    const cx=L+step*i+step/2,x=cx-bw/2;let base=B;
+    [[w.lt60,RP_COL[0]],[Math.max(0,w.lt-w.lt60),RP_COL[3]],[Math.max(0,w.u-w.lt),RP_COL[5]]].forEach(([v,c])=>{
+      const hh=(v/umax)*(B-T);
+      s+=`<rect x="${x.toFixed(1)}" y="${(base-hh).toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" fill="${c}"/>`;
+      base-=hh;});
+  });
+  const pts=a=>a.map((v,i)=>`${(L+step*i+step/2).toFixed(1)},${ty(v).toFixed(1)}`).join(' ');
+  s+=`<polyline fill="none" stroke="#22537f" stroke-width="1.4" points="${pts(tv)}"/>`;
+  s+=`<polyline fill="none" stroke="#6b96bd" stroke-width="1.4" stroke-dasharray="3 2" points="${pts(rv)}"/>`;
+  s+=`<line x1="${L}" y1="${B}" x2="${R}" y2="${B}" stroke="#c8cdd4"/>`;
+  let lastM=0;
+  wks.forEach((w,i)=>{if(w.m!==lastM){lastM=w.m;
+    s+=`<text x="${(L+step*i+step/2).toFixed(1)}" y="${B+12}" font-size="7" fill="#4a5568" text-anchor="middle">${w.m}월</text>`;}});
+  return s+'</svg>';
+}
+
+// 도넛 + 범례
+function rpDonut(items,total,cap){
+  const C=2*Math.PI*42;let off=0,circ='',rows='';
+  items.forEach((it,i)=>{
+    const pc=total?it.v/total*100:0,ln=C*pc/100,c=RP_COL[Math.min(i,RP_COL.length-1)];
+    circ+=`<circle cx="50" cy="50" r="42" stroke="${c}" stroke-dasharray="${ln.toFixed(1)} ${(C-ln).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}"/>`;
+    rows+=`<div class="r"><i style="background:${c}"></i><span class="nm">${esc(it.n)}</span><span class="vl">${rpN(it.v)}</span><span class="pc">${pc.toFixed(1)}%</span></div>`;
+    off+=ln;});
+  return `<div><div class="cap">${esc(cap)}</div>
+    <svg width="70" height="70" viewBox="0 0 100 100" style="float:left;margin-right:9px">
+      <g transform="rotate(-90 50 50)" fill="none" stroke-width="15">${circ}</g>
+      <text x="50" y="47" text-anchor="middle" font-size="12" font-weight="700" fill="#08213f">${rpN(total)}</text>
+      <text x="50" y="59" text-anchor="middle" font-size="7" fill="#6b7280">미처리</text></svg>
+    <div class="dl" style="overflow:hidden">${rows}</div></div>`;
+}
+
+function rpSec(no,title,note,inner,style){
+  return `<div class="sec"${style?` style="${style}"`:''}>
+    <div class="sec-h"><span class="sec-n">${no}</span><span class="sec-t">${esc(title)}</span>${note?`<span class="sec-note">${esc(note)}</span>`:''}</div>
+    ${inner}</div>`;
+}
+function rpKpi(cards){
+  return '<div class="kpis">'+cards.map(c=>
+    `<div class="kpi"><div class="k">${esc(c.k)}</div><div class="v">${rpN(c.v)}<span>건</span></div><div class="d">${c.d}</div></div>`).join('')+'</div>';
+}
+function rpPage(n,total,hdr,body,slim){
+  return `<div class="page"><div class="sheet">${hdr}
+    ${body}
+    <div class="foot"><div><b>현대건설</b> · ${esc(curTeam()?curTeam().name:'')}</div>
+      <div class="pg">${n} / ${total}</div></div></div></div>`;
+}
+function rpHdr(title,subs,asof,slim){
+  return `<div class="titlewrap"><div class="thead-row"><h1>${esc(title)}</h1>
+      <div class="asof">기준일<b>${esc(asof)}</b></div></div>
+    ${slim?'':`<div class="subject">${subs.map(s=>`<div>${s}</div>`).join('')}</div>`}</div>`;
+}
+
+/* ── 대시보드 보고서 ── */
+function rptDashboard(){
+  const sites=dashSites(), rm=S.rm;
+  const st=sites.map(s=>({s,c:calc(S.def[s.id]||[],s,rm)}));
+  const sum=k=>st.reduce((a,x)=>a+(x.c[k]||0),0);
+  const tR=sum('tR'),res=sum('res'),unr=sum('unr'),lt=sum('lt');
+  const pUnr=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.unr)||0),0);
+  const pLt=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.lt)||0),0);
+  const pR=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.tR)||0),0);
+  const pRes=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.res)||0),0);
+  const units=sites.reduce((a,s)=>a+(+s.units||0),0);
+  const rgs=[...new Set(sites.map(s=>s.region).filter(Boolean))];
+  const asof=(st[0]&&st[0].c.rmEnd||rm).replace(/-/g,'. ')+'.';
+  const hdrF=rpHdr((curTeam()?curTeam().name:'')+' 하자처리 현황 보고',
+    [`권역 <b>${esc(rgs.join(' · '))}</b>`,`관리대상현장 <b>${sites.length}개</b>`,`관리세대 <b>${rpN(units)}세대</b>`],asof);
+  const hdrS=rpHdr((curTeam()?curTeam().name:'')+' 하자처리 현황 보고',[],asof,true);
+
+  // 1) 종합 현황
+  const kpi=rpKpi([
+    {k:'전체 접수',v:tR,d:`세대당 ${units?(tR/units).toFixed(1):'0.0'}건 · ${rpDelta(tR-pR)}`},
+    {k:'처리 완료',v:res,d:`처리율 <b>${rpPct(res,tR)}</b> · ${rpDelta(res-pRes)}`},
+    {k:'미처리',v:unr,d:`세대당 ${units?(unr/units).toFixed(1):'0.0'}건 · ${rpDelta(unr-pUnr)}`},
+    {k:'장기미처리',v:lt,d:`미처리의 <b>${rpPct(lt,unr)}</b> · ${rpDelta(lt-pLt)}`}]);
+
+  // 2) 주차별 추이 — 팀 합산
+  const wkMap={};
+  st.forEach(x=>(x.c.weekly||[]).forEach(w=>{
+    const k=w.m+'-'+w.w,o=wkMap[k]||(wkMap[k]={m:w.m,w:w.w,cumR:0,u:0,lt:0,lt60:0});
+    o.cumR+=w.cumR||0;o.u+=w.u||0;o.lt+=w.lt||0;o.lt60+=w.lt60||0;}));
+  const wks=Object.values(wkMap).sort((a,b)=>a.m-b.m||a.w-b.w);
+  const trend=rpTrend(wks)+`<div class="lg">
+    <span><i style="background:${RP_COL[0]}"></i>60일 이상</span>
+    <span><i style="background:${RP_COL[3]}"></i>30~59일</span>
+    <span><i style="background:${RP_COL[5]}"></i>30일 미만</span>
+    <span style="margin-left:auto"><i class="ln" style="background:#22537f"></i>전체 접수(누계)</span>
+    <span><i class="ln" style="background:#6b96bd"></i>처리 완료(누계)</span></div>`;
+
+  // 3) 주요 이슈
+  const worst=[...st].sort((a,b)=>b.c.unr-a.c.unr)[0];
+  const avg=tR?res/tR*100:0;
+  const iss=[];
+  if(worst&&unr) iss.push({t:'특정 현장 집중',
+    m:`<b>${esc(worst.s.name)}</b> 미처리 <b>${rpN(worst.c.unr)}건</b> — 팀 전체의 <b>${rpPct(worst.c.unr,unr)}</b>. 처리율 ${rpPct(worst.c.res,worst.c.tR)}로 팀 평균(${avg.toFixed(1)}%) 대비 ${(avg-(worst.c.tR?worst.c.res/worst.c.tR*100:0)).toFixed(1)}%p 낮음.`});
+  if(lt-pLt!==0) iss.push({t:lt>pLt?'장기미처리 증가':'장기미처리 감소',
+    m:`장기미처리 <b>${rpN(lt)}건</b>, 전월 대비 <b>${rpN(Math.abs(lt-pLt))}건 ${lt>pLt?'증가':'감소'}</b>. 미처리 중 비중 ${rpPct(pLt,pUnr)} → <b>${rpPct(lt,unr)}</b>.`});
+  const mR=tR-pR,mRes=res-pRes;
+  if(mR||mRes) iss.push({t:mRes<mR?'처리 속도 둔화':'처리 속도 개선',
+    m:`월간 처리 <b>${rpN(mRes)}건</b>으로 월간 접수(${rpN(mR)}건)를 ${mRes<mR?'밑돌아 미처리 순증':'웃돌아 미처리 감소'}.`});
+  const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
+
+  // 4) 월별 처리 현황
+  const mo=(st[0]&&st[0].c.monthly)?st[0].c.monthly.map(x=>x.month):[];
+  const moMap={};
+  st.forEach(x=>(x.c.monthly||[]).forEach(m=>{
+    const o=moMap[m.month]||(moMap[m.month]={month:m.month,r:0,res:0,u:0,lt:0});
+    o.r+=m.r||0;o.res+=m.res||0;o.u+=m.u||0;o.lt+=m.lt||0;}));
+  const mos=Object.values(moMap).sort((a,b)=>a.month<b.month?-1:1);
+  let prevU=null,prevL=null,moRows='';
+  mos.forEach((m,i)=>{
+    const last=i===mos.length-1,B=v=>last?`<b>${v}</b>`:v;
+    const mi=i?m.r-mos[i-1].r:m.r, mp=i?m.res-mos[i-1].res:m.res;
+    moRows+=`<tr><td>${B(Number(m.month.slice(5))+'월')}</td><td>${B(rpN(m.r))}</td><td>${B(rpN(mi))}</td>`+
+      `<td>${B(rpN(m.res))}</td><td>${B(rpPct(m.res,m.r))}</td><td>${B(rpN(mp))}</td><td>${B(rpN(m.u))}</td>`+
+      `<td${last?' class="dn"':''}>${rpDelta(prevU==null?0:m.u-prevU)}</td><td>${B(rpN(m.lt))}</td>`+
+      `<td${last?' class="dn"':''}>${rpDelta(prevL==null?0:m.lt-prevL)}</td></tr>`;
+    prevU=m.u;prevL=m.lt;});
+  const moTbl=`<table><thead><tr>
+    <th class="cc" style="width:10%">월</th><th style="width:10%">전체 접수</th><th style="width:10%">월간 접수</th>
+    <th style="width:10%">전체 처리</th><th style="width:10%">처리율</th><th style="width:10%">월간 처리</th>
+    <th style="width:10%">전체 미처리</th><th style="width:10%">전월 대비</th><th style="width:10%">장기미처리</th>
+    <th style="width:10%">전월 대비</th></tr></thead><tbody>${moRows}</tbody></table>`;
+
+  // 5) 미처리 분포
+  const bySite=st.map(x=>({n:x.s.name.replace(/^힐스테이트\s*/,''),v:x.c.unr})).sort((a,b)=>b.v-a.v);
+  const trMap={};
+  st.forEach(x=>(x.c.trAgg||[]).forEach(t=>{trMap[t.t]=(trMap[t.t]||0)+(t.u||0);}));
+  const byTr=Object.entries(trMap).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
+  const cut=(arr,k,lbl)=>{const top=arr.slice(0,5),rest=arr.slice(5);
+    if(rest.length)top.push({n:`그 외 ${rest.length}${lbl}`,v:rest.reduce((a,x)=>a+x.v,0)});return top;};
+  const dist=`<div class="two">${rpDonut(cut(bySite,5,'개 현장'),unr,'현장별')}${rpDonut(cut(byTr,5,'개 공종'),unr,'공종별')}</div>`;
+
+  // 6) 현장별 · 7) 업체별
+  const siteRows=st.map(x=>{const c=x.c,p=c.prev||{};
+    return `<tr><td class="l dim">${esc(x.s.region||'')}</td><td class="l">${esc(x.s.name)}</td>`+
+      `<td>${rpN(x.s.units)}</td><td>${rpN(c.tR)}</td><td>${rpN(c.res)}</td><td>${rpPct(c.res,c.tR)}</td>`+
+      `<td class="dn">${rpN(c.unr)}</td><td>${rpDelta(c.unr-(p.unr||0))}</td>`+
+      `<td>${rpN(c.lt)}</td><td>${rpDelta(c.lt-(p.lt||0))}</td></tr>`;}).join('');
+  const siteTbl=`<table><thead><tr>
+    <th class="l" style="width:8%">권역</th><th class="l" style="width:24.9%">현장명</th>
+    <th style="width:8.39%">세대수</th><th style="width:8.39%">전체 접수</th><th style="width:8.39%">처리</th>
+    <th style="width:8.39%">처리율</th><th style="width:8.39%">미처리</th><th style="width:8.39%">전월 대비</th>
+    <th style="width:8.39%">장기미처리</th><th style="width:8.39%">전월 대비</th></tr></thead>
+    <tbody>${siteRows}</tbody>
+    <tfoot><tr><td class="l"></td><td class="l">합계</td><td>${rpN(units)}</td><td>${rpN(tR)}</td><td>${rpN(res)}</td>
+      <td>${rpPct(res,tR)}</td><td>${rpN(unr)}</td><td>${rpDelta(unr-pUnr)}</td><td>${rpN(lt)}</td><td>${rpDelta(lt-pLt)}</td></tr></tfoot></table>`;
+
+  const co=dashCoAgg(st.map(x=>({st:x.c}))).sort((a,b)=>b.u-a.u);
+  const top=co.slice(0,10),rest=co.slice(10);
+  const rSum=k=>rest.reduce((a,x)=>a+(x[k]||0),0);
+  let coRows=top.map((x,i)=>
+    `<tr><td>${i+1}</td><td class="l">${esc(x.key)}</td><td class="l">${esc(x.side||'-')}</td>`+
+    `<td>${rpN(x.r)}</td><td>${rpN(x.res)}</td><td>${rpPct(x.res,x.r)}</td>`+
+    `<td class="dn">${rpN(x.u)}</td><td>${rpDelta(x.u-(x.pu||0))}</td>`+
+    `<td>${rpN(x.lt)}</td><td>${rpDelta(x.lt-(x.plt||0))}</td></tr>`).join('');
+  if(rest.length)coRows+=`<tr><td class="dim">—</td><td class="l dim">그 외 ${rest.length}곳</td><td class="l dim">—</td>`+
+    `<td class="dim">${rpN(rSum('r'))}</td><td class="dim">${rpN(rSum('res'))}</td><td class="dim">${rpPct(rSum('res'),rSum('r'))}</td>`+
+    `<td class="dim">${rpN(rSum('u'))}</td><td class="dim">${rpDelta(rSum('u')-rSum('pu'))}</td>`+
+    `<td class="dim">${rpN(rSum('lt'))}</td><td class="dim">${rpDelta(rSum('lt')-rSum('plt'))}</td></tr>`;
+  const coTbl=`<table><thead><tr>
+    <th class="cc" style="width:5%">NO</th><th class="l" style="width:22%">시공업체</th><th class="l" style="width:9%">주요 공종</th>
+    <th style="width:9.6%">전체 접수</th><th style="width:9.6%">처리</th><th style="width:8.6%">처리율</th>
+    <th style="width:9.6%">미처리</th><th style="width:8.6%">전월 대비</th><th style="width:9.6%">장기미처리</th>
+    <th style="width:8.4%">전월 대비</th></tr></thead><tbody>${coRows}</tbody>
+    <tfoot><tr><td></td><td class="l">합계</td><td></td><td>${rpN(tR)}</td><td>${rpN(res)}</td><td>${rpPct(res,tR)}</td>
+      <td>${rpN(unr)}</td><td>${rpDelta(unr-pUnr)}</td><td>${rpN(lt)}</td><td>${rpDelta(lt-pLt)}</td></tr></tfoot></table>`;
+
+  const p1=rpSec(1,'종합 현황','전월 대비',kpi)+rpSec(2,'하자접수 · 처리 주차별 추이','',trend)
+    +rpSec(3,'주요 이슈','전월 대비 변화·현장 간 편차 기준 자동 선별',issHTML)
+    +rpSec(4,'월별 처리 현황',rm.slice(0,4)+'년 누계',moTbl);
+  const p2=rpSec(5,'미처리 분포',`미처리 ${rpN(unr)}건 기준`,dist)
+    +rpSec(6,'현장별 처리 현황',`권역 · 현장 순 · ${sites.length}개 현장`,siteTbl)
+    +rpSec(7,'업체별 처리 현황',`시공업체 기준 · 미처리 상위 ${top.length}곳 / 전체 ${co.length}곳`,coTbl);
+  return `<div class="rpt">${rpPage(1,2,hdrF,p1)}${rpPage(2,2,hdrS,p2)}</div>`;
+}
+
+/* ── 현장 보고서 ── */
+function rptSite(sid){
+  const site=(S.sites||[]).find(s=>s.id===sid); if(!site)return '';
+  const c=calc(S.def[sid]||[],site,S.rm), p=c.prev||{};
+  const cm=(S.cmt&&S.cmt[sid])||{}, asof=(c.rmEnd||S.rm).replace(/-/g,'. ')+'.';
+  const hdrF=rpHdr(site.name+' 하자처리 현황 보고',
+    [`권역 <b>${esc(site.region||'-')}</b>`,
+     `규모 <b>${site.buildings?site.buildings+'개동 ':''}${rpN(site.units)}세대</b>`,
+     `준공 <b>${esc((site.completionDate||'').replace('-','. ')+'.')}</b>`],asof);
+  const hdrS=rpHdr(site.name+' 하자처리 현황 보고',[],asof,true);
+
+  const kpi=rpKpi([
+    {k:'전체 접수',v:c.tR,d:`세대당 ${site.units?(c.tR/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.tR-(p.tR||0))}`},
+    {k:'처리 완료',v:c.res,d:`처리율 <b>${rpPct(c.res,c.tR)}</b> · ${rpDelta(c.res-(p.res||0))}`},
+    {k:'미처리',v:c.unr,d:`세대당 ${site.units?(c.unr/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.unr-(p.unr||0))}`},
+    {k:'장기미처리',v:c.lt,d:`미처리의 <b>${rpPct(c.lt,c.unr)}</b> · ${rpDelta(c.lt-(p.lt||0))}`}]);
+  const trend=rpTrend(c.weekly||[])+`<div class="lg">
+    <span><i style="background:${RP_COL[0]}"></i>60일 이상</span>
+    <span><i style="background:${RP_COL[3]}"></i>30~59일</span>
+    <span><i style="background:${RP_COL[5]}"></i>30일 미만</span>
+    <span style="margin-left:auto"><i class="ln" style="background:#22537f"></i>전체 접수(누계)</span>
+    <span><i class="ln" style="background:#6b96bd"></i>처리 완료(누계)</span></div>`;
+
+  const tops=(c.trAgg||[]).slice().sort((a,b)=>b.u-a.u);
+  const iss=[];
+  if(tops[0]) iss.push({t:'미처리 집중 공종',
+    m:`<b>${esc(tops[0].t)}</b> ${rpN(tops[0].u)}건(미처리의 <b>${rpPct(tops[0].u,c.unr)}</b>) · 시공업체 ${esc(tops[0].co||'-')}.`});
+  if(c.lt-(p.lt||0)!==0) iss.push({t:c.lt>(p.lt||0)?'장기미처리 증가':'장기미처리 감소',
+    m:`장기미처리 <b>${rpN(c.lt)}건</b>, 전월 대비 <b>${rpN(Math.abs(c.lt-(p.lt||0)))}건 ${c.lt>(p.lt||0)?'증가':'감소'}</b>. 미처리 중 비중 <b>${rpPct(c.lt,c.unr)}</b>.`});
+  if(c.critUnr) iss.push({t:'중대하자',
+    m:`사내 매뉴얼 기준 <b>${rpN(c.critUnr)}건</b>이 미처리 상태. 최우선 현장 재방문 및 정밀 진단 요망.`});
+  const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
+
+  let prevU=null,prevL=null,moRows='';
+  (c.monthly||[]).forEach((m,i,arr)=>{
+    const last=i===arr.length-1,B=v=>last?`<b>${v}</b>`:v;
+    const mi=i?m.r-arr[i-1].r:m.r, mp=i?m.res-arr[i-1].res:m.res;
+    moRows+=`<tr><td>${B(Number(m.month.slice(5))+'월')}</td><td>${B(rpN(m.r))}</td><td>${B(rpN(mi))}</td>`+
+      `<td>${B(rpN(m.res))}</td><td>${B(rpPct(m.res,m.r))}</td><td>${B(rpN(mp))}</td><td>${B(rpN(m.u))}</td>`+
+      `<td${last?' class="dn"':''}>${rpDelta(prevU==null?0:m.u-prevU)}</td><td>${B(rpN(m.lt||0))}</td>`+
+      `<td${last?' class="dn"':''}>${rpDelta(prevL==null?0:(m.lt||0)-prevL)}</td></tr>`;
+    prevU=m.u;prevL=m.lt||0;});
+  const moTbl=`<table><thead><tr>
+    <th class="cc" style="width:10%">월</th><th style="width:10%">전체 접수</th><th style="width:10%">월간 접수</th>
+    <th style="width:10%">전체 처리</th><th style="width:10%">처리율</th><th style="width:10%">월간 처리</th>
+    <th style="width:10%">전체 미처리</th><th style="width:10%">전월 대비</th><th style="width:10%">장기미처리</th>
+    <th style="width:10%">전월 대비</th></tr></thead><tbody>${moRows}</tbody></table>`;
+
+  const cut=(arr,lbl)=>{const t=arr.slice(0,5),r=arr.slice(5);
+    if(r.length)t.push({n:`그 외 ${r.length}${lbl}`,v:r.reduce((a,x)=>a+x.v,0)});return t;};
+  const byTr=tops.map(t=>({n:t.t,v:t.u}));
+  const tyMap={};
+  (S.def[sid]||[]).forEach(i=>{if(i.status==='처리')return;
+    const k=(i.trade||'기타')+'-'+(i.defectType||'기타');tyMap[k]=(tyMap[k]||0)+1;});
+  const byTy=Object.entries(tyMap).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
+  const dist=`<div class="two">${rpDonut(cut(byTr,'개 공종'),c.unr,'공종별')}${rpDonut(cut(byTy,'개'),c.unr,'공종 · 유형별')}</div>`;
+
+  const planTbl=(rows,field,note,num)=>{
+    const body=rows.map((t,i)=>{
+      const prev=(cm[field]||{})[pM(S.rm)+'@'+t.t]||'', cur=(cm[field]||{})[S.rm+'@'+t.t]||'';
+      const cell=v=>v?esc(v):'<span style="color:#9aa3ad">−</span>';
+      return `<tr><td>${i+1}</td><td class="l">${esc(t.t)}</td><td class="l">${esc(t.co||'-')}</td>`+
+        `<td>${rpN(t.pu||0)}</td><td class="dn">${rpN(t.u)}</td><td>${rpDelta(t.u-(t.pu||0))}</td>`+
+        `<td>${rpPct(t.u,num)}</td><td class="plan">`+
+        `<div class="prev"><span class="lb">전월</span><span class="tx">${cell(prev)}</span></div>`+
+        `<div class="cur"><span class="lb">금월</span><span class="tx">${cell(cur)}</span></div></td></tr>`;}).join('');
+    return `<table><thead><tr>
+      <th style="width:5%">순위</th><th class="l" style="width:10%">공종</th><th class="l" style="width:18%">시공업체</th>
+      <th style="width:7%">전월</th><th style="width:7%">금월</th><th style="width:8%">전월 대비</th><th style="width:7%">비율</th>
+      <th class="l" style="width:38%">처리계획</th></tr></thead><tbody>${body}</tbody></table>`;};
+  const ltTop=(c.topLt||[]).filter(t=>!t.isT&&!t.isO).slice(0,5);
+  const vacTop=((c.vacU&&c.vacU.top)||c.vTop||[]).slice(0,5);
+
+  let ai=(S.ana&&S.ana[sid]&&S.ana[sid][S.rm])||'';
+  const aiHTML=ai?`<div class="ai">${themeHTML(safeHTML(ai))}</div>`
+    :`<div class="ai"><ul><li>AI 분석이 아직 생성되지 않았습니다.</li></ul></div>`;
+
+  const p1=rpSec(1,'종합 현황','전월 대비',kpi)+rpSec(2,'하자접수 · 처리 주차별 추이','',trend)
+    +rpSec(3,'주요 이슈','전월 대비 변화·공종 간 편차 기준 자동 선별',issHTML)
+    +rpSec(4,'월별 처리 현황',S.rm.slice(0,4)+'년 누계',moTbl);
+  const p2=rpSec(5,'미처리 분포',`미처리 ${rpN(c.unr)}건 기준`,dist)
+    +rpSec(6,'장기미처리 처리계획','30일 이상 · 상위 5개 공종',planTbl(ltTop,'processingPlan','',c.lt))
+    +(vacTop.length?rpSec(7,'공가세대 처리계획',`공가세대 미처리 ${rpN(c.vUnr||0)}건 · 상위 ${vacTop.length}개 공종`,
+        planTbl(vacTop,'vacantProcessingPlan','',c.vUnr||1)):'');
+  const p3=rpSec(vacTop.length?8:7,'종합 분석 의견','AI 분석',aiHTML);
+  return `<div class="rpt">${rpPage(1,3,hdrF,p1)}${rpPage(2,3,hdrS,p2)}${rpPage(3,3,hdrS,p3)}</div>`;
+}

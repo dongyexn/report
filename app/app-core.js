@@ -151,7 +151,7 @@ function applyTheme(dark){
 // ── 빌드 식별자 ──
 //   화면에 뜬 것이 '어느 배포본'인지 알 수 있어야 진단이 싸진다(캐시된 옛 버전 vs 실제 버그 구분).
 //   배포 때마다 이 값을 올린다 — 안 올리면 CI(tests/build.mjs)가 실패한다.
-const BUILD='2026-07-27.11';
+const BUILD='2026-07-28.1';
 
 // ── 오류 기록 ──
 //   catch가 콘솔에만 남기면 뷰어(팀원)는 고장을 영영 모른다.
@@ -643,7 +643,7 @@ function closeMo(){
   window.__REC=null;
   // 닫힘 애니메이션(약 .22s)이 끝난 뒤 wide 해제 — 닫히는 도중 너비가 갑자기 줄어들지 않도록
   const mb=document.getElementById('mb');
-  if(mb){mb.classList.remove('has-x');clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow','rdw');},240);}
+  if(mb){mb.classList.remove('has-x');clearTimeout(mb._wideT);mb._wideT=setTimeout(()=>{mb.classList.remove('wide','narrow','rdw','wide-pick');},240);}
   try{if(_moPrevFocus&&_moPrevFocus.focus)_moPrevFocus.focus();}catch(_){}
   _moPrevFocus=null;
 }

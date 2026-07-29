@@ -1658,6 +1658,114 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .rl-fchip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--bt1);background:var(--b50);border:1px solid var(--b200);border-radius:var(--rp);padding:2px 9px;margin-left:2px;cursor:pointer;vertical-align:middle;}
 .rl-fchip:hover{filter:brightness(.96);}
 @media print{.ins-grid .ic.exp{position:static;box-shadow:none;}.insd{display:none;}}
+
+/* ══════════ 인쇄용 보고서 양식 (A4) ══════════
+   화면에는 나타나지 않고 인쇄할 때만 쓰인다. 기존 인쇄 규칙과 섞이지 않도록
+   .rpt 안으로 완전히 격리하고, 인쇄 시 본문은 통째로 숨긴다. */
+#rptRoot{position:fixed;left:-10000px;top:0;}
+.rpt{--rp-navy:#08213f; --rp-n2:#14395f; --rp-n3:#22537f; --rp-n4:#3a6f9f; --rp-n5:#6b96bd; --rp-n6:#b9c9d8;  --rp-text:#1a202c; --rp-gray:#4a5568; --rp-label:#6b7280;  --rp-line:#c8cdd4; --rp-lines:#e4e7eb; --rp-bg:#f7f8fa;}
+.rpt *{box-sizing:border-box;margin:0;padding:0;}
+.rpt{font-family:'HDharmony','Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--rp-text);-webkit-font-smoothing:antialiased;}
+.rpt .page{width:794px;min-height:1123px;background:#fff;margin:0 auto 22px;position:relative;box-shadow:0 2px 16px rgba(0,0,0,.28);}
+.rpt .sheet{width:595px;min-height:842px;padding:0 36px;position:relative;zoom:1.333333;}
+.rpt .page{break-after:page;box-shadow:none;margin:0;min-height:1123px}
+.rpt .page:last-child{break-after:auto}
+.rpt .page{box-shadow:none;margin:0;page-break-after:always}
+.rpt .page:last-child{page-break-after:auto}
+.rpt .dochead{display:flex;align-items:flex-end;justify-content:space-between;
+  padding:30px 0 10px;border-bottom:2px solid var(--rp-navy);}
+.rpt .brand{font-size:10px;font-weight:700;letter-spacing:.16em;color:var(--rp-navy);}
+.rpt .brand small{display:block;font-size:7.5px;font-weight:400;letter-spacing:.06em;color:var(--rp-label);margin-top:3px;}
+.rpt .docno{font-size:8px;color:var(--rp-label);text-align:right;line-height:1.6;}
+.rpt .thead-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;}
+.rpt .asof{text-align:right;font-size:8px;color:var(--rp-label);line-height:1.5;white-space:nowrap;}
+.rpt .asof b{display:block;font-size:10px;font-weight:700;color:var(--rp-navy);letter-spacing:-.01em;}
+.rpt .titlewrap{padding:32px 0 4px;border-bottom:1px solid var(--rp-line);}
+.rpt h1{font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--rp-navy);line-height:1.25;}
+.rpt .subject{display:flex;gap:22px;margin-top:8px;font-size:8.5px;color:var(--rp-gray);}
+.rpt .subject b{color:var(--rp-navy);font-weight:600;}
+.rpt .sec{margin-top:16px;}
+.rpt .page:first-of-type .sec{margin-top:7px;}
+.rpt .page:first-of-type .sheet>.sec:nth-child(2){margin-top:18px;}
+.rpt .page:first-of-type .sheet>.sec:nth-child(3){margin-top:13px;}
+.rpt .page:first-of-type .sheet>.sec:nth-child(4),.rpt .page:first-of-type .sheet>.sec:nth-child(5){margin-top:12px;}
+.rpt .sec-h{display:flex;align-items:baseline;gap:8px;padding-bottom:3px;
+  border-bottom:1px solid var(--rp-navy);margin-bottom:5px;}
+.rpt .sec-n{font-size:11.5px;font-weight:700;color:var(--rp-navy);letter-spacing:.02em;}
+.rpt .sec-t{font-size:12px;font-weight:700;color:var(--rp-navy);letter-spacing:-.01em;}
+.rpt .sec-note{margin-left:auto;font-size:7.5px;color:var(--rp-label);}
+.rpt .kpis{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rp-lines);}
+.rpt .kpi{padding:9px 11px 8px;border-bottom:1px solid var(--rp-lines);border-right:1px solid var(--rp-lines);}
+.rpt .kpi:last-child{border-right:0}
+.rpt .kpi .k{font-size:7.5px;color:var(--rp-label);}
+.rpt .kpi .v{font-size:18px;font-weight:700;color:var(--rp-navy);letter-spacing:-.03em;line-height:1.1;margin-top:4px;
+  font-variant-numeric:tabular-nums;}
+.rpt .kpi .v span{font-size:8.5px;font-weight:500;color:var(--rp-gray);margin-left:2px;}
+.rpt .kpi .d{font-size:7.5px;color:var(--rp-gray);margin-top:3px;font-variant-numeric:tabular-nums;}
+.rpt .kpi .d b{font-weight:700;color:var(--rp-navy);}
+.rpt table{width:100%;border-collapse:collapse;font-size:8.5px;font-variant-numeric:tabular-nums;table-layout:fixed;}
+.rpt th{font-size:7.5px;font-weight:600;color:var(--rp-label);text-align:center;padding:5px 4px;
+  border-bottom:1px solid var(--rp-line);white-space:nowrap;}
+.rpt th.l,.rpt td.l{text-align:left}
+.rpt td{padding:2.75px 4px;text-align:center;border-bottom:1px solid var(--rp-lines);}
+.rpt tbody tr:last-child td{border-bottom:1px solid var(--rp-line);}
+.rpt tfoot td{padding:5.5px 4px;font-weight:700;color:var(--rp-navy);background:var(--rp-bg);border-bottom:0;}
+.rpt .dim{color:var(--rp-label)}
+.rpt .dn{font-weight:600}
+.rpt /* 차트 공통 */
+.cap{font-size:7.5px;font-weight:700;color:var(--rp-navy);margin-bottom:1px;}
+.rpt .lg{display:flex;gap:13px;flex-wrap:wrap;font-size:7.5px;color:var(--rp-gray);margin-top:1px;}
+.rpt .lg span{display:inline-flex;align-items:center;gap:4px}
+.rpt .lg i{width:8px;height:8px;display:inline-block}
+.rpt .lg i.ln{height:2px;width:12px}
+.rpt .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.rpt /* 도넛 범례 */
+.dl{font-size:7.5px;color:var(--rp-gray);}
+.rpt .dl .r{display:flex;align-items:center;gap:5px;padding:2px 0;border-bottom:1px solid var(--rp-lines);}
+.rpt .dl .r:last-child{border-bottom:0}
+.rpt .dl i{width:7px;height:7px;flex:0 0 auto}
+.rpt .dl .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rpt .dl .vl{font-variant-numeric:tabular-nums;font-weight:600;color:var(--rp-text)}
+.rpt .dl .pc{width:34px;text-align:right;color:var(--rp-label);font-variant-numeric:tabular-nums}
+.rpt /* 이슈 */
+.iss{border-left:3px solid var(--rp-navy);background:var(--rp-bg);padding:5px 10px;margin-bottom:3px;}
+.rpt .iss:last-child{margin-bottom:0}
+.rpt .iss .t{font-size:7.5px;font-weight:700;color:var(--rp-navy);margin-bottom:2px;}
+.rpt .iss .m{font-size:7.5px;line-height:1.5;color:var(--rp-gray);}
+.rpt .iss .m b{color:var(--rp-navy);font-weight:600;}
+.rpt .foot{position:absolute;left:36px;right:36px;bottom:14px;padding-top:7px;
+  border-top:1px solid var(--rp-line);display:flex;justify-content:space-between;align-items:center;
+  font-size:7.5px;color:var(--rp-label);}
+.rpt .foot b{font-weight:700;color:var(--rp-gray);letter-spacing:.08em;}
+.rpt .pg{font-variant-numeric:tabular-nums;}
+@media print{
+  body.rpt-on>*:not(#rptRoot){display:none!important;}
+  body.rpt-on{background:#fff!important;}
+  #rptRoot{position:static!important;left:auto!important;}
+  .rpt .page{break-after:page;box-shadow:none;margin:0;}
+  .rpt .page:last-child{break-after:auto;}
+}
+
+/* 인쇄 방식 선택 모달 */
+#mb.wide-pick{max-width:620px;}
+.rpk-sub{font-size:12.5px;color:var(--lbl2);margin:-12px 0 18px;line-height:1.6;}
+.rpk{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.rpk-opt{border:1.5px solid var(--sep);border-radius:12px;padding:12px;cursor:pointer;
+  transition:border-color .15s,background .15s;background:var(--bg2);}
+.rpk-opt:hover{border-color:var(--b300);background:var(--b50);}
+.rpk-opt.on{border-color:var(--b600);background:var(--b50);box-shadow:0 0 0 3px rgba(62,113,210,.14);}
+.rpk-th{background:#fff;border:1px solid var(--sep);border-radius:6px;display:block;width:100%;margin-bottom:10px;}
+.rpk-nm{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--lbl);}
+.rpk-rd{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--lbl3);flex:0 0 auto;position:relative;}
+.rpk-opt.on .rpk-rd{border-color:var(--b600);}
+.rpk-opt.on .rpk-rd::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--b600);}
+.rpk-ds{font-size:11.5px;color:var(--lbl2);line-height:1.55;margin-top:5px;}
+.rpk-mt{font-size:11px;color:var(--lbl3);margin-top:6px;}
+.rpk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;
+  padding-top:14px;border-top:1px solid var(--sep);}
+.rpk-chk{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--lbl2);cursor:pointer;}
+.rpk-chk input{width:15px;height:15px;accent-color:var(--b600);cursor:pointer;}
+@media (max-width:560px){.rpk{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>

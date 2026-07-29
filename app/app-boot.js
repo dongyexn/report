@@ -1144,7 +1144,8 @@ registerActions('click', {
 // ── [전환 완료] 클릭 액션 (로그인/상단바/대시보드/설정/모달/팀/현장/패널) ──
 registerActions('click', {
   'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
-  'top.month':()=>openMP(), 'top.print':()=>doPrint(),
+  'top.month':()=>openMP(), 'top.print':()=>openPrintPick(),
+  'print.pick':(el)=>rptPickSel(el), 'print.go':()=>rptPickGo(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'readme.tab':(el)=>{const i=el.dataset.i;const mb=document.getElementById('mbody');if(!mb)return;
     mb.querySelectorAll('.rd-navi').forEach(b=>b.classList.toggle('act',b.dataset.i===i));
@@ -1329,3 +1330,81 @@ document.addEventListener('DOMContentLoaded',async()=>{
   // 부팅 중 어느 단계에서 로딩창이 켜졌든, 완료 시 반드시 닫음
   progHide();
 });
+
+/* ── 인쇄 방식 선택 ──
+   화면 그대로(기존 doPrint) / 보고서 양식(rptDashboard·rptSite) 중 고른다.
+   선택은 rptMode에 기억하고, 설정에서 다시 물어보게 되돌릴 수 있다. */
+function rptThumb(kind){
+  if(kind==='screen') return `<svg class="rpk-th" viewBox="0 0 160 113" width="100%">
+    <rect x="10" y="9" width="140" height="18" rx="4" fill="#DDE3EA"/>
+    <g fill="#DDE3EA"><rect x="10" y="32" width="33" height="20" rx="4"/><rect x="46" y="32" width="33" height="20" rx="4"/>
+      <rect x="82" y="32" width="33" height="20" rx="4"/><rect x="118" y="32" width="32" height="20" rx="4"/></g>
+    <rect x="10" y="57" width="140" height="30" rx="4" fill="#DDE3EA"/>
+    <g fill="#08213f" opacity=".55"><rect x="18" y="70" width="6" height="13"/><rect x="28" y="66" width="6" height="17"/>
+      <rect x="38" y="72" width="6" height="11"/><rect x="48" y="63" width="6" height="20"/>
+      <rect x="58" y="68" width="6" height="15"/><rect x="68" y="61" width="6" height="22"/></g>
+    <rect x="10" y="92" width="140" height="13" rx="4" fill="#DDE3EA"/></svg>`;
+  return `<svg class="rpk-th" viewBox="0 0 160 113" width="100%">
+    <rect x="14" y="10" width="62" height="7" rx="1.5" fill="#08213f"/>
+    <rect x="118" y="11" width="28" height="4" rx="1" fill="#C8CDD4"/>
+    <rect x="14" y="21" width="52" height="3" rx="1" fill="#C8CDD4"/>
+    <line x1="14" y1="29" x2="146" y2="29" stroke="#C8CDD4"/>
+    <rect x="14" y="34" width="26" height="4" rx="1" fill="#08213f"/>
+    <line x1="14" y1="41" x2="146" y2="41" stroke="#08213f"/>
+    <g fill="#08213f" opacity=".75"><rect x="16" y="46" width="20" height="7" rx="1"/><rect x="50" y="46" width="20" height="7" rx="1"/>
+      <rect x="84" y="46" width="20" height="7" rx="1"/><rect x="118" y="46" width="20" height="7" rx="1"/></g>
+    <rect x="14" y="60" width="26" height="4" rx="1" fill="#08213f"/>
+    <line x1="14" y1="67" x2="146" y2="67" stroke="#08213f"/>
+    <g fill="#08213f" opacity=".6"><rect x="18" y="76" width="5" height="10"/><rect x="27" y="73" width="5" height="13"/>
+      <rect x="36" y="78" width="5" height="8"/><rect x="45" y="71" width="5" height="15"/><rect x="54" y="75" width="5" height="11"/>
+      <rect x="63" y="69" width="5" height="17"/><rect x="72" y="74" width="5" height="12"/><rect x="81" y="70" width="5" height="16"/></g>
+    <polyline points="20,80 29,78 38,79 47,74 56,75 65,71 74,72 83,69" fill="none" stroke="#08213f" stroke-width="1.2"/>
+    <rect x="14" y="92" width="26" height="4" rx="1" fill="#08213f"/>
+    <g stroke="#C8CDD4"><line x1="14" y1="99" x2="146" y2="99"/><line x1="14" y1="104" x2="146" y2="104"/>
+      <line x1="14" y1="109" x2="146" y2="109"/></g></svg>`;
+}
+function openPrintPick(){
+  const saved=localStorage.getItem('rptMode');
+  if(saved==='screen'){doPrint();return;}
+  if(saved==='report'){doPrintReport();return;}
+  const opt=(v,nm,ds,mt)=>`<div class="rpk-opt${v==='report'?' on':''}" data-act="print.pick" data-v="${v}">
+      ${rptThumb(v)}
+      <div class="rpk-nm"><span class="rpk-rd"></span>${nm}</div>
+      <div class="rpk-ds">${ds}</div><div class="rpk-mt">${mt}</div></div>`;
+  document.getElementById('mt').textContent='인쇄';
+  document.getElementById('mbody').innerHTML=`<div class="rpk-sub">어떤 형태로 인쇄할지 고르세요.</div>
+    <div class="rpk">
+      ${opt('screen','화면 그대로','지금 보고 계신 카드 배치를 그대로 인쇄합니다.','기존 방식')}
+      ${opt('report','보고서 양식','A4 문서 형태로 재구성해 인쇄합니다.',S.view==='site'?'현황 · 추이 · 이슈 · 표 순 · 3쪽':'현황 · 추이 · 이슈 · 표 순 · 2쪽')}
+    </div>`;
+  document.getElementById('mf').innerHTML=`<label class="rpk-chk" style="margin-right:auto"><input type="checkbox" id="rpkRemember"> 다음부터 묻지 않기</label>
+    <button class="btn bg2" data-act="modal.close">취소</button>
+    <button class="btn bp" data-act="print.go">인쇄</button>`;
+  const mb=document.getElementById('mb'); if(mb)mb.classList.add('wide-pick');
+  openMo();
+}
+
+function rptPickSel(el){
+  document.querySelectorAll('.rpk-opt').forEach(o=>o.classList.remove('on'));
+  el.classList.add('on');
+}
+function rptPickGo(){
+  const sel=document.querySelector('.rpk-opt.on'), v=sel?sel.dataset.v:'report';
+  const rem=document.getElementById('rpkRemember');
+  if(rem&&rem.checked)localStorage.setItem('rptMode',v);
+  const mb=document.getElementById('mb'); if(mb)mb.classList.remove('wide-pick');
+  closeMo();
+  setTimeout(()=>{v==='screen'?doPrint():doPrintReport();},80);
+}
+function doPrintReport(){
+  const old=document.getElementById('rptRoot'); if(old)old.remove();
+  const d=document.createElement('div'); d.id='rptRoot';
+  try{ d.innerHTML=(S.view==='site'&&S.sid)?rptSite(S.sid):rptDashboard(); }
+  catch(e){ toast('보고서를 만들지 못했습니다'); console.error(e); return; }
+  document.body.appendChild(d);
+  document.body.classList.add('rpt-on');
+  const done=()=>{document.body.classList.remove('rpt-on');const r=document.getElementById('rptRoot');if(r)r.remove();
+    window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>{window.print();setTimeout(done,1500);},60);
+}
