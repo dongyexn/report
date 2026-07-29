@@ -1435,14 +1435,17 @@ const rpPct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'0.0%';
 // 주차별 스택 막대 + 누계 선 2종
 function rpTrend(wks){
   const W=523,H=112,L=40,R=494,T=14,B=96;
-  if(!wks||!wks.length)return '';
+  const _y=S.rm.slice(0,4);
+  wks=(wks||[]).filter(w=>String(w.week||'').slice(0,4)===_y); // 보고서는 당해년도만
+  if(!wks.length)return '';
   const n=wks.length,step=(R-L)/n,bw=Math.min(16,step*0.7);
   const umax=Math.max(...wks.map(w=>w.u||0))*1.15||1;
   const tv=wks.map(w=>w.r||0),rv=wks.map(w=>w.res||0);
   let tmin=Math.max(0,Math.min(...rv)*0.98),tmax=Math.max(...tv)*1.02||1;
   if(tmax<=tmin)tmax=tmin+1;
   const uy=v=>B-(v/umax)*(B-T), ty=v=>B-((v-tmin)/(tmax-tmin))*(B-T);
-  const kUnit=v=>v>=10000?Math.round(v/1000)+'천':rpN(Math.round(v));
+  const _big=tmax>=10000;
+  const kUnit=v=>_big?Math.round(v/1000)+'천':rpN(Math.round(v));
   let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`;
   for(let g=0;g<=4;g++){const v=umax*g/4,y=uy(v);
     s+=`<line x1="${L}" y1="${y.toFixed(1)}" x2="${R}" y2="${y.toFixed(1)}" stroke="#e4e7eb"/>`+
@@ -1512,7 +1515,7 @@ function rptDashboard(){
   const tR=sum('tR'),res=sum('res'),unr=sum('unr'),lt=sum('lt');
   const pUnr=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.unr)||0),0);
   const pLt=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.lt)||0),0);
-  const pR=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.tR)||0),0);
+  const pR=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.total)||0),0);
   const pRes=st.reduce((a,x)=>a+((x.c.prev&&x.c.prev.res)||0),0);
   const units=sites.reduce((a,s)=>a+(+s.units||0),0);
   const rgs=[...new Set(sites.map(s=>s.region).filter(Boolean))];
@@ -1528,12 +1531,14 @@ function rptDashboard(){
     {k:'미처리',v:unr,d:`세대당 ${units?(unr/units).toFixed(1):'0.0'}건 · ${rpDelta(unr-pUnr)}`},
     {k:'장기미처리',v:lt,d:`미처리의 <b>${rpPct(lt,unr)}</b> · ${rpDelta(lt-pLt)}`}]);
 
-  // 2) 주차별 추이 — 팀 합산
-  const wkMap={};
-  st.forEach(x=>(x.c.weekly||[]).forEach(w=>{
-    const k=w.m+'-'+w.w,o=wkMap[k]||(wkMap[k]={m:w.m,w:w.w,cumR:0,u:0,lt:0,lt60:0});
-    o.cumR+=w.cumR||0;o.u+=w.u||0;o.lt+=w.lt||0;o.lt60+=w.lt60||0;}));
-  const wks=Object.values(wkMap).sort((a,b)=>a.m-b.m||a.w-b.w);
+  // 2) 주차별 추이 — 팀 합산(week 키 기준 · 현장별 마지막 스냅샷 carry-forward)
+  const siteWk=st.map(x=>(x.c.weekly||[]).slice().sort((a,b)=>a.week<b.week?-1:1)).filter(a=>a.length);
+  const wkKeys=[...new Set(siteWk.flatMap(a=>a.map(w=>w.week)))].sort();
+  const wks=wkKeys.map(k=>{
+    const o={week:k,r:0,res:0,u:0,d0:0,d30:0,d60:0};
+    siteWk.forEach(arr=>{let last=null;for(const w of arr){if(w.week<=k)last=w;else break;}
+      if(last){o.r+=last.r;o.res+=last.res;o.u+=last.u;o.d0+=last.d0;o.d30+=last.d30;o.d60+=last.d60;}});
+    return o;});
   const trend=rpTrend(wks)+`<div class="lg">
     <span><i style="background:${RP_COL[0]}"></i>60일 이상</span>
     <span><i style="background:${RP_COL[3]}"></i>30~59일</span>
@@ -1641,7 +1646,7 @@ function rptSite(sid){
   const hdrS=rpHdr(site.name+' 하자처리 현황 보고',[],asof,true);
 
   const kpi=rpKpi([
-    {k:'전체 접수',v:c.tR,d:`세대당 ${site.units?(c.tR/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.tR-(p.tR||0))}`},
+    {k:'전체 접수',v:c.tR,d:`세대당 ${site.units?(c.tR/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.tR-(p.total||0))}`},
     {k:'처리 완료',v:c.res,d:`처리율 <b>${rpPct(c.res,c.tR)}</b> · ${rpDelta(c.res-(p.res||0))}`},
     {k:'미처리',v:c.unr,d:`세대당 ${site.units?(c.unr/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.unr-(p.unr||0))}`},
     {k:'장기미처리',v:c.lt,d:`미처리의 <b>${rpPct(c.lt,c.unr)}</b> · ${rpDelta(c.lt-(p.lt||0))}`}]);

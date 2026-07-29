@@ -1398,12 +1398,18 @@ function rptPickGo(){
 }
 function doPrintReport(){
   const old=document.getElementById('rptRoot'); if(old)old.remove();
+  // 보고서는 A4 전면을 직접 쓴다 — 기존 @page(여백 8/9mm·자동 쪽번호)를 인쇄 동안만 덮는다.
+  let _ps=document.getElementById('rptPageCSS');
+  if(!_ps){_ps=document.createElement('style');_ps.id='rptPageCSS';document.head.appendChild(_ps);}
+  _ps.textContent='@page{size:A4 portrait;margin:0;@bottom-right{content:""}@bottom-left{content:""}@top-left{content:""}@top-right{content:""}}';
   const d=document.createElement('div'); d.id='rptRoot';
   try{ d.innerHTML=(S.view==='site'&&S.sid)?rptSite(S.sid):rptDashboard(); }
   catch(e){ toast('보고서를 만들지 못했습니다'); console.error(e); return; }
   document.body.appendChild(d);
   document.body.classList.add('rpt-on');
-  const done=()=>{document.body.classList.remove('rpt-on');const r=document.getElementById('rptRoot');if(r)r.remove();
+  const done=()=>{document.body.classList.remove('rpt-on');
+    const r=document.getElementById('rptRoot');if(r)r.remove();
+    const s=document.getElementById('rptPageCSS');if(s)s.remove();
     window.removeEventListener('afterprint',done);};
   window.addEventListener('afterprint',done);
   setTimeout(()=>{window.print();setTimeout(done,1500);},60);
