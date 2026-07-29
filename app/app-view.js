@@ -1498,8 +1498,7 @@ function rpKpi(cards){
 function rpPage(n,total,hdr,body,slim){
   return `<div class="page"><div class="sheet">${hdr}
     ${body}
-    <div class="foot"><div><b>현대건설</b> · ${esc(curTeam()?curTeam().name:'')}</div>
-      </div></div></div>`;
+    <div class="pgn">${n} / ${total}</div></div></div>`;
 }
 function rpHdr(title,subs,asof,slim){
   return `<div class="titlewrap"><div class="thead-row"><h1>${esc(title)}</h1>
@@ -1660,7 +1659,7 @@ function rptSite(sid){
   const tops=(c.trAgg||[]).slice().sort((a,b)=>b.u-a.u);
   const iss=[];
   if(tops[0]) iss.push({t:'미처리 집중 공종',
-    m:`<b>${esc(tops[0].t)}</b> ${rpN(tops[0].u)}건(미처리의 <b>${rpPct(tops[0].u,c.unr)}</b>) · 시공업체 ${esc(tops[0].co||'-')}.`});
+    m:`<b>${esc(tops[0].t)}</b> ${rpN(tops[0].u)}건(미처리의 <b>${rpPct(tops[0].u,c.unr)}</b>) · 시공업체 ${esc(tops[0].coTop||'-')}.`});
   if(c.lt-(p.lt||0)!==0) iss.push({t:c.lt>(p.lt||0)?'장기미처리 증가':'장기미처리 감소',
     m:`장기미처리 <b>${rpN(c.lt)}건</b>, 전월 대비 <b>${rpN(Math.abs(c.lt-(p.lt||0)))}건 ${c.lt>(p.lt||0)?'증가':'감소'}</b>. 미처리 중 비중 <b>${rpPct(c.lt,c.unr)}</b>.`});
   if(c.critUnr) iss.push({t:'중대하자',
@@ -1687,8 +1686,7 @@ function rptSite(sid){
     if(r.length)t.push({n:`그 외 ${r.length}${lbl}`,v:r.reduce((a,x)=>a+x.v,0)});return t;};
   const byTr=tops.map(t=>({n:t.t,v:t.u}));
   const tyMap={};
-  (S.def[sid]||[]).forEach(i=>{if(i.status==='처리')return;
-    const k=(i.trade||'기타')+'-'+(i.defectType||'기타');tyMap[k]=(tyMap[k]||0)+1;});
+  (c.ul||[]).forEach(i=>{const k=(i.trade||'기타')+'-'+(i.defectType||i.type||'기타');tyMap[k]=(tyMap[k]||0)+1;});
   const byTy=Object.entries(tyMap).map(([n,v])=>({n,v})).sort((a,b)=>b.v-a.v);
   const dist=`<div class="two">${rpDonut(cut(byTr,'개 공종'),c.unr,'공종별')}${rpDonut(cut(byTy,'개'),c.unr,'공종 · 유형별')}</div>`;
 
@@ -1726,13 +1724,39 @@ function rptSite(sid){
 
 /* AI 분석 원문을 보고서 서식으로 — 짧은 줄은 소제목(.ai-h), 나머지는 목록 */
 function rptAI(src){
-  const lines=String(src).replace(/\r/g,'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const s=String(src||'').trim();
+  if(/<\s*(div|ul|li|p|strong|b)\b/i.test(s)){
+    // AI 원문이 HTML — 인라인 style·색상은 걷어내고 보고서 서식으로 다시 입힌다
+    const box=document.createElement('div');
+    box.innerHTML=safeHTML(s);
+    box.querySelectorAll('*').forEach(el=>{
+      el.removeAttribute('style');el.removeAttribute('class');
+      if(/^(SCRIPT|STYLE)$/.test(el.tagName))el.remove();
+    });
+    let out='';
+    const walk=el=>{
+      [...el.children].forEach(ch=>{
+        const tag=ch.tagName;
+        if(tag==='UL'||tag==='OL'){
+          const lis=[...ch.querySelectorAll(':scope>li')].map(li=>'<li>'+li.innerHTML+'</li>').join('');
+          if(lis)out+='<ul>'+lis+'</ul>';
+        }else if(tag==='DIV'&&!ch.children.length){
+          const txt=ch.textContent.trim(); if(txt)out+='<div class="ai-h">'+esc(txt)+'</div>';
+        }else if(tag==='P'){
+          const txt=ch.innerHTML.trim(); if(txt)out+='<ul><li>'+txt+'</li></ul>';
+        }else walk(ch);
+      });
+    };
+    walk(box);
+    return out||('<ul><li>'+esc(box.textContent.trim().slice(0,400))+'</li></ul>');
+  }
+  // 평문 — 짧은 줄은 소제목, 나머지는 목록
+  const lines=s.replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
   let out='',ul=false;
   const close=()=>{if(ul){out+='</ul>';ul=false;}};
   lines.forEach(ln=>{
     const body=ln.replace(/^[#*\u2022\-\s]+/,'').replace(/\*\*/g,'');
-    const isHead=body.length<=30&&!/[.。]$/.test(body);
-    if(isHead){close();out+='<div class="ai-h">'+esc(body)+'</div>';}
+    if(body.length<=30&&!/[.。]$/.test(body)){close();out+='<div class="ai-h">'+esc(body)+'</div>';}
     else{if(!ul){out+='<ul>';ul=true;}out+='<li>'+esc(body)+'</li>';}
   });
   close();
