@@ -1182,7 +1182,7 @@ input,select,textarea,button{display:none!important;}
 .opsr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;min-height:260px;}
 .opsr>.card{min-height:0;}
 .dn-side{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 4px;height:100%;}
-.dn-side .canv{flex:0 0 228px;width:228px;height:228px;max-width:228px;max-height:228px;position:relative;align-self:center;}
+.dn-side .canv{flex:0 0 210px;width:210px;height:210px;max-width:210px;max-height:210px;position:relative;align-self:center;}
 .dn-side .lg{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:12px;margin-left:auto;}
 .dn-side .lg.lg-2col{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:5px;min-width:360px;}
 .dn-side .lg .it{display:grid;grid-template-columns:9px minmax(60px,1fr) auto auto;align-items:center;gap:0;min-width:0;height:22px;font-variant-numeric:tabular-nums;cursor:pointer;border-radius:4px;transition:background .15s;padding:0 4px;}
@@ -1192,7 +1192,13 @@ input,select,textarea,button{display:none!important;}
 .dn-side .lg .nm{color:var(--ct);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:12.5px;min-width:0;padding-left:9px;}
 .dn-side .lg .cnt{color:var(--ct);font-weight:600;font-size:12.5px;white-space:nowrap;padding:0 16px 0 24px;text-align:right;}
 .dn-side .lg .pct{color:var(--lbl);font-weight:700;font-size:12.5px;white-space:nowrap;text-align:right;min-width:48px;}
-.dn-side .lg.lg-2col{min-width:0;flex:1;grid-auto-flow:column;grid-template-rows:repeat(6,auto);}
+/* 2열 범례는 항목 폭이 절반이라 현장명(힐스테이트 제외 전체 표기)이 60px 하한에서 바로 잘린다.
+   — 항목 여백·수치 열 폭을 줄이고 도넛을 228→210으로 낮춰 이름 폭을 확보(그래도 넘치면 ellipsis+툴팁) */
+.dn-side .lg.lg-2col .it{padding:0 2px;}
+.dn-side .lg.lg-2col .nm{padding-left:6px;}
+.dn-side .lg.lg-2col .cnt{padding:0 4px 0 6px;}
+.dn-side .lg.lg-2col .pct{min-width:36px;}
+.dn-side .lg.lg-2col{min-width:0;flex:1;grid-auto-flow:column;grid-template-rows:repeat(var(--lgr,6),auto);}
 
 /* MoM panel */
 .mom-wrap{display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding-top:4px;height:100%;}
@@ -1740,7 +1746,25 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .rpt .pg{font-variant-numeric:tabular-nums;}
 
 .rpt .up{color:#C0392B;} .rpt .dn2{color:#1E8449;}
-.rpt .dl{overflow:hidden;}
+.rpt .dl{overflow:hidden;flex:1 1 auto;min-width:0;}
+/* 종합 분석 의견 — rptAI가 원문 서식을 걷어내고 넘기므로 보고서 본문 크기를 여기서 입힌다.
+   (규칙이 없으면 브라우저 기본 16px + .sheet zoom 1.333이 겹쳐 다른 항목의 2배로 출력됨) */
+.rpt .ai{--aifs:8.5px;font-size:var(--aifs);color:var(--rp-gray);}
+.rpt .ai .ai-h{font-size:calc(var(--aifs) + 1px);font-weight:700;color:var(--rp-navy);
+  margin:calc(var(--aifs) * 1.15) 0 3px;padding-bottom:2px;border-bottom:1px solid var(--rp-lines);}
+.rpt .ai .ai-h:first-child{margin-top:3px;}
+.rpt .ai ul{margin:0;padding-left:11px;list-style:disc;}
+.rpt .ai li{font-size:var(--aifs);line-height:1.55;margin-bottom:2.5px;}
+.rpt .ai li:last-child{margin-bottom:0;}
+.rpt .ai b,.rpt .ai strong{font-weight:700;color:var(--rp-navy);}
+/* 표 밀도 — 행이 많아 한 쪽을 넘길 때 rptDashboard가 .page에 부여 */
+.rpt .dense th{padding:4px 4px;}
+.rpt .dense td{padding:1.5px 4px;}
+.rpt .dense tfoot td{padding:4px 4px;}
+.rpt .dense2 table{font-size:7.5px;}
+.rpt .dense2 th{font-size:6.8px;padding:3px 3px;}
+.rpt .dense2 td{padding:0.5px 3px;}
+.rpt .dense2 tfoot td{padding:3px 3px;}
 .rpt .dwrap{display:flex;align-items:center;gap:9px;}
 .rpt .dnut{flex:0 0 auto;}
 .rpt .pgn{position:absolute;right:36px;bottom:14px;font-size:7pt;color:var(--rp-label);}

@@ -1407,6 +1407,7 @@ function doPrintReport(){
   catch(e){ toast('보고서를 만들지 못했습니다'); console.error(e); return; }
   document.body.appendChild(d);
   document.body.classList.add('rpt-on');
+  try{ rptFitAI(d); }catch(e){ logErr('rptFitAI',e); }
   const done=()=>{document.body.classList.remove('rpt-on');
     const r=document.getElementById('rptRoot');if(r)r.remove();
     const s=document.getElementById('rptPageCSS');if(s)s.remove();

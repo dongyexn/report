@@ -912,7 +912,7 @@ function rChartsImpl(all){
     const tot=tmData.reduce((a,x)=>a+x.c,0);
     const tmColors=donutPalette();
     S.charts['mx']=new Chart(mxEl,{type:'doughnut',data:{labels:tmData.map(d=>d.t),datasets:[{data:tmData.map(d=>d.c),backgroundColor:tmColors,borderWidth:3,borderColor:chartSegBorder(),pointStyle:'circle',hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:tot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{caretPadding:32,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${tot>0?(ctx.parsed/tot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-    const mxLg=document.getElementById('c-mx-lg');if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+    const mxLg=document.getElementById('c-mx-lg');if(mxLg){lgRows(mxLg,tmData.length);mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
   }
   // 4) 현장별 미처리 분포 도넛 — 미처리 건수 기준 12현장 분포
   dC('sx');const sxEl=document.getElementById('c-sx');if(sxEl){
@@ -920,12 +920,15 @@ function rChartsImpl(all){
     const sxTot=sxData.reduce((a,x)=>a+x.c,0);
     const sxColors=donutPalette();
     S.charts['sx']=new Chart(sxEl,{type:'doughnut',data:{labels:sxData.map(d=>d.t),datasets:[{data:sxData.map(d=>d.c),backgroundColor:sxColors,borderWidth:3,borderColor:chartSegBorder(),pointStyle:'circle',hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:sxTot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{caretPadding:32,padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${sxTot>0?(ctx.parsed/sxTot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-    const sxLg=document.getElementById('c-sx-lg');if(sxLg){sxLg.innerHTML=sxData.map((d,i)=>`<div class="it" data-idx="${i}" data-tt="${esc(d.full)}" aria-label="${esc(d.full)}"><span class="l"><span class="dt" style="background:${sxColors[i%sxColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${sxTot>0?(d.c/sxTot*100).toFixed(1):0}%</span></div>`).join('');sxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['sx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['sx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+    const sxLg=document.getElementById('c-sx-lg');if(sxLg){lgRows(sxLg,sxData.length);sxLg.innerHTML=sxData.map((d,i)=>`<div class="it" data-idx="${i}" data-tt="${esc(d.full)}" aria-label="${esc(d.full)}"><span class="l"><span class="dt" style="background:${sxColors[i%sxColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${sxTot>0?(d.c/sxTot*100).toFixed(1):0}%</span></div>`).join('');sxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['sx'];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['sx'];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
   }
 }
-// 현장명 줄임말 — 범례 가독성. "힐스테이트"를 (앞/뒤 위치 무관) 제거한 뒤 앞 2글자만 사용.
-// 예: "힐스테이트 두정역"→"두정", "갑천1 트리풀시티 힐스테이트"→"갑천"
-function shortName(name){if(!name)return'-';const stripped=String(name).replace(/힐스테이트/g,'').trim();const core=stripped||String(name).trim();return core.slice(0,2)||name;}
+// 현장명 줄임말 — 범례 가독성. "힐스테이트"만 (앞/뒤 위치 무관) 제거하고 나머지는 그대로 쓴다.
+// 예: "힐스테이트 두정역"→"두정역", "갑천1 트리풀시티 힐스테이트"→"갑천1 트리풀시티"
+//   (넘치는 폭은 범례 .nm의 ellipsis가 처리)
+function shortName(name){if(!name)return'-';const stripped=String(name).replace(/힐스테이트/g,' ').replace(/\s+/g,' ').trim();return stripped||String(name).trim();}
+// 2열 범례 행 수 — 항목이 늘어도 2열을 유지하도록 ceil(n/2)행으로 지정(인쇄·모바일은 !important 규칙이 덮음)
+function lgRows(el,n){if(el)el.style.setProperty('--lgr',String(Math.max(1,Math.ceil(n/2))));}
 
 // 지난달 계획 셀 — 이번 달 결과(전월→금월) 바로 옆에 두면 이행 여부가 드러난다.
 //   누르면 이번 달 빈 칸으로 옮겨 적는다(전월 계획 불러오기 버튼을 대신함).
@@ -1244,7 +1247,7 @@ function buildSiteTradeDonut(sid){
   const tot=tmData.reduce((a,x)=>a+x.c,0);
   const tmColors=donutPalette();
   S.charts['mx-'+sid]=new Chart(mxEl,{type:'doughnut',data:{labels:tmData.map(d=>d.t),datasets:[{data:tmData.map(d=>d.c),backgroundColor:tmColors,borderWidth:3,borderColor:chartSegBorder(),hoverOffset:12,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:14},cutout:'58%',plugins:{centerText:{display:true,value:tot.toLocaleString()+'건',label:'미처리'},legend:{display:false},tooltip:{padding:12,usePointStyle:true,boxWidth:10,boxHeight:10,boxPadding:6,callbacks:{labelPointStyle:()=>({pointStyle:'circle',rotation:0}),label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()}건 (${tot>0?(ctx.parsed/tot*100).toFixed(1):0}%)`}},datalabels:{display:false}}}});
-  const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
+  const mxLg=document.getElementById('c-mx-lg-'+sid);if(mxLg){lgRows(mxLg,tmData.length);mxLg.innerHTML=tmData.map((d,i)=>`<div class="it" data-idx="${i}"><span class="l"><span class="dt" style="background:${tmColors[i%tmColors.length]}"></span><span class="nm">${esc(d.t)}</span></span><span class="cnt">${d.c.toLocaleString()}건</span><span class="pct">${tot>0?(d.c/tot*100).toFixed(1):0}%</span></div>`).join('');mxLg.querySelectorAll('.it').forEach(el=>{el.addEventListener('mouseenter',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;const idx=Number(el.dataset.idx);ch.setActiveElements([{datasetIndex:0,index:idx}]);ch.tooltip?.setActiveElements([{datasetIndex:0,index:idx}],{x:0,y:0});ch.update();});el.addEventListener('mouseleave',()=>{const ch=S.charts['mx-'+sid];if(!ch)return;ch.setActiveElements([]);ch.tooltip?.setActiveElements([],{x:0,y:0});ch.update();});});}
 }
 function renderTabCharts(sid,st){
   if(!st){const site=S.sites.find(s=>s.id===sid);if(!site)return;st=calc(S.def[sid]||[],site,S.rm);}
@@ -1495,8 +1498,8 @@ function rpKpi(cards){
   return '<div class="kpis">'+cards.map(c=>
     `<div class="kpi"><div class="k">${esc(c.k)}</div><div class="v">${rpN(c.v)}<span>건</span></div><div class="d">${c.d}</div></div>`).join('')+'</div>';
 }
-function rpPage(n,total,hdr,body,slim){
-  return `<div class="page"><div class="sheet">${hdr}
+function rpPage(n,total,hdr,body,cls){
+  return `<div class="page${cls?' '+cls:''}"><div class="sheet">${hdr}
     ${body}
     <div class="pgn">${n} / ${total}</div></div></div>`;
 }
@@ -1630,7 +1633,11 @@ function rptDashboard(){
   const p2=rpSec(5,'미처리 분포',`미처리 ${rpN(unr)}건 기준`,dist)
     +rpSec(6,'현장별 처리 현황',`권역 · 현장 순 · ${sites.length}개 현장`,siteTbl)
     +rpSec(7,'업체별 처리 현황',`시공업체 기준 · 미처리 상위 ${top.length}곳 / 전체 ${co.length}곳`,coTbl);
-  return `<div class="rpt">${rpPage(1,2,hdrF,p1)}${rpPage(2,2,hdrS,p2)}</div>`;
+  // 2쪽 표 밀도 — 현장별+업체별 본문 행이 많으면 행간(그다음 글자 크기)을 줄여 쪽번호 침범을 막는다.
+  //   실측 한계: 기본 밀도 22행 · 행간만 줄인 dense 26행 · 글자까지 줄인 dense2 31행(그 이상은 쪽 분리 필요).
+  const p2Rows=st.length+top.length+(rest.length?1:0);
+  const p2Cls=p2Rows>=27?'dense dense2':p2Rows>=23?'dense':'';
+  return `<div class="rpt">${rpPage(1,2,hdrF,p1)}${rpPage(2,2,hdrS,p2,p2Cls)}</div>`;
 }
 
 /* ── 현장 보고서 ── */
@@ -1722,6 +1729,18 @@ function rptSite(sid){
   return `<div class="rpt">${rpPage(1,3,hdrF,p1)}${rpPage(2,3,hdrS,p2)}${rpPage(3,3,hdrS,p3)}</div>`;
 }
 
+/* 종합 분석 의견 한 쪽 맞춤 — AI 원문 길이가 매달 달라 기본 8.5px로는 넘칠 수 있다.
+   #rptRoot를 붙인 뒤(레이아웃 확정) 실측해서 넘치면 --aifs를 0.25px씩 낮춘다. 하한 6.25px. */
+function rptFitAI(root){
+  if(!root)return;
+  root.querySelectorAll('.page').forEach(pg=>{
+    const ai=pg.querySelector('.ai'),pgn=pg.querySelector('.pgn');
+    if(!ai||!pgn)return;
+    const over=()=>{const lim=pgn.getBoundingClientRect().top-6;let b=0;
+      pg.querySelectorAll('.sec').forEach(s=>{b=Math.max(b,s.getBoundingClientRect().bottom);});return b>lim;};
+    for(let fs=8.25;over()&&fs>=6.25;fs-=0.25)ai.style.setProperty('--aifs',fs+'px');
+  });
+}
 /* AI 분석 원문을 보고서 서식으로 — 짧은 줄은 소제목(.ai-h), 나머지는 목록 */
 function rptAI(src){
   const s=String(src||'').trim();
