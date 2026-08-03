@@ -359,7 +359,7 @@ function toggleShortcutHelp(){
 
 // 인쇄 헤더(팀명·제목·기준일)를 현재 상태로 갱신 — 앱 인쇄버튼/브라우저 Ctrl+P 모두에서 호출
 function updatePrintHeader(){
-  const pteam=document.querySelector('#printhdr .ph-team');if(pteam){const tm=curTeam();pteam.textContent=(tm&&tm.name?tm.name:'H서비스센터')+' 하자처리 현황';}
+  const pteam=document.querySelector('#printhdr .ph-team');if(pteam){const tm=curTeam();pteam.textContent=(tm&&tm.name?tm.name:'H서비스센터')+' 하자처리현황';}
   const t=document.getElementById('ph-title');if(t){const sid=S.sid,site=sid?S.sites.find(s=>s.id===sid):null;t.textContent=S.view==='site'&&site?`${site.region} · ${site.name}`:'전체 현황 대시보드';}
   const d=document.getElementById('ph-date');if(d){const ym=S.rm||new Date().toISOString().slice(0,7),[y,m]=ym.split('-'),lastDay=new Date(Number(y),Number(m),0).getDate();d.textContent=`${y}.${m}.${String(lastDay).padStart(2,'0')}`;}
 }

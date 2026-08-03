@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="UTF-8"><!-- 앱 스크립트는 외부 파일 app.js로 분리되어 script-src 'self'로 허용된다(인라인 스크립트 없음 · 해시 관리 불필요). index.html과 app.js는 항상 함께 배포할 것. --><meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.gstatic.com https://www.google.com; font-src 'self'; object-src 'none'; base-uri 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com https://www.google.com https://www.recaptcha.net https://recaptcha.google.com https://apis.google.com https://*.firebasedatabase.app; frame-src https://www.google.com https://recaptcha.google.com https://www.recaptcha.net; connect-src 'self' https://*.googleapis.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.firebaseio.com wss://*.firebaseio.com https://www.gstatic.com https://cdn.jsdelivr.net https://www.google.com https://www.recaptcha.net https://recaptcha.google.com"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>H서비스센터 · 하자처리 현황</title>
+<title>H · 하자처리현황</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='0.8' y2='1'><stop offset='0' stop-color='%236FB0FF'/><stop offset='1' stop-color='%2316357C'/></linearGradient></defs><rect width='64' height='64' rx='13' fill='url(%23g)'/><g transform='translate(11,16) scale(0.4828)' fill='white'><path d='M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z'/><path d='M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z'/></g></svg>">
 <script src="./vendor/chart.umd.min.js"></script>
 <script src="./vendor/chartjs-plugin-datalabels.min.js"></script>
@@ -1062,9 +1062,9 @@ input,select,textarea,button{display:none!important;}
 /* 1페이지 월별 현황: 본문 행간만 확대 (헤더/제목 간격은 기본값) */
 #view-site.printing #_sp_p1 .sp-month-card .dt td{padding-top:9px!important;padding-bottom:9px!important;line-height:1.5!important;}
 
-/* 대시보드 인쇄: 월별 하자처리 현황 — 본문 행간만 확대 (헤더/제목 간격은 기본값) */
+/* 대시보드 인쇄: 월별 하자처리현황 — 본문 행간만 확대 (헤더/제목 간격은 기본값) */
 #content.sp-print-mode #view-dashboard.printing .sp-dash-month .dt td{padding-top:9px!important;padding-bottom:9px!important;line-height:1.5!important;}
-/* 대시보드 인쇄: 현장별 하자처리 현황 행 높이를 월별 현황과 동일하게 */
+/* 대시보드 인쇄: 현장별 하자처리현황 행 높이를 월별 현황과 동일하게 */
 #content.sp-print-mode #view-dashboard.printing #dtable td{padding-top:9px!important;padding-bottom:9px!important;line-height:1.5!important;}
 #content.sp-print-mode #view-dashboard.printing #dtable th{padding-top:8px!important;padding-bottom:8px!important;}
 
@@ -1815,7 +1815,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
     <div style="margin:0 auto 22px;display:flex;align-items:center;justify-content:center;">
       <svg viewBox="0 0 87 66" xmlns="http://www.w3.org/2000/svg" class="cvlogo" style="height:50px;width:auto;display:block;"><path d="M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z" fill="#fff"/><path d="M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z" fill="#fff"/></svg>
     </div>
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;">H서비스센터 하자처리 현황</div>
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;">H · 하자처리현황</div>
     <div id="cvLoading" style="margin-top:20px"><div class="cv-spin"></div><div style="margin-top:13px;font-size:12.5px;color:#9fb0cc;letter-spacing:.01em">현장 데이터 불러오는 중…</div></div>
     <div id="cvBody" style="display:none">
     <div style="margin-top:22px;text-align:left">
@@ -1840,7 +1840,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
   <div class="sbh">
     <div class="sbb">
       <div class="sblogo"><svg viewBox="0 0 87 66" xmlns="http://www.w3.org/2000/svg" style="height:22px;width:auto;display:block"><defs><linearGradient id="sblg" x1="0" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#6FB0FF"/><stop offset="1" stop-color="#16357C"/></linearGradient></defs><path d="M50.2456 0L44.4349 9.8333L11.2683 65.9786H11.2736H75.6123H86.8843L50.2456 0Z" fill="url(#sblg)"/><path d="M38.9747 0L0 65.9786H7.58667L42.6533 6.62664L38.9747 0Z" fill="url(#sblg)"/></svg></div>
-      <div class="sbtext"><div class="sbn">H서비스센터</div><div class="sbs">하자처리 현황</div></div>
+      <div class="sbtext"><div class="sbn">H · 하자처리현황</div></div>
     </div>
     <button class="sbtg" data-act="nav.toggle" data-tt="사이드바 접기" aria-label="사이드바 접기">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 3L6 8l4 5"></path></svg>
@@ -1890,7 +1890,7 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
   <div id="content">
     <div id="printhdr" class="print-only">
       <div class="ph-l">
-        <div class="ph-team">H서비스중부팀 하자처리 현황</div>
+        <div class="ph-team">H서비스중부팀 하자처리현황</div>
         <div class="ph-title" id="ph-title">전체 현황 대시보드</div>
       </div>
       <div class="ph-r">
@@ -1918,8 +1918,8 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
           <div class="dn-side"><div class="canv" style="padding: 0px"><canvas id="c-mx"></canvas></div><div class="lg lg-2col" id="c-mx-lg"></div></div>
         </div>
       </div>
-      <div class="card mb12"><div class="sh"><div class="ct cardttl">월별 하자처리 현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
-      <div class="card mb12"><div class="sh"><div class="st cardttl" id="dashAxTtl">현장별 하자처리 현황</div><div class="axseg" id="dashAx" role="group" aria-label="묶는 기준"><button data-act="axis.dash" data-ax="site">현장별</button><button data-act="axis.dash" data-ax="co">업체별</button></div></div>
+      <div class="card mb12"><div class="sh"><div class="ct cardttl">월별 하자처리현황</div><select class="yr-sel no-print" id="dmo-yr" data-act="dash.monthYear" aria-label="월별 연도 선택"></select></div><div style="overflow-x:auto"><table class="dt dt-detail" style="table-layout:fixed" id="dmo-table"></table></div></div>
+      <div class="card mb12"><div class="sh"><div class="st cardttl" id="dashAxTtl">현장별 하자처리현황</div><div class="axseg" id="dashAx" role="group" aria-label="묶는 기준"><button data-act="axis.dash" data-ax="site">현장별</button><button data-act="axis.dash" data-ax="co">업체별</button></div></div>
         <table class="dt" id="dtable" style="table-layout:fixed"><thead><tr>
           <th style="width:7.7%;text-align: center;white-space:nowrap" data-sort="region" tabindex="0" data-act="dash.sort" data-key="region">권역 <span class="sortmk">↕</span></th>
           <th style="width:16.75%" data-sort="name" tabindex="0" data-act="dash.sort" data-key="name">현장명 <span class="sortmk">↕</span></th>

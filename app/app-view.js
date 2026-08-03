@@ -70,7 +70,7 @@ function deltaParts(dN){
 
 
 
-// ── 대시보드 '전체 하자처리 현황' — 현장별(기본 표) ↔ 업체별(팀 전체 coAgg 병합) ──
+// ── 대시보드 '전체 하자처리현황' — 현장별(기본 표) ↔ 업체별(팀 전체 coAgg 병합) ──
 //   현장별은 index.html의 표를 그대로 쓰고, 업체별일 때만 표를 통째로 갈아 끼운다.
 let _dtOrig=null;
 const DASH_CO_TOP=10;
@@ -118,7 +118,7 @@ function dashCoRowHTML(x,i,opt){
 
 
 const SITE_TOP_N=15;   // 현장 표에서 먼저 보여줄 개수
-// 현장 표(전체 하자처리 현황)의 축·행을 한 곳에서 만든다.
+// 현장 표(전체 하자처리현황)의 축·행을 한 곳에서 만든다.
 //   화면 전체를 다시 그리지 않고 이 표만 갈아 끼울 때도 같은 함수를 쓴다.
 function siteAxParts(sid,st){
   const ax=(S.axSite==='co'&&(st.coAgg||[]).length)?'co':'trade';
@@ -151,7 +151,7 @@ function rSiteAxisOnly(sid){
   if(card){
     card.querySelectorAll('.axseg button').forEach(b=>b.classList.toggle('on',b.dataset.ax===(S.axSite==='co'?'co':'trade')));
     const ttl=card.querySelector('.cardttl');
-    if(ttl)ttl.textContent=(P.ax==='co'?'업체별':'공종별')+' 하자처리 현황';
+    if(ttl)ttl.textContent=(P.ax==='co'?'업체별':'공종별')+' 하자처리현황';
   }
 }
 // 대시보드 표만 갈아 끼운다
@@ -165,7 +165,7 @@ function rDashAxis(list){
   if(_dtOrig===null)_dtOrig=tbl.innerHTML;
   document.querySelectorAll('#dashAx button').forEach(b=>b.classList.toggle('on',b.dataset.ax===(S.axDash==='co'?'co':'site')));
   {const ttl=document.getElementById('dashAxTtl');
-   if(ttl)ttl.textContent=(S.axDash==='co'?'업체별':'현장별')+' 하자처리 현황';}   // 인쇄물만 봐도 기준을 알 수 있게
+   if(ttl)ttl.textContent=(S.axDash==='co'?'업체별':'현장별')+' 하자처리현황';}   // 인쇄물만 봐도 기준을 알 수 있게
   if(S.axDash!=='co'){                          // 현장별 — 원래 표 구조로 되돌린다
     if(!document.getElementById('dtbody'))tbl.innerHTML=_dtOrig;
     return false;
@@ -195,7 +195,7 @@ function rDashAxis(list){
   return true;
 }
 
-// ── 전체 하자처리 현황 표 — 공종/업체/현장 어느 축으로 묶어도 같은 열 구성 ──
+// ── 전체 하자처리현황 표 — 공종/업체/현장 어느 축으로 묶어도 같은 열 구성 ──
 //   normalize: {key, side, sideN, r,res,u,lt,d0,d30,d60,pu,plt} 로 맞춘 뒤 한 곳에서 그린다.
 function aggNorm(list,axis){
   return (list||[]).map(x=> axis==='co'
@@ -417,7 +417,7 @@ const tblDlt=(d,isFirst,cur,u)=>{ // cur(현재값)·u('월'|'주')를 주면 �
   return`<span class="ba ${cls}"${tt}>${arrow} ${sign}${Math.abs(d).toLocaleString()}</span>`;};
 const tblLtrCells=(d0,d30,d60,unr,ltDlt,isFirst,u)=>{const lt=d30+d60;const ltr=unr>0?(lt/unr*100):0;const p60=unr>0?Math.min(d60/unr*100,100):0,p30=unr>0?Math.min(d30/unr*100,100):0,p0=unr>0?Math.min(d0/unr*100,100):0;const dltCell=`<td class="cc">${tblDlt(ltDlt,isFirst,lt,u)}</td>`;const barCell=`<td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar" data-tip="장기미처리|${unr}|${d60}|${d30}|${d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60.toFixed(1)}%"></div><div class="seg s30" style="width:${p30.toFixed(1)}%"></div><div class="seg s0" style="width:${p0.toFixed(1)}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`;return`<td class="cc ltr-red tl-grp-ltr">${tblNF(lt)}</td>${barCell}${dltCell}`;};
 const tblMetrics=(cur,prev,prev2)=>{const tR=cur.r,cumRes=cur.res,unr=cur.u,d0=cur.d0,lt=cur.d30+cur.d60;const rate=tR>0?(cumRes/tR*100):0,ltRatio=unr>0?(lt/unr*100):0;const recvW=prev?cur.r-prev.r:cur.r;const resW=prev?cur.res-prev.res:cur.res;const prevResW=prev?(prev2?prev.res-prev2.res:prev.res):0;const prevLt=prev?(prev.d30+prev.d60):0,prevUnr=prev?prev.u:0;return{tR,cumRes,unr,d0,d30:cur.d30,d60:cur.d60,lt,rate,ltRatio,recvW,resW,resWDlt:resW-prevResW,ltDlt:lt-prevLt,unrDlt:unr-prevUnr};};
-// 월말 스냅샷(단일 출처) — 화면 '월별 하자처리 현황'과 보고서가 같은 값을 쓰도록 여기서만 만든다.
+// 월말 스냅샷(단일 출처) — 화면 '월별 하자처리현황'과 보고서가 같은 값을 쓰도록 여기서만 만든다.
 //   현장: 각 월의 마지막 주차 스냅샷. 팀: 월말마다 현장별 '그 달 이전 마지막 스냅샷'을 carry-forward 합산.
 //   키는 연도 필터 전 전체 월이라, 1월의 전월 대비가 전년 12월과 비교된다(연도별로 자르면 1월이 항상 '—'가 됨).
 function moSnapsSite(weekly){const map={};(weekly||[]).forEach(w=>{map[String(w.week||'').slice(0,7)]=w;});
@@ -477,7 +477,7 @@ function attachKpiTap(){if(window._kpiTapAttached)return;window._kpiTapAttached=
   document.addEventListener('touchend',clear,{passive:true});
   document.addEventListener('touchcancel',clear,{passive:true});
   document.addEventListener('touchmove',clear,{passive:true});}
-// ── 대시보드 월별 하자처리 현황 — 전 현장 주차별 누적 스냅샷을 주(week)별로 합산해 월말 스냅샷 산출 ──
+// ── 대시보드 월별 하자처리현황 — 전 현장 주차별 누적 스냅샷을 주(week)별로 합산해 월말 스냅샷 산출 ──
 function setDashMonthYear(y){S.dashMoYear=y;buildDashMonthTable();}
 function buildDashMonthTable(){
   const tbl=document.getElementById('dmo-table');if(!tbl)return;
@@ -1121,10 +1121,10 @@ function rSite(sid){
   const _moThead=_moTheadFn();
   const _wkThead=_wkTheadFn();
   // All-trade table for trade tab — 시공업체 최다 사용 1개 + 추가 N
-  // 공종별 전체 처리 현황 — 현장별 하자처리 현황과 동일 구성
+  // 공종별 전체 처리 현황 — 현장별 하자처리현황과 동일 구성
   // NO/공종/시공업체/전체접수/처리/처리율/미처리/장기미처리/장기미처리비율(바)/전월대비
   // 공종별 전체 처리현황 — calc의 trAgg(단일 출처)를 사용. 뷰어는 게시 kpi에 실린 trAgg를 그대로 받는다.
-  // 전체 하자처리 현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
+  // 전체 하자처리현황 — 공종/업체 축 전환. 업체 축은 게시본에 coAgg가 있어야 보인다(구게시본은 안내).
   const _axP=siteAxParts(sid,st);
   const _ax=_axP.ax,_axRows=_axP.rows,_axEmptyRow=_axP.emptyRow;
 
@@ -1163,7 +1163,7 @@ function rSite(sid){
   <div class="as">
     ${ltrMomBar}
     <div class="card" data-print="tr-top5"><div class="sh"><div class="st cardttl">장기미처리 상위 5개 공종 처리 현황</div></div><table class="dt" style="table-layout:fixed" id="ttop-${sid}"><thead><tr><th class="cc" style="width:6%">순위</th><th style="width:11%">공종</th><th style="width:11%">시공업체</th><th class="n" style="width:7%">전월</th><th class="n" style="width:7%">금월</th><th class="cc" style="width:7%">비율</th><th class="cc" style="width:7%;white-space:nowrap">전월대비</th><th style="width:44%">처리계획</th></tr></thead><tbody>${trRows}</tbody></table></div>
-    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">${_ax==='co'?'업체별':'공종별'} 하자처리 현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="cc" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="cc" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
+    <div class="card" data-print="tr-all"><div class="sh"><div class="st cardttl">${_ax==='co'?'업체별':'공종별'} 하자처리현황</div><div class="axseg" role="group" aria-label="묶는 기준"><button class="${_ax==='trade'?'on':''}" data-act="axis.site" data-ax="trade">공종별</button><button class="${_ax==='co'?'on':''}" data-act="axis.site" data-ax="co">업체별</button></div></div><table class="dt" style="table-layout:fixed" id="trade-${sid}"><thead><tr><th class="cc" style="width:6%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">NO <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'시공업체':'공종'} <span class="sortmk">↕</span></th><th style="width:11%" data-sort data-sort-type="str" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">${_ax==='co'?'주요 공종':'시공업체'} <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전체 접수 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리 <span class="sortmk">↕</span></th><th class="cc" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">처리율 <span class="sortmk">↕</span></th><th class="cc" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th><th class="n" style="width:7%" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">장기미처리 <span class="sortmk">↕</span></th><th class="cc" style="width:25%">장기미처리 비율</th><th class="cc" style="width:6%;white-space:nowrap" data-sort data-sort-type="num" tabindex="0" data-act="panel.sort" data-tbl="trade-${esc(sid)}">전월대비 <span class="sortmk">↕</span></th></tr></thead><tbody>${_axRows||_axEmptyRow}</tbody></table></div>
   </div>
 </div>
 
@@ -1537,9 +1537,9 @@ function rptDashboard(){
   const units=sites.reduce((a,s)=>a+(+s.units||0),0);
   const rgs=[...new Set(sites.map(s=>s.region).filter(Boolean))];
   const asof=(st[0]&&st[0].c.rmEnd||rm).replace(/-/g,'. ')+'.';
-  const hdrF=rpHdr((curTeam()?curTeam().name:'')+' 하자처리 현황 보고',
+  const hdrF=rpHdr((curTeam()?curTeam().name:'')+' 하자처리현황 보고',
     [`권역 <b>${esc(rgs.join(' · '))}</b>`,`관리대상현장 <b>${sites.length}개</b>`,`관리세대 <b>${rpN(units)}세대</b>`],asof);
-  const hdrS=rpHdr((curTeam()?curTeam().name:'')+' 하자처리 현황 보고',[],asof,true);
+  const hdrS=rpHdr((curTeam()?curTeam().name:'')+' 하자처리현황 보고',[],asof,true);
 
   // 1) 종합 현황
   const kpi=rpKpi([
@@ -1576,7 +1576,7 @@ function rptDashboard(){
     m:`월간 처리 <b>${rpN(mRes)}건</b>으로 월간 접수(${rpN(mR)}건)를 ${mRes<mR?'밑돌아 미처리 순증':'웃돌아 미처리 감소'}.`});
   const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
 
-  // 4) 월별 처리 현황 — 화면 '월별 하자처리 현황'과 같은 월말 스냅샷·같은 지표(tblMetrics)를 쓴다.
+  // 4) 월별 처리 현황 — 화면 '월별 하자처리현황'과 같은 월말 스냅샷·같은 지표(tblMetrics)를 쓴다.
   //   (예전엔 calcMo 집계를 따로 돌려 장기미처리 열이 항상 0이고, 연도로 먼저 잘라 1월 전월대비가 비었음)
   const moRows=rpMoRows(moSnapsDash());
   const moTbl=`<table><thead><tr>
@@ -1647,11 +1647,11 @@ function rptSite(sid){
   const site=(S.sites||[]).find(s=>s.id===sid); if(!site)return '';
   const c=calc(S.def[sid]||[],site,S.rm), p=c.prev||{};
   const cm=(S.cmt&&S.cmt[sid])||{}, asof=(c.rmEnd||S.rm).replace(/-/g,'. ')+'.';
-  const hdrF=rpHdr(site.name+' 하자처리 현황 보고',
+  const hdrF=rpHdr(site.name+' 하자처리현황 보고',
     [`권역 <b>${esc(site.region||'-')}</b>`,
      `규모 <b>${site.buildings?site.buildings+'개동 ':''}${rpN(site.units)}세대</b>`,
      `준공 <b>${esc((site.completionDate||'').replace('-','. ')+'.')}</b>`],asof);
-  const hdrS=rpHdr(site.name+' 하자처리 현황 보고',[],asof,true);
+  const hdrS=rpHdr(site.name+' 하자처리현황 보고',[],asof,true);
 
   const kpi=rpKpi([
     {k:'전체 접수',v:c.tR,d:`세대당 ${site.units?(c.tR/site.units).toFixed(1):'0.0'}건 · ${rpDelta(c.tR-(p.total||0))}`},
