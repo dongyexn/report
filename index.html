@@ -1671,7 +1671,12 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 #rptRoot{position:fixed;left:-10000px;top:0;}
 .rpt{--rp-navy:#08213f; --rp-n2:#14395f; --rp-n3:#22537f; --rp-n4:#3a6f9f; --rp-n5:#6b96bd; --rp-n6:#b9c9d8;  --rp-text:#1a202c; --rp-gray:#4a5568; --rp-label:#6b7280;  --rp-line:#c8cdd4; --rp-lines:#e4e7eb; --rp-bg:#f7f8fa;}
 .rpt *{box-sizing:border-box;margin:0;padding:0;}
-.rpt{font-family:'HDharmony','Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--rp-text);-webkit-font-smoothing:antialiased;}
+.rpt{font-family:'HDharmony','Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--rp-text);-webkit-font-smoothing:antialiased;}
+/* ↑ 'Pretendard'만 있으면 @font-face 이름('Pretendard Variable')과 달라 번들 글꼴을 못 잡고 OS 기본으로 떨어졌다 — 기본 글꼴을 앱 화면과 같게 고정 */
+/* 보고서 글꼴 — 인쇄 모달에서 고른다. 시스템 글꼴은 앱 UI와 달리 문서 인쇄물에 가까운 인상을 준다.
+   글꼴마다 자·행 폭이 달라 표 높이가 바뀌므로, 넘침은 rptFit()이 인쇄 직전 실측해 밀도로 흡수한다. */
+.rpt.f-sys{font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Noto Sans KR','Noto Sans CJK KR',system-ui,sans-serif;}
+.rpt.f-serif{font-family:'Batang','바탕','AppleMyungjo','Noto Serif KR','Noto Serif CJK KR',serif;}
 .rpt .page{width:794px;min-height:1123px;background:#fff;margin:0 auto 22px;position:relative;box-shadow:0 2px 16px rgba(0,0,0,.28);}
 .rpt .sheet{width:595px;min-height:842px;padding:0 36px;position:relative;zoom:1.333333;}
 .rpt .page{break-after:page;box-shadow:none;margin:0;min-height:1123px}
@@ -1802,8 +1807,13 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .rpk-mt{font-size:11px;color:var(--lbl3);margin-top:6px;}
 .rpk-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;
   padding-top:14px;border-top:1px solid var(--sep);}
-.rpk-chk{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--lbl2);cursor:pointer;}
-.rpk-chk input{width:15px;height:15px;accent-color:var(--b600);cursor:pointer;}
+/* 보고서 글꼴 선택 — '보고서 양식'일 때만 의미가 있어 '화면 그대로' 선택 시엔 흐리게 잠근다 */
+.rpk-fnt{display:flex;align-items:center;gap:10px;margin-top:16px;transition:opacity .15s;}
+.rpk-fnt.off{opacity:.35;pointer-events:none;}
+.rpk-fnt-l{font-size:12.5px;font-weight:600;color:var(--lbl2);}
+.rpk-seg{display:inline-flex;gap:2px;padding:2px;background:var(--fill2);border-radius:8px;}
+.rpk-seg button{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;color:var(--lbl2);}
+.rpk-seg button.on{background:var(--bg);color:var(--lbl);box-shadow:0 1px 2px rgba(0,0,0,.08);}
 @media (max-width:560px){.rpk{grid-template-columns:1fr;}}
 </style>
 </head>

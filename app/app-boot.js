@@ -1145,7 +1145,7 @@ registerActions('click', {
 registerActions('click', {
   'auth.login':()=>fbDoLogin(), 'auth.signup':()=>fbDoSignup(), 'auth.resend':()=>fbDoResend(),
   'top.month':()=>openMP(), 'top.print':()=>openPrintPick(),
-  'print.pick':(el)=>rptPickSel(el), 'print.go':()=>rptPickGo(),
+  'print.pick':(el)=>rptPickSel(el), 'print.font':(el)=>rptPickFont(el), 'print.go':()=>rptPickGo(),
   'dash.ai':()=>runDashAI(), 'dash.sort':(el)=>sortDT(el.dataset.key),
   'readme.tab':(el)=>{const i=el.dataset.i;const mb=document.getElementById('mbody');if(!mb)return;
     mb.querySelectorAll('.rd-navi').forEach(b=>b.classList.toggle('act',b.dataset.i===i));
@@ -1333,7 +1333,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
 /* ── 인쇄 방식 선택 ──
    화면 그대로(기존 doPrint) / 보고서 양식(rptDashboard·rptSite) 중 고른다.
-   선택은 rptMode에 기억하고, 설정에서 다시 물어보게 되돌릴 수 있다. */
+   형태는 기억하지 않고 인쇄할 때마다 고른다. 글꼴만 rptFont 에 남겨 다음 인쇄 때 선택 상태로 띄운다. */
 function rptThumb(kind){
   if(kind==='screen') return `<svg class="rpk-th" viewBox="0 0 160 113" width="100%">
     <rect x="10" y="9" width="140" height="18" rx="4" fill="#DDE3EA"/>
@@ -1364,9 +1364,8 @@ function rptThumb(kind){
       <line x1="14" y1="109" x2="146" y2="109"/></g></svg>`;
 }
 function openPrintPick(){
-  const saved=localStorage.getItem('rptMode');
-  if(saved==='screen'){doPrint();return;}
-  if(saved==='report'){doPrintReport();return;}
+  localStorage.removeItem('rptMode');   // 옛 '묻지 않기' 저장값 정리 — 인쇄 형태는 매번 고른다
+  const fSaved=rptFont();
   const opt=(v,nm,ds,mt)=>`<div class="rpk-opt${v==='report'?' on':''}" data-act="print.pick" data-v="${v}">
       ${rptThumb(v)}
       <div class="rpk-nm"><span class="rpk-rd"></span>${nm}</div>
@@ -1376,9 +1375,12 @@ function openPrintPick(){
     <div class="rpk">
       ${opt('screen','화면 그대로','지금 보고 계신 카드 배치를 그대로 인쇄합니다.','기존 방식')}
       ${opt('report','보고서 양식','A4 문서 형태로 재구성해 인쇄합니다.',S.view==='site'?'현황 · 추이 · 이슈 · 표 순 · 3쪽':'현황 · 추이 · 이슈 · 표 순 · 2쪽')}
-    </div>`;
-  document.getElementById('mf').innerHTML=`<label class="rpk-chk" style="margin-right:auto"><input type="checkbox" id="rpkRemember"> 다음부터 묻지 않기</label>
-    <button class="btn bg2" data-act="modal.close">취소</button>
+    </div>
+    <div class="rpk-fnt" id="rpkFont"><span class="rpk-fnt-l">보고서 글꼴</span><div class="rpk-seg">
+      ${[['brand','기본'],['sys','맑은 고딕'],['serif','바탕']].map(([f,nm])=>
+        `<button class="${f===fSaved?'on':''}" data-act="print.font" data-f="${f}">${nm}</button>`).join('')}
+    </div></div>`;
+  document.getElementById('mf').innerHTML=`<button class="btn bg2" data-act="modal.close">취소</button>
     <button class="btn bp" data-act="print.go">인쇄</button>`;
   const mb=document.getElementById('mb'); if(mb)mb.classList.add('wide-pick');
   openMo();
@@ -1387,11 +1389,19 @@ function openPrintPick(){
 function rptPickSel(el){
   document.querySelectorAll('.rpk-opt').forEach(o=>o.classList.remove('on'));
   el.classList.add('on');
+  const f=document.getElementById('rpkFont');
+  if(f)f.classList.toggle('off',el.dataset.v==='screen');   // 글꼴은 보고서 양식에만 적용된다
+}
+// 보고서 글꼴 — brand(브랜드 산세리프) / sys(맑은 고딕) / serif(바탕). 모달을 건너뛰는 경로도 이 값을 쓴다.
+function rptFont(){const v=localStorage.getItem('rptFont');return v==='sys'||v==='serif'?v:'brand';}
+function rptPickFont(el){
+  document.querySelectorAll('.rpk-seg button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
 }
 function rptPickGo(){
   const sel=document.querySelector('.rpk-opt.on'), v=sel?sel.dataset.v:'report';
-  const rem=document.getElementById('rpkRemember');
-  if(rem&&rem.checked)localStorage.setItem('rptMode',v);
+  const fs=document.querySelector('.rpk-seg button.on');
+  if(fs)localStorage.setItem('rptFont',fs.dataset.f);   // 글꼴만 기억해 다음 인쇄 때 선택 상태로 띄운다
   const mb=document.getElementById('mb'); if(mb)mb.classList.remove('wide-pick');
   closeMo();
   setTimeout(()=>{v==='screen'?doPrint():doPrintReport();},80);
@@ -1405,9 +1415,10 @@ function doPrintReport(){
   const d=document.createElement('div'); d.id='rptRoot';
   try{ d.innerHTML=(S.view==='site'&&S.sid)?rptSite(S.sid):rptDashboard(); }
   catch(e){ toast('보고서를 만들지 못했습니다'); console.error(e); return; }
+  const _rp=d.querySelector('.rpt'); if(_rp)_rp.classList.add('f-'+rptFont());
   document.body.appendChild(d);
   document.body.classList.add('rpt-on');
-  try{ rptFitAI(d); }catch(e){ logErr('rptFitAI',e); }
+  try{ rptFit(d); }catch(e){ logErr('rptFit',e); }
   const done=()=>{document.body.classList.remove('rpt-on');
     const r=document.getElementById('rptRoot');if(r)r.remove();
     const s=document.getElementById('rptPageCSS');if(s)s.remove();

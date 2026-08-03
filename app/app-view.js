@@ -1722,16 +1722,21 @@ function rptSite(sid){
   return `<div class="rpt">${rpPage(1,3,hdrF,p1)}${rpPage(2,3,hdrS,p2)}${rpPage(3,3,hdrS,p3)}</div>`;
 }
 
-/* 종합 분석 의견 한 쪽 맞춤 — AI 원문 길이가 매달 달라 기본 8.5px로는 넘칠 수 있다.
-   #rptRoot를 붙인 뒤(레이아웃 확정) 실측해서 넘치면 --aifs를 0.25px씩 낮춘다. 하한 6.25px. */
-function rptFitAI(root){
+/* 보고서 한 쪽 맞춤 — #rptRoot를 붙인 뒤(레이아웃 확정) 쪽마다 실측해 넘치는 만큼만 줄인다.
+   컴파일 시점 추정으로는 못 잡는 두 가지를 여기서 흡수한다:
+     · 표: 현장 수는 rptDashboard가 미리 밀도를 잡지만, 글꼴을 바꾸면 자·행 폭이 달라져 다시 넘칠 수 있다.
+     · 종합 분석 의견: AI 원문 길이가 매달 다르다.
+   .rpt 기하 규칙은 @media print 밖에 있어 화면에서 잰 값이 인쇄 결과와 같다. */
+function rptFit(root){
   if(!root)return;
   root.querySelectorAll('.page').forEach(pg=>{
-    const ai=pg.querySelector('.ai'),pgn=pg.querySelector('.pgn');
-    if(!ai||!pgn)return;
+    const pgn=pg.querySelector('.pgn'); if(!pgn)return;
     const over=()=>{const lim=pgn.getBoundingClientRect().top-6;let b=0;
       pg.querySelectorAll('.sec').forEach(s=>{b=Math.max(b,s.getBoundingClientRect().bottom);});return b>lim;};
-    for(let fs=8.25;over()&&fs>=6.25;fs-=0.25)ai.style.setProperty('--aifs',fs+'px');
+    if(over())pg.classList.add('dense');    // 1단계: 행간만
+    if(over())pg.classList.add('dense2');   // 2단계: 표 글자까지
+    const ai=pg.querySelector('.ai');       // 3단계: 분석 의견 본문
+    if(ai)for(let fs=8.25;over()&&fs>=6.25;fs-=0.25)ai.style.setProperty('--aifs',fs+'px');
   });
 }
 /* AI 분석 원문을 보고서 서식으로 — 짧은 줄은 소제목(.ai-h), 나머지는 목록 */
