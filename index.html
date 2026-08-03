@@ -1733,6 +1733,16 @@ th[data-act]:focus-visible{outline:2px solid #3E71D2;outline-offset:-2px;}
 .rpt .dl .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rpt .dl .vl{font-variant-numeric:tabular-nums;font-weight:600;color:var(--rp-text)}
 .rpt .dl .pc{width:34px;text-align:right;color:var(--rp-label);font-variant-numeric:tabular-nums}
+/* 처리계획 칸 — 지난달(기록)과 이번 달(기입란)을 라벨+본문 2단으로 분리.
+   규칙이 없으면 td 기본 가운데정렬로 '지난달- 내용 / 이번 달-'이 한 덩어리로 뭉쳐 읽힌다. */
+.rpt td.plan{text-align:left;padding:0;vertical-align:top;}
+.rpt .plan>div{display:flex;align-items:flex-start;gap:7px;padding:3px 7px;}
+.rpt .plan .prev{border-bottom:1px dotted var(--rp-lines);}
+.rpt .plan .lb{flex:0 0 26px;font-size:6.5px;font-weight:700;color:var(--rp-label);
+  line-height:1.5;letter-spacing:-.02em;white-space:nowrap;}
+.rpt .plan .tx{flex:1;min-width:0;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.rpt .plan .cur .tx{min-height:15px;border:1px solid var(--rp-lines);border-radius:4px;
+  padding:2px 5px;background:#fff;}
 .rpt /* 이슈 */
 .iss{border-left:3px solid var(--rp-navy);background:var(--rp-bg);padding:5px 10px;margin-bottom:3px;}
 .rpt .iss:last-child{margin-bottom:0}

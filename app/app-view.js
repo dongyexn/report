@@ -417,6 +417,21 @@ const tblDlt=(d,isFirst,cur,u)=>{ // cur(현재값)·u('월'|'주')를 주면 �
   return`<span class="ba ${cls}"${tt}>${arrow} ${sign}${Math.abs(d).toLocaleString()}</span>`;};
 const tblLtrCells=(d0,d30,d60,unr,ltDlt,isFirst,u)=>{const lt=d30+d60;const ltr=unr>0?(lt/unr*100):0;const p60=unr>0?Math.min(d60/unr*100,100):0,p30=unr>0?Math.min(d30/unr*100,100):0,p0=unr>0?Math.min(d0/unr*100,100):0;const dltCell=`<td class="cc">${tblDlt(ltDlt,isFirst,lt,u)}</td>`;const barCell=`<td class="cc tl-grp-ltr"><div class="ltrbar-wrap"><div class="ltrbar" data-tip="장기미처리|${unr}|${d60}|${d30}|${d0}|${ltr.toFixed(1)}"><div class="seg s60" style="width:${p60.toFixed(1)}%"></div><div class="seg s30" style="width:${p30.toFixed(1)}%"></div><div class="seg s0" style="width:${p0.toFixed(1)}%"></div></div><span class="ltrbar-pct">${ltr.toFixed(1)}%</span></div></td>`;return`<td class="cc ltr-red tl-grp-ltr">${tblNF(lt)}</td>${barCell}${dltCell}`;};
 const tblMetrics=(cur,prev,prev2)=>{const tR=cur.r,cumRes=cur.res,unr=cur.u,d0=cur.d0,lt=cur.d30+cur.d60;const rate=tR>0?(cumRes/tR*100):0,ltRatio=unr>0?(lt/unr*100):0;const recvW=prev?cur.r-prev.r:cur.r;const resW=prev?cur.res-prev.res:cur.res;const prevResW=prev?(prev2?prev.res-prev2.res:prev.res):0;const prevLt=prev?(prev.d30+prev.d60):0,prevUnr=prev?prev.u:0;return{tR,cumRes,unr,d0,d30:cur.d30,d60:cur.d60,lt,rate,ltRatio,recvW,resW,resWDlt:resW-prevResW,ltDlt:lt-prevLt,unrDlt:unr-prevUnr};};
+// 월말 스냅샷(단일 출처) — 화면 '월별 하자처리 현황'과 보고서가 같은 값을 쓰도록 여기서만 만든다.
+//   현장: 각 월의 마지막 주차 스냅샷. 팀: 월말마다 현장별 '그 달 이전 마지막 스냅샷'을 carry-forward 합산.
+//   키는 연도 필터 전 전체 월이라, 1월의 전월 대비가 전년 12월과 비교된다(연도별로 자르면 1월이 항상 '—'가 됨).
+function moSnapsSite(weekly){const map={};(weekly||[]).forEach(w=>{map[String(w.week||'').slice(0,7)]=w;});
+  return{keys:Object.keys(map).filter(k=>k&&k<=S.rm).sort(),map};}
+function moSnapsDash(){
+  const siteWeekly=dashSites().map(s=>{const st=calc(S.def[s.id]||[],s,S.rm);
+    return (st.weekly||[]).slice().sort((a,b)=>a.week<b.week?-1:a.week>b.week?1:0);}).filter(a=>a.length);
+  const keys=[...new Set(siteWeekly.flatMap(a=>a.map(w=>w.week.slice(0,7))))].filter(k=>k<=S.rm).sort();
+  const map={};
+  keys.forEach(mk=>{const a={r:0,res:0,u:0,d0:0,d30:0,d60:0};
+    siteWeekly.forEach(arr=>{let last=null;for(const w of arr){if(w.week.slice(0,7)<=mk)last=w;else break;}
+      if(last){a.r+=last.r;a.res+=last.res;a.u+=last.u;a.d0+=last.d0;a.d30+=last.d30;a.d60+=last.d60;}});
+    map[mk]={week:mk,m:Number(mk.slice(5,7)),...a};});
+  return{keys,map};}
 const tblTh=(cls,txt)=>`<th class="cc ${cls}">${txt}</th>`;
 const tblThG=(cls,txt)=>`<th class="cc ${cls} tl-grp">${txt}</th>`;
 // SORTING dashboard table
@@ -466,26 +481,8 @@ function attachKpiTap(){if(window._kpiTapAttached)return;window._kpiTapAttached=
 function setDashMonthYear(y){S.dashMoYear=y;buildDashMonthTable();}
 function buildDashMonthTable(){
   const tbl=document.getElementById('dmo-table');if(!tbl)return;
-  // 전 현장 weekly 합산 (week 키 기준, 인수 전 현장 제외)
-  // 현장별 weekly 스냅샷(주차=일요일 cutoff; 누적 r/res + 시점 u/d*) 수집
-  const siteWeekly=dashSites().map(s=>{
-    const st=calc(S.def[s.id]||[],s,S.rm);
-    return (st.weekly||[]).slice().sort((a,b)=>a.week<b.week?-1:a.week>b.week?1:0);
-  }).filter(arr=>arr.length);
-  // 전체 월 목록 = 모든 현장 주차의 'YYYY-MM' 합집합
-  const moKeys=[...new Set(siteWeekly.flatMap(arr=>arr.map(w=>w.week.slice(0,7))))].filter(mk=>mk<=S.rm).sort();
-  // 월말 스냅샷: 각 월말 시점마다 현장별 '그 달 이전까지의 마지막 스냅샷'을 carry-forward 합산.
-  // (현장마다 주차 집합이 달라서, 해당 월에 접수 없는 현장이 통째로 누락 → 합계 출렁임 → 월간델타 음수 발생하던 버그 수정)
-  const moMap={};
-  moKeys.forEach(mk=>{
-    const a={r:0,res:0,u:0,d0:0,d30:0,d60:0};
-    siteWeekly.forEach(arr=>{
-      let last=null;
-      for(const w of arr){if(w.week.slice(0,7)<=mk)last=w;else break;}
-      if(last){a.r+=last.r;a.res+=last.res;a.u+=last.u;a.d0+=last.d0;a.d30+=last.d30;a.d60+=last.d60;}
-    });
-    moMap[mk]={week:mk,...a};
-  });
+  // 월말 스냅샷은 moSnapsDash()가 만든다(보고서와 단일 출처 — 값이 어긋날 수 없게)
+  const {keys:moKeys,map:moMap}=moSnapsDash();
   // 연도 옵션
   const years=[...new Set(moKeys.map(k=>k.slice(0,4)))].sort();
   const curYear=(years.includes(S.dashMoYear)?S.dashMoYear:(years.includes(S.rm.slice(0,4))?S.rm.slice(0,4):years[years.length-1]))||S.rm.slice(0,4);
@@ -1106,8 +1103,7 @@ function rSite(sid){
     return`<tr class="${lastOfMonth?'mend':''}">${monthCell}<td class="cc">${w.wn}주</td><td class="cc recv-total tl-grp">${_nf(m.tR)}</td><td class="cc recv-weekly">${_nf(m.recvW)}</td><td class="cc proc-blue tl-grp">${_nf(m.cumRes)}</td><td class="rate-col proc-blue">${_rateNum(m.rate.toFixed(1))}</td><td class="cc proc-blue">${_nf(m.resW)}</td><td class="cc">${_dlt(m.resWDlt,first,m.resW,'주')}</td><td class="cc unr-red tl-grp">${_nf(m.unr)}</td><td class="cc">${_dlt(m.unrDlt,first,m.unr,'주')}</td>${_ltrCells(m.d0,m.d30,m.d60,m.unr,m.ltDlt,first,'주')}</tr>`;
   }).join('');
   // 월별 본문: 각 월의 마지막(월말) 누적 스냅샷
-  const _moMapAll={};_wkAll.forEach(w=>{_moMapAll[w.week.slice(0,7)]=w;});
-  const _moKeys=Object.keys(_moMapAll).sort();
+  const {keys:_moKeys,map:_moMapAll}=moSnapsSite(_wkAll);
   const _moRows=_moKeys.map((k,i)=>{
     const w=_moMapAll[k],prev=i>0?_moMapAll[_moKeys[i-1]]:null,prev2=i>1?_moMapAll[_moKeys[i-2]]:null;
     return{w,k,m:_metrics(w,prev,prev2),first:i===0,yr:k.slice(0,4)};
@@ -1436,8 +1432,23 @@ const rpDelta=d=>d===0?'— 0':`<span class="${d>0?'up':'dn2'}">${d>0?'▲ ':'�
 const rpPct=(a,b)=>b?(a/b*100).toFixed(1)+'%':'0.0%';
 
 // 주차별 스택 막대 + 누계 선 2종
+/* 보고서 월별 처리 현황 본문 — 화면 표와 같은 월말 스냅샷·지표를 쓰고 표시 연도만 잘라낸다.
+   연도 필터는 지표 계산 '뒤'에 걸어야 1월이 전년 12월과 비교된다. */
+function rpMoRows({keys,map}){
+  const yr=S.rm.slice(0,4);
+  const all=keys.map((k,i)=>({k,first:i===0,
+    m:tblMetrics(map[k], i>0?map[keys[i-1]]:null, i>1?map[keys[i-2]]:null)}));
+  const sel=all.filter(x=>x.k.slice(0,4)===yr);
+  return sel.map((x,i)=>{
+    const m=x.m,last=i===sel.length-1,B=v=>last?`<b>${v}</b>`:v;
+    const d=(v,isFirst)=>isFirst?'<span class="dim">—</span>':rpDelta(v);
+    return `<tr><td>${B(Number(x.k.slice(5))+'월')}</td><td>${B(rpN(m.tR))}</td><td>${B(rpN(m.recvW))}</td>`+
+      `<td>${B(rpN(m.cumRes))}</td><td>${B(rpPct(m.cumRes,m.tR))}</td><td>${B(rpN(m.resW))}</td><td>${B(rpN(m.unr))}</td>`+
+      `<td${last?' class="dn"':''}>${d(m.unrDlt,x.first)}</td><td>${B(rpN(m.lt))}</td>`+
+      `<td${last?' class="dn"':''}>${d(m.ltDlt,x.first)}</td></tr>`;}).join('');
+}
 function rpTrend(wks){
-  const W=523,H=112,L=40,R=494,T=14,B=96;
+  const W=523,H=112,L=48,R=486,T=14,B=96;
   const _y=S.rm.slice(0,4);
   wks=(wks||[]).filter(w=>String(w.week||'').slice(0,4)===_y); // 보고서는 당해년도만
   if(!wks.length)return '';
@@ -1470,6 +1481,10 @@ function rpTrend(wks){
   wks.forEach((w,i)=>{const mm=String(w.week||'').slice(5,7);
     if(mm&&mm!==lastM){lastM=mm;
       s+=`<text x="${(L+step*i+step/2).toFixed(1)}" y="${B+12}" font-size="7" fill="#4a5568" text-anchor="middle">${Number(mm)}월</text>`;}});
+  // 축 제목 — 앱 차트와 같은 문구, 눈금보다 작고 옅게. 좌축은 아래→위, 우축은 위→아래(Chart.js 기본 방향과 동일)
+  const _ac=(T+B)/2;
+  s+=`<text x="9" y="${_ac}" font-size="6" fill="#9aa3ad" text-anchor="middle" transform="rotate(-90 9 ${_ac})">미처리(건)</text>`;
+  s+=`<text x="516" y="${_ac}" font-size="6" fill="#9aa3ad" text-anchor="middle" transform="rotate(90 516 ${_ac})">접수·처리(건)</text>`;
   return s+'</svg>';
 }
 
@@ -1561,22 +1576,9 @@ function rptDashboard(){
     m:`월간 처리 <b>${rpN(mRes)}건</b>으로 월간 접수(${rpN(mR)}건)를 ${mRes<mR?'밑돌아 미처리 순증':'웃돌아 미처리 감소'}.`});
   const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
 
-  // 4) 월별 처리 현황
-  const moMap={};
-  st.forEach(x=>(x.c.monthly||[]).forEach(m=>{
-    const o=moMap[m.month]||(moMap[m.month]={month:m.month,r:0,res:0,u:0,lt:0});
-    o.r+=m.r||0;o.res+=m.res||0;o.u+=m.u||0;o.lt+=m.lt||0;}));
-  const _yr=S.rm.slice(0,4);
-  const mos=Object.values(moMap).filter(m=>m.month.slice(0,4)===_yr).sort((a,b)=>a.month<b.month?-1:1);
-  let prevU=null,prevL=null,moRows='';
-  mos.forEach((m,i)=>{
-    const last=i===mos.length-1,B=v=>last?`<b>${v}</b>`:v;
-    const mi=i?m.r-mos[i-1].r:m.r, mp=i?m.res-mos[i-1].res:m.res;
-    moRows+=`<tr><td>${B(Number(m.month.slice(5))+'월')}</td><td>${B(rpN(m.r))}</td><td>${B(rpN(mi))}</td>`+
-      `<td>${B(rpN(m.res))}</td><td>${B(rpPct(m.res,m.r))}</td><td>${B(rpN(mp))}</td><td>${B(rpN(m.u))}</td>`+
-      `<td${last?' class="dn"':''}>${rpDelta(prevU==null?0:m.u-prevU)}</td><td>${B(rpN(m.lt))}</td>`+
-      `<td${last?' class="dn"':''}>${rpDelta(prevL==null?0:m.lt-prevL)}</td></tr>`;
-    prevU=m.u;prevL=m.lt;});
+  // 4) 월별 처리 현황 — 화면 '월별 하자처리 현황'과 같은 월말 스냅샷·같은 지표(tblMetrics)를 쓴다.
+  //   (예전엔 calcMo 집계를 따로 돌려 장기미처리 열이 항상 0이고, 연도로 먼저 잘라 1월 전월대비가 비었음)
+  const moRows=rpMoRows(moSnapsDash());
   const moTbl=`<table><thead><tr>
     <th class="cc" style="width:10%">월</th><th style="width:10%">전체 접수</th><th style="width:10%">월간 접수</th>
     <th style="width:10%">전체 처리</th><th style="width:10%">처리율</th><th style="width:10%">월간 처리</th>
@@ -1673,16 +1675,7 @@ function rptSite(sid){
     m:`사내 매뉴얼 기준 <b>${rpN(c.critUnr)}건</b>이 미처리 상태. 최우선 현장 재방문 및 정밀 진단 요망.`});
   const issHTML=iss.map(i=>`<div class="iss"><div class="t">${esc(i.t)}</div><div class="m">${i.m}</div></div>`).join('');
 
-  let prevU=null,prevL=null,moRows='';
-  const _yr=S.rm.slice(0,4);
-  (c.monthly||[]).filter(m=>String(m.month).slice(0,4)===_yr).forEach((m,i,arr)=>{
-    const last=i===arr.length-1,B=v=>last?`<b>${v}</b>`:v;
-    const mi=i?m.r-arr[i-1].r:m.r, mp=i?m.res-arr[i-1].res:m.res;
-    moRows+=`<tr><td>${B(Number(m.month.slice(5))+'월')}</td><td>${B(rpN(m.r))}</td><td>${B(rpN(mi))}</td>`+
-      `<td>${B(rpN(m.res))}</td><td>${B(rpPct(m.res,m.r))}</td><td>${B(rpN(mp))}</td><td>${B(rpN(m.u))}</td>`+
-      `<td${last?' class="dn"':''}>${rpDelta(prevU==null?0:m.u-prevU)}</td><td>${B(rpN(m.lt||0))}</td>`+
-      `<td${last?' class="dn"':''}>${rpDelta(prevL==null?0:(m.lt||0)-prevL)}</td></tr>`;
-    prevU=m.u;prevL=m.lt||0;});
+  const moRows=rpMoRows(moSnapsSite(c.weekly));
   const moTbl=`<table><thead><tr>
     <th class="cc" style="width:10%">월</th><th style="width:10%">전체 접수</th><th style="width:10%">월간 접수</th>
     <th style="width:10%">전체 처리</th><th style="width:10%">처리율</th><th style="width:10%">월간 처리</th>
@@ -1706,7 +1699,7 @@ function rptSite(sid){
         `<td>${rpN(pc)}</td><td class="dn">${rpN(x.c)}</td><td>${rpDelta(d)}</td>`+
         `<td>${num?rpPct(x.c,num):'-'}</td><td class="plan">`+
         `<div class="prev"><span class="lb">지난달</span><span class="tx">${cell(prev)}</span></div>`+
-        `<div class="cur"><span class="lb">이번 달</span><span class="tx">${cell(cur)}</span></div></td></tr>`;}).join('');
+        `<div class="cur"><span class="lb">이번 달</span><span class="tx">${cur?esc(cur):''}</span></div></td></tr>`;}).join('');
     return `<table><thead><tr>
       <th style="width:5%">순위</th><th class="l" style="width:10%">공종</th><th class="l" style="width:18%">시공업체</th>
       <th style="width:7%">전월</th><th style="width:7%">금월</th><th style="width:8%">전월 대비</th><th style="width:7%">비율</th>
