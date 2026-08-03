@@ -1694,16 +1694,16 @@ function rptSite(sid){
     const body=rows.map((x,i)=>{
       const pc=(prevMap&&prevMap[x.t])||0, d=x.c-pc;
       const prev=(cm[field]||{})[pM(S.rm)+'@'+x.t]||'', cur=(cm[field]||{})[S.rm+'@'+x.t]||'';
-      const cell=v=>v?esc(v):'<span style="color:#9aa3ad">−</span>';
+      const cell=v=>v?esc(v):''; // 계획이 없으면 자리표시 없이 비운다
       return `<tr><td>${i+1}</td><td class="l">${esc(x.t)}</td><td class="l">${esc(x.co||'-')}</td>`+
         `<td>${rpN(pc)}</td><td class="dn">${rpN(x.c)}</td><td>${rpDelta(d)}</td>`+
         `<td>${num?rpPct(x.c,num):'-'}</td><td class="plan">`+
         `<div class="prev"><span class="lb">지난달</span><span class="tx">${cell(prev)}</span></div>`+
-        `<div class="cur"><span class="lb">이번 달</span><span class="tx">${cur?esc(cur):''}</span></div></td></tr>`;}).join('');
+        `<div class="cur"><span class="lb">이번 달</span><span class="tx">${cell(cur)}</span></div></td></tr>`;}).join('');
     return `<table><thead><tr>
-      <th style="width:5%">순위</th><th class="l" style="width:10%">공종</th><th class="l" style="width:18%">시공업체</th>
-      <th style="width:7%">전월</th><th style="width:7%">금월</th><th style="width:8%">전월 대비</th><th style="width:7%">비율</th>
-      <th class="l" style="width:38%">처리계획</th></tr></thead><tbody>${body}</tbody></table>`;};
+      <th style="width:4%">순위</th><th class="l" style="width:9%">공종</th><th class="l" style="width:14%">시공업체</th>
+      <th style="width:6.5%">전월</th><th style="width:6.5%">금월</th><th style="width:7%">전월 대비</th><th style="width:7%">비율</th>
+      <th class="l" style="width:46%">처리계획</th></tr></thead><tbody>${body}</tbody></table>`;};
   const ltTop=(c.topLt||[]).filter(x=>!x.isT&&!x.isO).slice(0,5);
   const vacTop=(c.vTop||[]).filter(x=>!x.isT&&!x.isO).slice(0,5);
 
